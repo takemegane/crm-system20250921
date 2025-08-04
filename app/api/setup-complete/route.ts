@@ -166,6 +166,143 @@ async function createAllTables(prisma: any) {
     )
   `
 
+  // Category テーブル
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS "Category" (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      name TEXT NOT NULL,
+      description TEXT,
+      "isActive" BOOLEAN DEFAULT TRUE,
+      "displayOrder" INTEGER DEFAULT 0,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `
+
+  // Product テーブル
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS "Product" (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      name TEXT NOT NULL,
+      description TEXT,
+      price DECIMAL(10,2) NOT NULL,
+      "categoryId" TEXT,
+      "imageUrl" TEXT,
+      "isActive" BOOLEAN DEFAULT TRUE,
+      "displayOrder" INTEGER DEFAULT 0,
+      stock INTEGER DEFAULT 0,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("categoryId") REFERENCES "Category"(id) ON DELETE SET NULL
+    )
+  `
+
+  // ShippingRate テーブル
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS "ShippingRate" (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "categoryId" TEXT,
+      name TEXT NOT NULL,
+      rate DECIMAL(10,2) NOT NULL,
+      "freeThreshold" DECIMAL(10,2),
+      "isDefault" BOOLEAN DEFAULT FALSE,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("categoryId") REFERENCES "Category"(id) ON DELETE CASCADE
+    )
+  `
+
+  // SystemSettings テーブル
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS "SystemSettings" (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "systemName" TEXT DEFAULT 'CRM管理システム',
+      "logoUrl" TEXT,
+      "faviconUrl" TEXT,
+      "primaryColor" TEXT DEFAULT '#3B82F6',
+      "secondaryColor" TEXT DEFAULT '#EF4444',
+      description TEXT,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `
+
+  // Order テーブル
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS "Order" (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "customerId" TEXT NOT NULL,
+      "orderNumber" TEXT UNIQUE NOT NULL,
+      "totalAmount" DECIMAL(10,2) NOT NULL,
+      "shippingAmount" DECIMAL(10,2) DEFAULT 0,
+      status TEXT DEFAULT 'PENDING',
+      "recipientName" TEXT NOT NULL,
+      "recipientPhone" TEXT NOT NULL,
+      "recipientAddress" TEXT NOT NULL,
+      "contactPhone" TEXT,
+      "orderedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "shippedAt" TIMESTAMP,
+      "deliveredAt" TIMESTAMP,
+      "cancelledAt" TIMESTAMP,
+      "cancelledBy" TEXT,
+      "cancelReason" TEXT,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("customerId") REFERENCES "Customer"(id) ON DELETE CASCADE
+    )
+  `
+
+  // OrderItem テーブル
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS "OrderItem" (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "orderId" TEXT NOT NULL,
+      "productId" TEXT NOT NULL,
+      "productName" TEXT NOT NULL,
+      price DECIMAL(10,2) NOT NULL,
+      quantity INTEGER NOT NULL,
+      subtotal DECIMAL(10,2) NOT NULL,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("orderId") REFERENCES "Order"(id) ON DELETE CASCADE,
+      FOREIGN KEY ("productId") REFERENCES "Product"(id) ON DELETE CASCADE
+    )
+  `
+
+  // EmailSettings テーブル
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS "EmailSettings" (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "smtpHost" TEXT,
+      "smtpPort" INTEGER DEFAULT 587,
+      "smtpUser" TEXT,
+      "smtpPass" TEXT,
+      "fromName" TEXT DEFAULT 'CRM管理システム',
+      "fromAddress" TEXT,
+      signature TEXT,
+      "isActive" BOOLEAN DEFAULT FALSE,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    )
+  `
+
+  // AuditLog テーブル
+  await prisma.$executeRaw`
+    CREATE TABLE IF NOT EXISTS "AuditLog" (
+      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+      "userId" TEXT NOT NULL,
+      "userName" TEXT NOT NULL,
+      action TEXT NOT NULL,
+      entity TEXT NOT NULL,
+      "entityId" TEXT,
+      details TEXT,
+      "oldValues" TEXT,
+      "newValues" TEXT,
+      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY ("userId") REFERENCES "User"(id) ON DELETE CASCADE
+    )
+  `
+
   console.log('All tables created successfully')
 }
 
@@ -217,6 +354,63 @@ async function createSampleData(prisma: any) {
         ('template-1', 'デフォルトテンプレート', 'お知らせ', 'こんにちは、{{customer_name}}様。\n\nお世話になっております。', true)
       `
       console.log('Sample email template created')
+    }
+
+    // サンプルカテゴリの作成
+    const categoryExists = await prisma.$queryRaw`SELECT COUNT(*) as count FROM "Category"` as any[]
+    if (parseInt(categoryExists[0].count) === 0) {
+      await prisma.$executeRaw`
+        INSERT INTO "Category" (id, name, description, "displayOrder")
+        VALUES 
+        ('category-1', '書籍', '各種書籍・教材', 1),
+        ('category-2', 'グッズ', 'オリジナルグッズ', 2)
+      `
+      console.log('Sample categories created')
+    }
+
+    // サンプル商品の作成
+    const productExists = await prisma.$queryRaw`SELECT COUNT(*) as count FROM "Product"` as any[]
+    if (parseInt(productExists[0].count) === 0) {
+      await prisma.$executeRaw`
+        INSERT INTO "Product" (id, name, description, price, "categoryId", stock, "displayOrder")
+        VALUES 
+        ('product-1', 'テキストブック', '基本テキスト', 2000, 'category-1', 100, 1),
+        ('product-2', 'オリジナルTシャツ', 'ロゴ入りTシャツ', 3500, 'category-2', 50, 2)
+      `
+      console.log('Sample products created')
+    }
+
+    // デフォルト送料設定の作成
+    const shippingExists = await prisma.$queryRaw`SELECT COUNT(*) as count FROM "ShippingRate"` as any[]
+    if (parseInt(shippingExists[0].count) === 0) {
+      await prisma.$executeRaw`
+        INSERT INTO "ShippingRate" (id, name, rate, "freeThreshold", "isDefault")
+        VALUES 
+        ('shipping-1', 'デフォルト送料', 500, 10000, true)
+      `
+      console.log('Default shipping rate created')
+    }
+
+    // システム設定の作成
+    const systemSettingsExists = await prisma.$queryRaw`SELECT COUNT(*) as count FROM "SystemSettings"` as any[]
+    if (parseInt(systemSettingsExists[0].count) === 0) {
+      await prisma.$executeRaw`
+        INSERT INTO "SystemSettings" (id, "systemName", "primaryColor", "secondaryColor", description)
+        VALUES 
+        ('settings-1', 'CRM管理システム', '#3B82F6', '#EF4444', '顧客関係管理システム')
+      `
+      console.log('System settings created')
+    }
+
+    // メール設定の作成
+    const emailSettingsExists = await prisma.$queryRaw`SELECT COUNT(*) as count FROM "EmailSettings"` as any[]
+    if (parseInt(emailSettingsExists[0].count) === 0) {
+      await prisma.$executeRaw`
+        INSERT INTO "EmailSettings" (id, "fromName", "isActive")
+        VALUES 
+        ('email-settings-1', 'CRM管理システム', false)
+      `
+      console.log('Email settings created')
     }
 
   } catch (error) {
