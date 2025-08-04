@@ -18,6 +18,7 @@ function createPrismaClient() {
       return null
     }
 
+    console.log('Creating Prisma client for production...')
     return new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['error'] : ['error'],
     })
@@ -29,6 +30,8 @@ function createPrismaClient() {
 
 export const prisma = globalForPrisma.prisma ?? createPrismaClient()
 
-if (process.env.NODE_ENV !== 'production' && prisma) {
+// 本番環境でもグローバルキャッシュを有効にする
+if (prisma) {
   globalForPrisma.prisma = prisma
+  console.log('Prisma client initialized and cached')
 }
