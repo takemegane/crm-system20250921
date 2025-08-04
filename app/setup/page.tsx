@@ -6,6 +6,34 @@ import { Button } from '@/components/ui/button'
 export default function SetupPage() {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<string>('')
+  const [dbSetupLoading, setDbSetupLoading] = useState(false)
+  const [dbSetupResult, setDbSetupResult] = useState<string>('')
+
+  const handleSetupDatabase = async () => {
+    setDbSetupLoading(true)
+    setDbSetupResult('')
+
+    try {
+      const response = await fetch('/api/setup-database', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setDbSetupResult(`✅ データベースセットアップ成功: ${data.message}`)
+      } else {
+        setDbSetupResult(`❌ データベースエラー: ${data.error}`)
+      }
+    } catch (error) {
+      setDbSetupResult(`❌ 接続エラー: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setDbSetupLoading(false)
+    }
+  }
 
   const handleSetupAdmin = async () => {
     setLoading(true)
@@ -49,15 +77,30 @@ export default function SetupPage() {
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <div className="space-y-6">
-            <div className="text-center">
+            <div className="text-center space-y-4">
               <Button
-                onClick={handleSetupAdmin}
-                disabled={loading}
+                onClick={handleSetupDatabase}
+                disabled={dbSetupLoading}
+                variant="outline"
                 className="w-full"
               >
-                {loading ? '作成中...' : '管理者アカウントを作成'}
+                {dbSetupLoading ? 'セットアップ中...' : '1. データベースセットアップ'}
+              </Button>
+              
+              <Button
+                onClick={handleSetupAdmin}
+                disabled={loading || !dbSetupResult.includes('✅')}
+                className="w-full"
+              >
+                {loading ? '作成中...' : '2. 管理者アカウントを作成'}
               </Button>
             </div>
+
+            {dbSetupResult && (
+              <div className={`p-4 rounded-md ${dbSetupResult.includes('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                <pre className="whitespace-pre-wrap text-sm">{dbSetupResult}</pre>
+              </div>
+            )}
 
             {result && (
               <div className={`p-4 rounded-md ${result.includes('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>

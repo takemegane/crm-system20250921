@@ -11,7 +11,23 @@ export async function POST(request: NextRequest) {
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
       return NextResponse.json(
-        { error: 'データベースに接続できません' },
+        { error: 'DATABASE_URL環境変数が設定されていません' },
+        { status: 503 }
+      )
+    }
+
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
+    console.log('Prisma client type:', typeof prisma)
+    console.log('Prisma client methods:', Object.keys(prisma))
+
+    // Prismaクライアントの接続テスト
+    try {
+      await prisma.$connect()
+      console.log('Database connection successful')
+    } catch (error) {
+      console.error('Database connection failed:', error)
+      return NextResponse.json(
+        { error: `データベース接続エラー: ${error instanceof Error ? error.message : 'Unknown error'}` },
         { status: 503 }
       )
     }
@@ -19,7 +35,10 @@ export async function POST(request: NextRequest) {
     // 既存の管理者をチェック
     const existingAdmin = await prisma.user.findFirst({
       where: { role: 'OWNER' }
-    }).catch(() => null)
+    }).catch((error) => {
+      console.error('Database query error:', error)
+      throw new Error(`データベースクエリエラー: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    })
 
     if (existingAdmin) {
       return NextResponse.json(
