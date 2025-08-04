@@ -4,11 +4,25 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
     
     // 管理者権限のチェック
@@ -16,7 +30,7 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
     
-    const category = await prisma.category.findUnique({
+    const category = await prisma!.category.findUnique({
       where: { id: params.id },
       include: {
         _count: {
@@ -45,6 +59,16 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
     
     // 商品管理権限のチェック
@@ -64,7 +88,7 @@ export async function PUT(
     }
     
     // 存在チェック
-    const existingCategory = await prisma.category.findUnique({
+    const existingCategory = await prisma!.category.findUnique({
       where: { id: params.id }
     })
     
@@ -73,7 +97,7 @@ export async function PUT(
     }
     
     // 名前の重複チェック（自分以外）
-    const duplicateCategory = await prisma.category.findFirst({
+    const duplicateCategory = await prisma!.category.findFirst({
       where: {
         name: name.trim(),
         id: { not: params.id }
@@ -87,7 +111,7 @@ export async function PUT(
       )
     }
     
-    const category = await prisma.category.update({
+    const category = await prisma!.category.update({
       where: { id: params.id },
       data: {
         name: name.trim(),
@@ -118,6 +142,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
     
     // 商品管理権限のチェック
@@ -126,7 +160,7 @@ export async function DELETE(
     }
     
     // 存在チェック
-    const category = await prisma.category.findUnique({
+    const category = await prisma!.category.findUnique({
       where: { id: params.id },
       include: {
         _count: {
@@ -148,7 +182,7 @@ export async function DELETE(
       )
     }
     
-    await prisma.category.delete({
+    await prisma!.category.delete({
       where: { id: params.id }
     })
     
