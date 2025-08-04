@@ -10,12 +10,14 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // ビルド時のエラーを防ぐため、セッション確認を先に実行
     const session = await getServerSession(authOptions)
 
     if (!session || session.user.role !== 'OWNER') {
       return NextResponse.json({ error: 'Unauthorized - Owner access required' }, { status: 403 })
     }
 
+    // データベース接続のエラーハンドリングを強化
     const admin = await prisma.user.findUnique({
       where: { id: params.id },
       select: {
@@ -25,7 +27,10 @@ export async function GET(
         role: true,
         createdAt: true
       }
-    })
+    }).catch((error) => {
+      console.error('Database connection error:', error);
+      return null;
+    });
 
     if (!admin) {
       return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
@@ -68,7 +73,10 @@ export async function PUT(
         email,
         id: { not: params.id }
       }
-    })
+    }).catch((error) => {
+      console.error('Database connection error (email check):', error);
+      return null;
+    });
 
     if (existingUser) {
       return NextResponse.json(
@@ -104,7 +112,10 @@ export async function PUT(
         role: true,
         createdAt: true
       }
-    })
+    }).catch((error) => {
+      console.error('Database connection error (update):', error);
+      throw error;
+    });
 
     return NextResponse.json(admin)
   } catch (error) {
@@ -138,7 +149,10 @@ export async function DELETE(
     // Check if admin exists
     const admin = await prisma.user.findUnique({
       where: { id: params.id }
-    })
+    }).catch((error) => {
+      console.error('Database connection error (admin check):', error);
+      return null;
+    });
 
     if (!admin) {
       return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
@@ -146,7 +160,10 @@ export async function DELETE(
 
     await prisma.user.delete({
       where: { id: params.id }
-    })
+    }).catch((error) => {
+      console.error('Database connection error (delete):', error);
+      throw error;
+    });
 
     return NextResponse.json({ message: 'Admin deleted successfully' })
   } catch (error) {

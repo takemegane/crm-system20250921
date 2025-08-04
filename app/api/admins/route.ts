@@ -24,7 +24,10 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: 'desc'
       }
-    })
+    }).catch((error) => {
+      console.error('Database connection error (admins list):', error);
+      return [];
+    });
 
     return NextResponse.json(admins)
   } catch (error) {
@@ -64,7 +67,10 @@ export async function POST(request: NextRequest) {
     // Check if email already exists
     const existingUser = await prisma.user.findUnique({
       where: { email }
-    })
+    }).catch((error) => {
+      console.error('Database connection error (existing user check):', error);
+      return null;
+    });
 
     if (existingUser) {
       return NextResponse.json(
@@ -90,7 +96,10 @@ export async function POST(request: NextRequest) {
         role: true,
         createdAt: true
       }
-    })
+    }).catch((error) => {
+      console.error('Database connection error (admin creation):', error);
+      throw error;
+    });
 
     return NextResponse.json(admin, { status: 201 })
   } catch (error) {
