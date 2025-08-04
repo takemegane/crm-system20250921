@@ -4,8 +4,22 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET() {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
     
     // 認証チェック（管理者と顧客の両方がアクセス可能）
@@ -18,7 +32,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
     
-    const categories = await prisma.category.findMany({
+    const categories = await prisma!.category.findMany({
       where: {
         isActive: true
       },
@@ -46,6 +60,16 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
     
     // 商品管理権限のチェック
@@ -65,7 +89,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 名前の重複チェック
-    const existingCategory = await prisma.category.findUnique({
+    const existingCategory = await prisma!.category.findUnique({
       where: { name: name.trim() }
     })
     
@@ -76,7 +100,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const category = await prisma.category.create({
+    const category = await prisma!.category.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,
