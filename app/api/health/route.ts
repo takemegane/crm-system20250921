@@ -7,7 +7,7 @@ export const runtime = 'nodejs'
 export async function GET() {
   try {
     // 基本的な環境確認
-    const health = {
+    const health: any = {
       status: 'ok',
       timestamp: new Date().toISOString(),
       database_url_exists: !!process.env.DATABASE_URL,
@@ -18,15 +18,15 @@ export async function GET() {
     // データベース接続テスト
     if (prisma) {
       try {
-        await prisma.$connect()
-        const testQuery = await prisma.$queryRaw`SELECT 1 as test`
+        await prisma!.$connect()
+        const testQuery = await prisma!.$queryRaw`SELECT 1 as test`
         health.database_connection = 'ok'
         health.test_query = 'ok'
       } catch (error) {
         health.database_connection = 'error'
         health.database_error = error instanceof Error ? error.message : 'Unknown error'
       } finally {
-        await prisma.$disconnect()
+        await prisma!.$disconnect()
       }
     }
 
