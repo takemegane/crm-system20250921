@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     // Prismaクライアントの接続テスト
     try {
-      await prisma.$connect()
+      await prisma!.$connect()
       console.log('Database connection successful')
     } catch (error) {
       console.error('Database connection failed:', error)
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 既存の管理者をチェック
-    const existingAdmin = await prisma.user.findFirst({
+    const existingAdmin = await prisma!.user.findFirst({
       where: { role: 'OWNER' }
     }).catch((error) => {
       console.error('Database query error:', error)
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     // デフォルト管理者アカウントを作成
     const hashedPassword = await bcrypt.hash('admin123', 12)
     
-    const admin = await prisma.user.create({
+    const admin = await prisma!.user.create({
       data: {
         id: 'admin001',
         email: 'admin@example.com',

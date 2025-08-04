@@ -32,7 +32,7 @@ export async function GET(
     }
 
     // データベース接続のエラーハンドリングを強化
-    const admin = await prisma.user.findUnique({
+    const admin = await prisma!.user.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -82,7 +82,7 @@ export async function PUT(
     }
 
     // Check if email already exists (but not for current user)
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma!.user.findFirst({
       where: {
         email,
         id: { not: params.id }
@@ -116,7 +116,7 @@ export async function PUT(
       updateData.password = await bcrypt.hash(password, 12)
     }
 
-    const admin = await prisma.user.update({
+    const admin = await prisma!.user.update({
       where: { id: params.id },
       data: updateData,
       select: {
@@ -161,7 +161,7 @@ export async function DELETE(
     }
 
     // Check if admin exists
-    const admin = await prisma.user.findUnique({
+    const admin = await prisma!.user.findUnique({
       where: { id: params.id }
     }).catch((error) => {
       console.error('Database connection error (admin check):', error);
@@ -172,7 +172,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
     }
 
-    await prisma.user.delete({
+    await prisma!.user.delete({
       where: { id: params.id }
     }).catch((error) => {
       console.error('Database connection error (delete):', error);

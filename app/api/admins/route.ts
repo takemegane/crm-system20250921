@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - Admin management access required' }, { status: 403 })
     }
 
-    const admins = await prisma.user.findMany({
+    const admins = await prisma!.user.findMany({
       select: {
         id: true,
         name: true,
@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if email already exists
-    const existingUser = await prisma.user.findUnique({
+    const existingUser = await prisma!.user.findUnique({
       where: { email }
     }).catch((error) => {
       console.error('Database connection error (existing user check):', error);
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    const admin = await prisma.user.create({
+    const admin = await prisma!.user.create({
       data: {
         name,
         email,
