@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 
 // 静的生成を無効にして動的ルートとして扱う
 export const dynamic = 'force-dynamic'
@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -92,7 +93,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -123,7 +125,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const product = await prisma!.product.create({
+    const product = await prisma.product.create({
       data: {
         name,
         description,

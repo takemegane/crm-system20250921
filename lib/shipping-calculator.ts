@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 
 export interface CartItem {
   productId: string
@@ -49,6 +49,11 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
     isOverFreeShippingThreshold?: boolean
   }
 }> {
+  const prisma = getPrismaClient()
+  if (!prisma) {
+    throw new Error('Prisma client not initialized')
+  }
+
   // 商品小計計算
   const subtotalAmount = cartItems.reduce((sum, item) => {
     return sum + (item.product.price * item.quantity)
@@ -56,7 +61,7 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
 
   // カートの商品とそのカテゴリを取得
   const productIds = cartItems.map(item => item.productId)
-  const products = await prisma!.product.findMany({
+  const products = await prisma.product.findMany({
     where: { id: { in: productIds } },
     include: {
       category: {
@@ -81,7 +86,7 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
   }
 
   // デフォルト送料設定を取得
-  const defaultShippingRate = await prisma!.shippingRate.findFirst({
+  const defaultShippingRate = await prisma.shippingRate.findFirst({
     where: { categoryId: null }
   })
 

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import bcrypt from 'bcryptjs'
 
@@ -19,7 +19,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -44,7 +45,7 @@ export async function PUT(
     }
 
     // 顧客の存在確認
-    const customer = await prisma!.customer.findUnique({
+    const customer = await prisma.customer.findUnique({
       where: { id: params.id }
     })
 
@@ -59,7 +60,7 @@ export async function PUT(
     const hashedPassword = await bcrypt.hash(newPassword, 12)
 
     // 顧客のパスワードを更新（ECユーザーフラグも有効化）
-    await prisma!.customer.update({
+    await prisma.customer.update({
       where: { id: params.id },
       data: {
         password: hashedPassword,
@@ -68,12 +69,12 @@ export async function PUT(
     })
 
     // 監査ログの記録（セッションユーザーの存在確認）
-    const sessionUser = await prisma!.user.findUnique({
+    const sessionUser = await prisma.user.findUnique({
       where: { email: session.user.email }
     })
     
     if (sessionUser) {
-      await prisma!.auditLog.create({
+      await prisma.auditLog.create({
         data: {
           userId: sessionUser.id,
           action: 'UPDATE',

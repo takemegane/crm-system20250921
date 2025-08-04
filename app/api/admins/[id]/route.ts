@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
@@ -19,7 +19,8 @@ export async function GET(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -32,7 +33,7 @@ export async function GET(
     }
 
     // データベース接続のエラーハンドリングを強化
-    const admin = await prisma!.user.findUnique({
+    const admin = await prisma.user.findUnique({
       where: { id: params.id },
       select: {
         id: true,
@@ -81,8 +82,14 @@ export async function PUT(
       )
     }
 
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     // Check if email already exists (but not for current user)
-    const existingUser = await prisma!.user.findFirst({
+    const existingUser = await prisma.user.findFirst({
       where: {
         email,
         id: { not: params.id }
@@ -116,7 +123,7 @@ export async function PUT(
       updateData.password = await bcrypt.hash(password, 12)
     }
 
-    const admin = await prisma!.user.update({
+    const admin = await prisma.user.update({
       where: { id: params.id },
       data: updateData,
       select: {
@@ -160,8 +167,14 @@ export async function DELETE(
       )
     }
 
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     // Check if admin exists
-    const admin = await prisma!.user.findUnique({
+    const admin = await prisma.user.findUnique({
       where: { id: params.id }
     }).catch((error) => {
       console.error('Database connection error (admin check):', error);
@@ -172,7 +185,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Admin not found' }, { status: 404 })
     }
 
-    await prisma!.user.delete({
+    await prisma.user.delete({
       where: { id: params.id }
     }).catch((error) => {
       console.error('Database connection error (delete):', error);

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { logCustomerTagUpdate } from '@/lib/audit'
 
@@ -19,7 +19,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -32,13 +33,13 @@ export async function DELETE(
     }
 
     // Get tags before deletion for audit log
-    const oldTags = await prisma!.customerTag.findMany({
+    const oldTags = await prisma.customerTag.findMany({
       where: { customerId: params.id },
       include: { tag: true }
     })
 
     // Find and delete the customer-tag association
-    const customerTag = await prisma!.customerTag.findFirst({
+    const customerTag = await prisma.customerTag.findFirst({
       where: {
         customerId: params.id,
         tagId: params.tagId
@@ -52,12 +53,12 @@ export async function DELETE(
       )
     }
 
-    await prisma!.customerTag.delete({
+    await prisma.customerTag.delete({
       where: { id: customerTag.id }
     })
 
     // Get tags after deletion for audit log
-    const newTags = await prisma!.customerTag.findMany({
+    const newTags = await prisma.customerTag.findMany({
       where: { customerId: params.id },
       include: { tag: true }
     })

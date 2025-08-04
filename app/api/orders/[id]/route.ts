@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { 
   unauthorizedResponse, 
@@ -21,6 +21,12 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -40,7 +46,7 @@ export async function GET(
       where.customerId = session.user.id
     }
     
-    const order = await prisma!.order.findFirst({
+    const order = await prisma.order.findFirst({
       where,
       select: {
         id: true,
@@ -103,6 +109,12 @@ export async function PUT(
   })
   
   try {
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
     console.log('🔐 Session info:', session ? { userType: session.user?.userType, id: session.user?.id } : 'null')
     
@@ -118,7 +130,7 @@ export async function PUT(
     // 顧客のキャンセルアクション
     if (action === 'cancel' && session.user?.userType === 'customer') {
       // 注文を取得し、キャンセル可能かチェック
-      const order = await prisma!.order.findUnique({
+      const order = await prisma.order.findUnique({
         where: { id: params.id },
         include: {
           customer: true,
@@ -150,7 +162,7 @@ export async function PUT(
       }
 
       // トランザクションでキャンセル処理
-      const cancelledOrder = await prisma!.$transaction(async (tx) => {
+      const cancelledOrder = await prisma.$transaction(async (tx) => {
         // 注文をキャンセル
         const updatedOrder = await tx.order.update({
           where: { id: params.id },
@@ -195,7 +207,7 @@ export async function PUT(
     }
 
     // 注文を取得して存在確認
-    const order = await prisma!.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id: params.id }
     })
 
@@ -215,7 +227,7 @@ export async function PUT(
       updateData.cancelReason = '管理者による注文キャンセル'
     }
 
-    const updatedOrder = await prisma!.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id: params.id },
       data: updateData,
       select: {
@@ -276,6 +288,12 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
   
   // PUTメソッドと同じキャンセル処理を実行
   try {
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
     console.log('🔐 DELETE Session info:', session ? { userType: session.user?.userType, id: session.user?.id } : 'null')
     
@@ -287,7 +305,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     // 顧客のキャンセルアクション（DELETEメソッド用）
     if (session.user?.userType === 'customer') {
       // 注文を取得し、キャンセル可能かチェック
-      const order = await prisma!.order.findUnique({
+      const order = await prisma.order.findUnique({
         where: { id: params.id },
         include: {
           customer: true,
@@ -319,7 +337,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       }
 
       // トランザクションでキャンセル処理
-      const cancelledOrder = await prisma!.$transaction(async (tx) => {
+      const cancelledOrder = await prisma.$transaction(async (tx) => {
         // 注文をキャンセル
         const updatedOrder = await tx.order.update({
           where: { id: params.id },

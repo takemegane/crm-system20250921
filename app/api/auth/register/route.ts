@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 // 静的生成を無効にして動的ルートとして扱う
@@ -13,7 +13,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -56,10 +57,10 @@ export async function POST(request: NextRequest) {
 
     // メールアドレスの重複確認（管理者ユーザーとも重複チェック）
     const [existingCustomer, existingUser] = await Promise.all([
-      prisma!.customer.findUnique({
+      prisma.customer.findUnique({
         where: { email }
       }).catch(() => null),
-      prisma!.user.findUnique({
+      prisma.user.findUnique({
         where: { email }
       }).catch(() => null)
     ])
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12)
     
     // 顧客アカウント作成
-    const customer = await prisma!.customer.create({
+    const customer = await prisma.customer.create({
       data: {
         name,
         nameKana,

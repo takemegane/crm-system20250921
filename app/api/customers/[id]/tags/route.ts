@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { logCustomerTagUpdate } from '@/lib/audit'
 
@@ -19,7 +19,8 @@ export async function POST(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -42,7 +43,7 @@ export async function POST(
     }
 
     // Check if customer exists
-    const customer = await prisma!.customer.findUnique({
+    const customer = await prisma.customer.findUnique({
       where: { id: params.id }
     })
 
@@ -51,7 +52,7 @@ export async function POST(
     }
 
     // Check if tag exists
-    const tag = await prisma!.tag.findUnique({
+    const tag = await prisma.tag.findUnique({
       where: { id: tagId }
     })
 
@@ -60,7 +61,7 @@ export async function POST(
     }
 
     // Check if association already exists
-    const existingAssociation = await prisma!.customerTag.findFirst({
+    const existingAssociation = await prisma.customerTag.findFirst({
       where: {
         customerId: params.id,
         tagId: tagId
@@ -75,20 +76,20 @@ export async function POST(
     }
 
     // Get tags before and after for audit log
-    const oldTags = await prisma!.customerTag.findMany({
+    const oldTags = await prisma.customerTag.findMany({
       where: { customerId: params.id },
       include: { tag: true }
     })
 
     // Create association
-    const customerTag = await prisma!.customerTag.create({
+    const customerTag = await prisma.customerTag.create({
       data: {
         customerId: params.id,
         tagId: tagId
       }
     })
 
-    const newTags = await prisma!.customerTag.findMany({
+    const newTags = await prisma.customerTag.findMany({
       where: { customerId: params.id },
       include: { tag: true }
     })

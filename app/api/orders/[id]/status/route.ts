@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { 
   forbiddenResponse, 
@@ -25,7 +25,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -52,7 +53,7 @@ export async function PUT(
     }
 
     // 注文を取得
-    const order = await prisma!.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id: orderId }
     })
 
@@ -72,7 +73,7 @@ export async function PUT(
       updateData.cancelReason = '管理者による注文キャンセル'
     }
 
-    const updatedOrder = await prisma!.order.update({
+    const updatedOrder = await prisma.order.update({
       where: { id: orderId },
       data: updateData
     })

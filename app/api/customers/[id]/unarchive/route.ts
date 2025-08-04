@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
 // 静的生成を無効にして動的ルートとして扱う
@@ -18,7 +18,8 @@ export async function POST(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -34,7 +35,7 @@ export async function POST(
     const customerId = params.id
 
     // Check if customer exists
-    const customer = await prisma!.customer.findUnique({
+    const customer = await prisma.customer.findUnique({
       where: { id: customerId }
     })
 
@@ -48,7 +49,7 @@ export async function POST(
     }
 
     // Restore customer
-    const restoredCustomer = await prisma!.customer.update({
+    const restoredCustomer = await prisma.customer.update({
       where: { id: customerId },
       data: {
         isArchived: false,
@@ -57,7 +58,7 @@ export async function POST(
     })
 
     // Create audit log
-    await prisma!.auditLog.create({
+    await prisma.auditLog.create({
       data: {
         userId: session.user.id,
         action: 'RESTORE',

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
@@ -16,7 +16,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -27,7 +28,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized - Admin management access required' }, { status: 403 })
     }
 
-    const admins = await prisma!.user.findMany({
+    const admins = await prisma.user.findMany({
       select: {
         id: true,
         name: true,
@@ -78,8 +79,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     // Check if email already exists
-    const existingUser = await prisma!.user.findUnique({
+    const existingUser = await prisma.user.findUnique({
       where: { email }
     }).catch((error) => {
       console.error('Database connection error (existing user check):', error);
@@ -96,7 +103,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    const admin = await prisma!.user.create({
+    const admin = await prisma.user.create({
       data: {
         name,
         email,

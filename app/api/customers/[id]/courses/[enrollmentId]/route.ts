@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { logCustomerCourseUpdate } from '@/lib/audit'
 
@@ -19,7 +19,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -32,7 +33,7 @@ export async function DELETE(
     }
 
     // Find and verify the enrollment belongs to the customer
-    const enrollment = await prisma!.enrollment.findFirst({
+    const enrollment = await prisma.enrollment.findFirst({
       where: {
         id: params.enrollmentId,
         customerId: params.id
@@ -48,17 +49,17 @@ export async function DELETE(
     }
 
     // Get courses before deletion for audit log
-    const oldEnrollments = await prisma!.enrollment.findMany({
+    const oldEnrollments = await prisma.enrollment.findMany({
       where: { customerId: params.id },
       include: { course: true }
     })
 
-    await prisma!.enrollment.delete({
+    await prisma.enrollment.delete({
       where: { id: params.enrollmentId }
     })
 
     // Get courses after deletion for audit log
-    const newEnrollments = await prisma!.enrollment.findMany({
+    const newEnrollments = await prisma.enrollment.findMany({
       where: { customerId: params.id },
       include: { course: true }
     })

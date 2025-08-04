@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import nodemailer from 'nodemailer'
 
@@ -16,7 +16,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get email settings
-    const settings = await prisma!.emailSettings.findFirst()
+    const settings = await prisma.emailSettings.findFirst()
 
     if (!settings || !settings.isActive) {
       return NextResponse.json(

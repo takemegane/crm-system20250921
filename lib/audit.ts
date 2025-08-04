@@ -1,4 +1,4 @@
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { NextRequest } from 'next/server'
 
 export type AuditAction = 'LOGIN' | 'LOGOUT' | 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW' | 'SEND_EMAIL'
@@ -23,6 +23,12 @@ export async function createAuditLog({
   request
 }: AuditLogData) {
   try {
+    const prisma = getPrismaClient()
+    if (!prisma) {
+      console.error('Prisma client not initialized for audit log')
+      return
+    }
+
     const ipAddress = request?.headers.get('x-forwarded-for') || 
                      request?.headers.get('x-real-ip') || 
                      request?.ip || 
@@ -30,7 +36,7 @@ export async function createAuditLog({
     
     const userAgent = request?.headers.get('user-agent') || 'unknown'
 
-    await prisma!.auditLog.create({
+    await prisma.auditLog.create({
       data: {
         userId,
         action,

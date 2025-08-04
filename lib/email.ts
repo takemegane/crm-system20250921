@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 
 export interface EmailOptions {
   to: string
@@ -12,8 +12,13 @@ export interface EmailOptions {
 
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
+    const prisma = getPrismaClient()
+    if (!prisma) {
+      throw new Error('Prisma client not initialized')
+    }
+
     // Get email settings
-    const settings = await prisma!.emailSettings.findFirst()
+    const settings = await prisma.emailSettings.findFirst()
 
     if (!settings || !settings.isActive) {
       throw new Error('メール送信が無効になっています')
@@ -52,7 +57,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     })
 
     // Log successful send
-    await prisma!.emailLog.create({
+    await prisma.emailLog.create({
       data: {
         templateId: options.templateId,
         customerId: options.customerId,
@@ -72,18 +77,21 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
     // Log failed send
     try {
-      await prisma!.emailLog.create({
-        data: {
-          templateId: options.templateId,
-          customerId: options.customerId,
-          subject: options.subject,
-          content: options.html,
-          recipientEmail: options.to,
-          recipientName: options.toName,
-          status: 'FAILED',
-          errorMessage: error instanceof Error ? error.message : 'Unknown error',
-        }
-      })
+      const logPrisma = getPrismaClient()
+      if (logPrisma) {
+        await logPrisma.emailLog.create({
+          data: {
+            templateId: options.templateId,
+            customerId: options.customerId,
+            subject: options.subject,
+            content: options.html,
+            recipientEmail: options.to,
+            recipientName: options.toName,
+            status: 'FAILED',
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+          }
+        })
+      }
     } catch (logError) {
       console.error('Failed to log email error:', logError)
     }

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 
 // 静的生成を無効にして動的ルートとして扱う
 export const dynamic = 'force-dynamic'
@@ -15,7 +15,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json(
         { error: 'Prismaクライアントが初期化されていません' },
@@ -29,7 +30,7 @@ export async function POST(request: NextRequest) {
 
     // データベース接続テスト
     try {
-      await prisma!.$connect()
+      await prisma.$connect()
       console.log('Database connection successful')
     } catch (error) {
       console.error('Database connection failed:', error)
@@ -42,11 +43,11 @@ export async function POST(request: NextRequest) {
     // テーブル存在確認とスキーマ同期
     try {
       // 簡単なクエリでテーブル存在を確認
-      await prisma!.$queryRaw`SELECT 1`
+      await prisma.$queryRaw`SELECT 1`
       console.log('Database query test successful')
 
       // テーブル作成 (CREATE TABLE IF NOT EXISTS相当)
-      await prisma!.$executeRaw`
+      await prisma.$executeRaw`
         CREATE TABLE IF NOT EXISTS "User" (
           id TEXT PRIMARY KEY,
           email TEXT UNIQUE NOT NULL,
@@ -58,7 +59,7 @@ export async function POST(request: NextRequest) {
         )
       `
 
-      await prisma!.$executeRaw`
+      await prisma.$executeRaw`
         CREATE TABLE IF NOT EXISTS "Customer" (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
@@ -101,6 +102,9 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma!.$disconnect()
+    const prisma = getPrismaClient()
+    if (prisma) {
+      await prisma.$disconnect()
+    }
   }
 }

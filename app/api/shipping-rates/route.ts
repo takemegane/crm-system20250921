@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
 // 静的生成を無効にして動的ルートとして扱う
@@ -15,7 +15,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -27,7 +28,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
     
-    const shippingRates = await prisma!.shippingRate.findMany({
+    const shippingRates = await prisma.shippingRate.findMany({
       include: {
         category: true
       },
@@ -53,7 +54,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -85,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     // カテゴリが指定されている場合、カテゴリの存在確認
     if (categoryId) {
-      const category = await prisma!.category.findUnique({
+      const category = await prisma.category.findUnique({
         where: { id: categoryId }
       })
       
@@ -99,7 +101,7 @@ export async function POST(request: NextRequest) {
     
     // カテゴリ別送料の重複チェック（デフォルト送料は除外）
     if (categoryId) {
-      const existingRate = await prisma!.shippingRate.findUnique({
+      const existingRate = await prisma.shippingRate.findUnique({
         where: { categoryId: categoryId }
       })
       
@@ -111,7 +113,7 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    const shippingRate = await prisma!.shippingRate.create({
+    const shippingRate = await prisma.shippingRate.create({
       data: {
         categoryId: categoryId || null,
         shippingFee: parseFloat(shippingFee),

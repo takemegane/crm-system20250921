@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
 // 静的生成を無効にして動的ルートとして扱う
@@ -28,7 +28,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -166,7 +167,7 @@ export async function POST(request: NextRequest) {
     for (const row of rows) {
       try {
         // 既存の顧客をチェック
-        const existingCustomer = await prisma!.customer.findUnique({
+        const existingCustomer = await prisma.customer.findUnique({
           where: { email: row.email },
         })
 
@@ -183,7 +184,7 @@ export async function POST(request: NextRequest) {
         // コースIDを取得
         const courseIds: string[] = []
         if (courseNames.length > 0) {
-          const courses = await prisma!.course.findMany({
+          const courses = await prisma.course.findMany({
             where: {
               name: { in: courseNames },
               isActive: true
@@ -195,14 +196,14 @@ export async function POST(request: NextRequest) {
         // タグIDを取得
         const tagIds: string[] = []
         if (tagNames.length > 0) {
-          const tags = await prisma!.tag.findMany({
+          const tags = await prisma.tag.findMany({
             where: { name: { in: tagNames } }
           })
           tagIds.push(...tags.map(t => t.id))
         }
 
         // 顧客を作成（フリガナ、生年月日、性別を追加）
-        const customer = await prisma!.customer.create({
+        const customer = await prisma.customer.create({
           data: {
             name: row.name,
             nameKana: row.nameKana,
@@ -217,7 +218,7 @@ export async function POST(request: NextRequest) {
 
         // コースの登録
         if (courseIds.length > 0) {
-          await prisma!.enrollment.createMany({
+          await prisma.enrollment.createMany({
             data: courseIds.map(courseId => ({
               customerId: customer.id,
               courseId,
@@ -229,7 +230,7 @@ export async function POST(request: NextRequest) {
 
         // タグの付与
         if (tagIds.length > 0) {
-          await prisma!.customerTag.createMany({
+          await prisma.customerTag.createMany({
             data: tagIds.map(tagId => ({
               customerId: customer.id,
               tagId

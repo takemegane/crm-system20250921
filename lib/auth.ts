@@ -1,6 +1,6 @@
 import { NextAuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { prisma } from './db'
+import { getPrismaClient } from './db'
 import bcrypt from 'bcryptjs'
 import { logLogin } from './audit'
 
@@ -27,8 +27,14 @@ export const authOptions: NextAuthOptions = {
             return null
           }
 
+          const prisma = getPrismaClient()
+          if (!prisma) {
+            console.error('Prisma client not initialized in auth')
+            return null
+          }
+
           // まず管理者ユーザーを確認
-          const user = await prisma!.user.findUnique({
+          const user = await prisma.user.findUnique({
             where: {
               email: credentials.email
             }
@@ -61,7 +67,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // 管理者が見つからない場合、顧客ユーザーを確認
-          const customer = await prisma!.customer.findUnique({
+          const customer = await prisma.customer.findUnique({
             where: {
               email: credentials.email,
               isECUser: true // ECユーザーのみログイン可能

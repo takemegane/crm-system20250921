@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { 
   unauthorizedResponse, 
   forbiddenResponse, 
@@ -25,7 +25,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -40,7 +41,7 @@ export async function PUT(
     const orderId = params.id
 
     // 注文を取得し、キャンセル可能かチェック
-    const order = await prisma!.order.findUnique({
+    const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
         customer: true,
@@ -72,7 +73,7 @@ export async function PUT(
     }
 
     // トランザクションでキャンセル処理
-    const cancelledOrder = await prisma!.$transaction(async (tx) => {
+    const cancelledOrder = await prisma.$transaction(async (tx) => {
       // 注文をキャンセル
       const updatedOrder = await tx.order.update({
         where: { id: orderId },

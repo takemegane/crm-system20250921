@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { calculateShipping } from '@/lib/shipping-calculator'
 import { 
@@ -24,7 +24,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -138,7 +139,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -164,7 +166,7 @@ export async function POST(request: NextRequest) {
     }
     
     // カートアイテムを取得
-    const cartItems = await prisma!.cartItem.findMany({
+    const cartItems = await prisma.cartItem.findMany({
       where: {
         customerId: session.user.id
       },
@@ -196,7 +198,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
     
     // トランザクションで注文作成と在庫更新
-    const order = await prisma!.$transaction(async (tx) => {
+    const order = await prisma.$transaction(async (tx) => {
       // 注文作成
       const newOrder = await tx.order.create({
         data: {
@@ -248,7 +250,7 @@ export async function POST(request: NextRequest) {
     })
     
     // 作成された注文を詳細情報付きで取得
-    const orderWithDetails = await prisma!.order.findUnique({
+    const orderWithDetails = await prisma.order.findUnique({
       where: { id: order.id },
       include: {
         orderItems: {

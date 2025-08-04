@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
 // 静的生成を無効にして動的ルートとして扱う
@@ -15,7 +15,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -32,7 +33,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
     
-    const categories = await prisma!.category.findMany({
+    const categories = await prisma.category.findMany({
       where: {
         isActive: true
       },
@@ -65,7 +66,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -89,7 +91,7 @@ export async function POST(request: NextRequest) {
     }
     
     // 名前の重複チェック
-    const existingCategory = await prisma!.category.findUnique({
+    const existingCategory = await prisma.category.findUnique({
       where: { name: name.trim() }
     })
     
@@ -100,7 +102,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const category = await prisma!.category.create({
+    const category = await prisma.category.create({
       data: {
         name: name.trim(),
         description: description?.trim() || null,

@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 // 静的生成を無効にして動的ルートとして扱う
@@ -10,11 +10,6 @@ export async function POST(request: NextRequest) {
   console.log('=== Setup Admin API called ===')
   
   try {
-    // 基本的な情報をログ出力
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
-    console.log('DATABASE_URL preview:', process.env.DATABASE_URL?.substring(0, 50) + '...')
-    console.log('Prisma client exists:', !!prisma)
-
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
       console.log('ERROR: DATABASE_URL not found')
@@ -24,7 +19,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       console.log('ERROR: Prisma client not initialized')
       return NextResponse.json(
@@ -39,11 +35,11 @@ export async function POST(request: NextRequest) {
     console.log('Testing basic database connection...')
     try {
       // 基本的な接続テスト
-      await prisma!.$connect()
+      await prisma.$connect()
       console.log('✅ Database connection successful')
       
       // シンプルなクエリテスト
-      const testQuery = await prisma!.$queryRaw`SELECT 1 as test`
+      const testQuery = await prisma.$queryRaw`SELECT 1 as test`
       console.log('✅ Basic query successful:', testQuery)
     } catch (error) {
       console.error('❌ Database connection or query failed:', error)
@@ -60,7 +56,7 @@ export async function POST(request: NextRequest) {
     console.log('Checking if User table exists...')
     let userTableExists = false
     try {
-      await prisma!.$queryRaw`SELECT 1 FROM "User" LIMIT 1`
+      await prisma.$queryRaw`SELECT 1 FROM "User" LIMIT 1`
       userTableExists = true
       console.log('✅ User table exists')
     } catch (error) {
@@ -72,7 +68,7 @@ export async function POST(request: NextRequest) {
     if (!userTableExists) {
       console.log('Creating User table...')
       try {
-        await prisma!.$executeRaw`
+        await prisma.$executeRaw`
           CREATE TABLE IF NOT EXISTS "User" (
             id TEXT PRIMARY KEY,
             email TEXT UNIQUE NOT NULL,
@@ -97,7 +93,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 既存の管理者をチェック
-    const existingAdmin = await prisma!.user.findFirst({
+    const existingAdmin = await prisma.user.findFirst({
       where: { role: 'OWNER' }
     }).catch((error) => {
       console.error('Database query error:', error)
@@ -114,7 +110,7 @@ export async function POST(request: NextRequest) {
     // デフォルト管理者アカウントを作成
     const hashedPassword = await bcrypt.hash('admin123', 12)
     
-    const admin = await prisma!.user.create({
+    const admin = await prisma.user.create({
       data: {
         id: 'admin001',
         email: 'admin@example.com',
@@ -162,8 +158,11 @@ export async function POST(request: NextRequest) {
   } finally {
     // 確実にデータベース接続を切断
     try {
-      await prisma!.$disconnect()
-      console.log('Database disconnected')
+      const prisma = getPrismaClient()
+      if (prisma) {
+        await prisma.$disconnect()
+        console.log('Database disconnected')
+      }
     } catch (disconnectError) {
       console.error('Disconnect error:', disconnectError)
     }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 
 // 静的生成を無効にして動的ルートとして扱う
 export const dynamic = 'force-dynamic'
@@ -17,7 +17,8 @@ export async function PUT(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -41,7 +42,7 @@ export async function PUT(
     }
     
     // カートアイテムの存在確認（自分のアイテムのみ）
-    const cartItem = await prisma!.cartItem.findFirst({
+    const cartItem = await prisma.cartItem.findFirst({
       where: {
         id: params.id,
         customerId: session.user.id
@@ -71,7 +72,7 @@ export async function PUT(
       )
     }
     
-    const updatedItem = await prisma!.cartItem.update({
+    const updatedItem = await prisma.cartItem.update({
       where: { id: params.id },
       data: { quantity: parseInt(quantity) },
       include: {
@@ -108,7 +109,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -121,7 +123,7 @@ export async function DELETE(
     }
     
     // カートアイテムの存在確認（自分のアイテムのみ）
-    const cartItem = await prisma!.cartItem.findFirst({
+    const cartItem = await prisma.cartItem.findFirst({
       where: {
         id: params.id,
         customerId: session.user.id
@@ -132,7 +134,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Cart item not found' }, { status: 404 })
     }
     
-    await prisma!.cartItem.delete({
+    await prisma.cartItem.delete({
       where: { id: params.id }
     })
     

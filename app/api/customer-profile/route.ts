@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/db'
+import { getPrismaClient } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
 // 静的生成を無効にして動的ルートとして扱う
@@ -15,7 +15,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -28,7 +29,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Customer access required' }, { status: 403 })
     }
     
-    const customer = await prisma!.customer.findUnique({
+    const customer = await prisma.customer.findUnique({
       where: {
         id: session.user.id
       },
@@ -66,7 +67,8 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
-    // Prismaクライアントの存在確認
+    // Prismaクライアントの動的初期化
+    const prisma = getPrismaClient()
     if (!prisma) {
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
@@ -91,7 +93,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // 現在の顧客情報を取得
-    const currentCustomer = await prisma!.customer.findUnique({
+    const currentCustomer = await prisma.customer.findUnique({
       where: { id: session.user.id }
     })
 
@@ -137,7 +139,7 @@ export async function PUT(request: NextRequest) {
 
     // メールアドレスの重複チェック（他の顧客との重複）
     if (email !== currentCustomer.email) {
-      const existingCustomer = await prisma!.customer.findFirst({
+      const existingCustomer = await prisma.customer.findFirst({
         where: {
           email,
           id: { not: session.user.id }
@@ -153,7 +155,7 @@ export async function PUT(request: NextRequest) {
     }
 
     try {
-      const updatedCustomer = await prisma!.customer.update({
+      const updatedCustomer = await prisma.customer.update({
         where: {
           id: session.user.id
         },
