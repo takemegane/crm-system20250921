@@ -4,8 +4,22 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
 
     // ADMIN and OWNER can access audit logs
@@ -50,7 +64,7 @@ export async function GET(request: NextRequest) {
     }
 
     const [auditLogs, total] = await Promise.all([
-      prisma.auditLog.findMany({
+      prisma!.auditLog.findMany({
         where,
         include: {
           user: {
@@ -68,7 +82,7 @@ export async function GET(request: NextRequest) {
         skip,
         take: limit
       }),
-      prisma.auditLog.count({ where })
+      prisma!.auditLog.count({ where })
     ])
 
     // 顧客名を取得するため、CUSTOMERエンティティのログについて顧客情報を追加
@@ -76,7 +90,7 @@ export async function GET(request: NextRequest) {
       auditLogs.map(async (log) => {
         if (log.entity === 'CUSTOMER' && log.entityId) {
           try {
-            const customer = await prisma.customer.findUnique({
+            const customer = await prisma!.customer.findUnique({
               where: { id: log.entityId },
               select: { name: true }
             })
