@@ -39,6 +39,37 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // データベーススキーマの確認
+    try {
+      // より簡単なテーブル存在確認
+      await prisma!.$queryRaw`SELECT 1 FROM "User" LIMIT 1`
+      console.log('User table exists')
+    } catch (error) {
+      console.error('User table does not exist:', error)
+      // テーブルが存在しない場合でも処理を続行
+      console.log('Attempting to create User table...')
+      try {
+        await prisma!.$executeRaw`
+          CREATE TABLE IF NOT EXISTS "User" (
+            id TEXT PRIMARY KEY,
+            email TEXT UNIQUE NOT NULL,
+            name TEXT NOT NULL,
+            password TEXT NOT NULL,
+            role TEXT DEFAULT 'ADMIN',
+            "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          )
+        `
+        console.log('User table created successfully')
+      } catch (createError) {
+        console.error('Failed to create User table:', createError)
+        return NextResponse.json(
+          { error: 'ユーザーテーブルの作成に失敗しました。' },
+          { status: 503 }
+        )
+      }
+    }
+
     // 既存の管理者をチェック
     const existingAdmin = await prisma!.user.findFirst({
       where: { role: 'OWNER' }

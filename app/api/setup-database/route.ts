@@ -15,7 +15,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json(
+        { error: 'Prismaクライアントが初期化されていません' },
+        { status: 503 }
+      )
+    }
+
     console.log('Starting database setup...')
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
+    console.log('Prisma client initialized:', !!prisma)
 
     // データベース接続テスト
     try {
