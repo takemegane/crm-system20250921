@@ -32,6 +32,13 @@ function createPrismaClient() {
         db: {
           url: databaseUrl
         }
+      },
+      // Vercel Edge Runtime 対応設定
+      __internal: {
+        engine: {
+          binaryPath: undefined,
+          allowTriggerPanic: false,
+        },
       }
     })
 
