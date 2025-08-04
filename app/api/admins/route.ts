@@ -12,8 +12,13 @@ export const runtime = 'nodejs'
 export async function GET(request: NextRequest) {
   try {
     // ビルド時の実行を防ぐ
-    if (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL) {
+    if (!process.env.DATABASE_URL) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
 
     const session = await getServerSession(authOptions).catch(() => null)
