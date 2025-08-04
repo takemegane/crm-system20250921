@@ -125,7 +125,7 @@ export default function SetupPage() {
 
               <Button
                 onClick={handleCompleteSetup}
-                disabled={completeSetupLoading || !result.includes('✅')}
+                disabled={completeSetupLoading || (!result.includes('✅') && !result.includes('既に存在します'))}
                 variant="secondary"
                 className="w-full"
               >
