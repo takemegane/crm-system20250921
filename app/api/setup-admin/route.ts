@@ -7,9 +7,17 @@ export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
+  console.log('=== Setup Admin API called ===')
+  
   try {
+    // 基本的な情報をログ出力
+    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
+    console.log('DATABASE_URL preview:', process.env.DATABASE_URL?.substring(0, 50) + '...')
+    console.log('Prisma client exists:', !!prisma)
+
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
+      console.log('ERROR: DATABASE_URL not found')
       return NextResponse.json(
         { error: 'DATABASE_URL環境変数が設定されていません' },
         { status: 503 }
@@ -18,36 +26,51 @@ export async function POST(request: NextRequest) {
 
     // Prismaクライアントの存在確認
     if (!prisma) {
+      console.log('ERROR: Prisma client not initialized')
       return NextResponse.json(
         { error: 'Prismaクライアントが初期化されていません' },
         { status: 503 }
       )
     }
 
-    console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL)
-    console.log('Prisma client initialized:', !!prisma)
+    console.log('Starting database operations...')
 
-    // Prismaクライアントの接続テスト
+    // 最初に簡単なテストを実行
+    console.log('Testing basic database connection...')
     try {
+      // 基本的な接続テスト
       await prisma!.$connect()
-      console.log('Database connection successful')
+      console.log('✅ Database connection successful')
+      
+      // シンプルなクエリテスト
+      const testQuery = await prisma!.$queryRaw`SELECT 1 as test`
+      console.log('✅ Basic query successful:', testQuery)
     } catch (error) {
-      console.error('Database connection failed:', error)
+      console.error('❌ Database connection or query failed:', error)
       return NextResponse.json(
-        { error: `データベース接続エラー: ${error instanceof Error ? error.message : 'Unknown error'}` },
+        { 
+          error: `データベース接続エラー: ${error instanceof Error ? error.message : 'Unknown error'}`,
+          details: 'Basic connection test failed'
+        },
         { status: 503 }
       )
     }
 
-    // データベーススキーマの確認
+    // ユーザーテーブルの存在確認（簡易版）
+    console.log('Checking if User table exists...')
+    let userTableExists = false
     try {
-      // より簡単なテーブル存在確認
       await prisma!.$queryRaw`SELECT 1 FROM "User" LIMIT 1`
-      console.log('User table exists')
+      userTableExists = true
+      console.log('✅ User table exists')
     } catch (error) {
-      console.error('User table does not exist:', error)
-      // テーブルが存在しない場合でも処理を続行
-      console.log('Attempting to create User table...')
+      console.log('⚠️ User table does not exist, will create it')
+      userTableExists = false
+    }
+
+    // テーブルが存在しない場合は作成
+    if (!userTableExists) {
+      console.log('Creating User table...')
       try {
         await prisma!.$executeRaw`
           CREATE TABLE IF NOT EXISTS "User" (
@@ -55,17 +78,20 @@ export async function POST(request: NextRequest) {
             email TEXT UNIQUE NOT NULL,
             name TEXT NOT NULL,
             password TEXT NOT NULL,
-            role TEXT DEFAULT 'ADMIN',
+            role TEXT DEFAULT 'OWNER',
             "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
           )
         `
-        console.log('User table created successfully')
+        console.log('✅ User table created successfully')
       } catch (createError) {
-        console.error('Failed to create User table:', createError)
+        console.error('❌ Failed to create User table:', createError)
         return NextResponse.json(
-          { error: 'ユーザーテーブルの作成に失敗しました。' },
-          { status: 503 }
+          { 
+            error: `ユーザーテーブルの作成に失敗: ${createError instanceof Error ? createError.message : 'Unknown error'}`,
+            details: 'Table creation failed'
+          },
+          { status: 500 }
         )
       }
     }
@@ -114,10 +140,32 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error) {
-    console.error('Error creating admin account:', error)
+    console.error('❌ Critical error in setup-admin:', error)
+    
+    // 確実にJSONレスポンスを返す
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    console.error('Error details:', errorMessage)
+    
     return NextResponse.json(
-      { error: 'アカウントの作成に失敗しました: ' + (error instanceof Error ? error.message : 'Unknown error') },
-      { status: 500 }
+      { 
+        error: 'アカウントの作成に失敗しました',
+        details: errorMessage,
+        timestamp: new Date().toISOString()
+      },
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
     )
+  } finally {
+    // 確実にデータベース接続を切断
+    try {
+      await prisma!.$disconnect()
+      console.log('Database disconnected')
+    } catch (disconnectError) {
+      console.error('Disconnect error:', disconnectError)
+    }
   }
 }
