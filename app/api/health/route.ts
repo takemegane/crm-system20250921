@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/db'
+import { prisma, isPrismaInitialized } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -11,9 +11,12 @@ export async function GET() {
       status: 'ok',
       timestamp: new Date().toISOString(),
       database_url_exists: !!process.env.DATABASE_URL,
-      prisma_initialized: !!prisma,
+      prisma_initialized: isPrismaInitialized(),
       environment: process.env.NODE_ENV || 'unknown'
     }
+    
+    console.log('Health check - Prisma initialized:', isPrismaInitialized())
+    console.log('Health check - Prisma instance:', !!prisma)
 
     // データベース接続テスト
     if (prisma) {

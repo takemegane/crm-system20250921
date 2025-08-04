@@ -1,33 +1,35 @@
 import { PrismaClient } from '@prisma/client'
 
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
+// Vercel サーバーレス環境用のPrismaクライアント管理
+let prismaInstance: PrismaClient | null = null
 
-// ビルド時安全なPrismaクライアント初期化
-function createPrismaClient() {
+// 遅延初期化関数
+function getPrismaClient(): PrismaClient | null {
+  // クライアントサイドでは何もしない
+  if (typeof window !== 'undefined') {
+    return null
+  }
+
+  // 既存のインスタンスがあれば返す
+  if (prismaInstance) {
+    return prismaInstance
+  }
+
   try {
-    // クライアントサイドでは何もしない
-    if (typeof window !== 'undefined') {
-      console.warn('Prisma client cannot be initialized on client side')
-      return null
-    }
-    
     const databaseUrl = process.env.DATABASE_URL
-    console.log('=== Prisma Client Initialization ===')
+    console.log('=== Prisma Lazy Initialization ===')
     console.log('DATABASE_URL exists:', !!databaseUrl)
-    console.log('NODE_ENV:', process.env.NODE_ENV)
-    console.log('typeof window:', typeof window)
+    console.log('Environment:', process.env.NODE_ENV)
     
     if (!databaseUrl) {
-      console.error('DATABASE_URL not found, cannot initialize Prisma client')
+      console.error('DATABASE_URL not found')
       return null
     }
 
-    console.log('Creating Prisma client with URL:', databaseUrl.substring(0, 50) + '...')
+    console.log('Creating new Prisma client instance...')
     
-    const client = new PrismaClient({
-      log: ['error', 'warn'],
+    prismaInstance = new PrismaClient({
+      log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
       datasources: {
         db: {
           url: databaseUrl
@@ -36,27 +38,17 @@ function createPrismaClient() {
     })
 
     console.log('✅ Prisma client created successfully')
-    return client
+    return prismaInstance
   } catch (error) {
     console.error('❌ Failed to create Prisma client:', error)
-    console.error('Error details:', {
-      name: error instanceof Error ? error.name : 'Unknown',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : 'No stack trace'
-    })
     return null
   }
 }
 
-// Prismaクライアントの初期化とキャッシュ
-console.log('=== Prisma Export Initialization ===')
-export const prisma = globalForPrisma.prisma ?? createPrismaClient()
+// エクスポートは関数として提供
+export const prisma = getPrismaClient()
 
-if (prisma) {
-  globalForPrisma.prisma = prisma
-  console.log('✅ Prisma client exported and cached globally')
-  console.log('Prisma client type:', typeof prisma)
-} else {
-  console.error('❌ Prisma client is null - initialization failed')
-  console.log('globalForPrisma.prisma:', globalForPrisma.prisma)
+// ヘルスチェック用の初期化確認関数
+export function isPrismaInitialized(): boolean {
+  return prisma !== null
 }
