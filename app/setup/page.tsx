@@ -8,6 +8,8 @@ export default function SetupPage() {
   const [result, setResult] = useState<string>('')
   const [dbSetupLoading, setDbSetupLoading] = useState(false)
   const [dbSetupResult, setDbSetupResult] = useState<string>('')
+  const [completeSetupLoading, setCompleteSetupLoading] = useState(false)
+  const [completeSetupResult, setCompleteSetupResult] = useState<string>('')
 
   const handleSetupDatabase = async () => {
     setDbSetupLoading(true)
@@ -61,6 +63,32 @@ export default function SetupPage() {
     }
   }
 
+  const handleCompleteSetup = async () => {
+    setCompleteSetupLoading(true)
+    setCompleteSetupResult('')
+
+    try {
+      const response = await fetch('/api/setup-complete', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setCompleteSetupResult(`✅ 完全セットアップ成功: ${data.message}`)
+      } else {
+        setCompleteSetupResult(`❌ セットアップエラー: ${data.error}`)
+      }
+    } catch (error) {
+      setCompleteSetupResult(`❌ 接続エラー: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setCompleteSetupLoading(false)
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -94,6 +122,15 @@ export default function SetupPage() {
               >
                 {loading ? '作成中...' : '2. 管理者アカウントを作成'}
               </Button>
+
+              <Button
+                onClick={handleCompleteSetup}
+                disabled={completeSetupLoading || !result.includes('✅')}
+                variant="secondary"
+                className="w-full"
+              >
+                {completeSetupLoading ? 'セットアップ中...' : '3. 完全セットアップ（全テーブル作成）'}
+              </Button>
             </div>
 
             {dbSetupResult && (
@@ -108,7 +145,13 @@ export default function SetupPage() {
               </div>
             )}
 
-            {result.includes('✅') && (
+            {completeSetupResult && (
+              <div className={`p-4 rounded-md ${completeSetupResult.includes('✅') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                <pre className="whitespace-pre-wrap text-sm">{completeSetupResult}</pre>
+              </div>
+            )}
+
+            {(result.includes('✅') || completeSetupResult.includes('✅')) && (
               <div className="text-center">
                 <a
                   href="/login"
