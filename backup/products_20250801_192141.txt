@@ -1,0 +1,6 @@
+cmdqqqu8g0004ux0fjzi8lbcs|ビタミンC サプリメント|高品質なビタミンCサプリメント|2500.0|100||cmdqqqu8e0000ux0fv7j4ohyh|1|1753926823313|1753926823313
+cmdqqqu8h0006ux0fnr1lbk4k|プロテイン パウダー|ホエイプロテイン 1kg|4800.0|50||cmdqqqu8e0000ux0fv7j4ohyh|1|1753926823313|1753926823313
+cmdqqqu8h0008ux0fpv5ja1f7|フェイシャルクリーム|保湿効果の高いフェイシャルクリーム|3200.0|70||cmdqqqu8f0001ux0f0txmotzm|1|1753926823314|1754023289615
+cmdqqqu8i000aux0f5z4mnnjg|アイセラム|目元ケア用美容液|1000.0|60||cmdqqqu8e0000ux0fv7j4ohyh|1|1753926823314|1753926823314
+cmdqqqu8i000cux0fimnebhtz|オーガニック石鹸|天然成分100%の石鹸|800.0|186||cmdqqqu8g0002ux0fs2khubms|1|1753926823315|1754023400468
+cmdqqsiki0001hqwb0ng13dx9|最終テスト商品（CSRF確認用）|CSRF保護除外が正常動作することを確認するテスト商品|3000.0|13||cmdqqqu8e0000ux0fv7j4ohyh|1|1753926901506|1754023289616

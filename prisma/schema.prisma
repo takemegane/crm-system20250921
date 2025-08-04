@@ -1,0 +1,271 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  password      String
+  role          String    @default("ADMIN")
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  auditLogs     AuditLog[]
+}
+
+model Customer {
+  id            String    @id @default(cuid())
+  name          String
+  nameKana      String?   // フリガナ
+  email         String    @unique
+  phone         String?
+  address       String?
+  birthDate     DateTime? // 生年月日
+  gender        String?   // 性別: "男", "女", "未回答"
+  password      String?   // ECサイトログイン用パスワード（ハッシュ化）
+  isECUser      Boolean   @default(false) // ECサイトユーザーフラグ
+  joinedAt      DateTime  @default(now())
+  isArchived    Boolean   @default(false)
+  archivedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  enrollments   Enrollment[]
+  customerTags  CustomerTag[]
+  emailLogs     EmailLog[]
+  orders        Order[]
+  cartItems     CartItem[]
+}
+
+model Course {
+  id            String    @id @default(cuid())
+  name          String
+  description   String?
+  price         Float
+  duration      String?
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  enrollments   Enrollment[]
+}
+
+model Enrollment {
+  id            String    @id @default(cuid())
+  customerId    String
+  courseId      String
+  enrolledAt    DateTime  @default(now())
+  status        String    @default("ACTIVE")
+  
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  course        Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  
+  @@unique([customerId, courseId])
+}
+
+model Tag {
+  id            String    @id @default(cuid())
+  name          String    @unique
+  color         String?   @default("#3B82F6")
+  description   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  customerTags  CustomerTag[]
+}
+
+model CustomerTag {
+  id          String    @id @default(cuid())
+  customerId  String
+  tagId       String
+  createdAt   DateTime  @default(now())
+  
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  tag         Tag       @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  
+  @@unique([customerId, tagId])
+}
+
+model EmailTemplate {
+  id          String    @id @default(cuid())
+  name        String    // テンプレート名
+  subject     String    // メール件名
+  content     String    // メール本文（HTML対応）
+  isActive    Boolean   @default(true)
+  isDefault   Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  emailLogs   EmailLog[]
+}
+
+model EmailLog {
+  id          String    @id @default(cuid())
+  templateId  String?   // 使用されたテンプレートID（任意）
+  customerId  String?   // 送信先顧客ID（一括送信の場合は任意）
+  subject     String    // 送信時の件名
+  content     String    // 送信時の本文
+  recipientEmail String // 送信先メールアドレス
+  recipientName  String? // 送信先名前
+  status      String    @default("PENDING") // PENDING, SENT, FAILED
+  sentAt      DateTime?
+  errorMessage String?
+  createdAt   DateTime  @default(now())
+  
+  template    EmailTemplate? @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  customer    Customer?      @relation(fields: [customerId], references: [id], onDelete: SetNull)
+}
+
+model AuditLog {
+  id          String    @id @default(cuid())
+  userId      String    // 操作したユーザーID
+  action      String    // LOGIN, LOGOUT, CREATE, UPDATE, DELETE
+  entity      String?   // 操作対象（Customer, Course, Tag, User, etc.）
+  entityId    String?   // 操作対象のID
+  oldData     String?   // 変更前データ（JSON）
+  newData     String?   // 変更後データ（JSON）
+  ipAddress   String?   // IPアドレス
+  userAgent   String?   // ユーザーエージェント
+  createdAt   DateTime  @default(now())
+  
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model EmailSettings {
+  id          String    @id @default(cuid())
+  smtpHost    String    @default("smtp.gmail.com")
+  smtpPort    Int       @default(587)
+  smtpUser    String?
+  smtpPass    String?   // 暗号化して保存
+  fromAddress String?
+  fromName    String    @default("CRM管理システム")
+  signature   String?
+  isActive    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+model SystemSettings {
+  id          String    @id @default(cuid())
+  systemName  String    @default("CRM管理システム")
+  logoUrl     String?   // ロゴ画像のURL
+  faviconUrl  String?   // ファビコンのURL
+  primaryColor String   @default("#3B82F6")  // メインカラー
+  secondaryColor String @default("#1F2937") // セカンダリカラー
+  backgroundColor String @default("#F8FAFC") // 背景色
+  description String?   // システムの説明
+  communityLinkText String? // コミュニティリンクのテキスト（空の場合は「準備中」）
+  communityLinkUrl String?  // コミュニティリンクのURL
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
+// 商品カテゴリ管理
+model Category {
+  id          String    @id @default(cuid())
+  name        String    @unique // カテゴリ名
+  description String?   // カテゴリ説明
+  isActive    Boolean   @default(true)
+  sortOrder   Int       @default(0) // 並び順
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  products     Product[]
+  shippingRate ShippingRate?
+}
+
+// ECサイト用の商品管理
+model Product {
+  id            String    @id @default(cuid())
+  name          String    // 商品名
+  description   String?   // 商品説明
+  price         Float     // 価格
+  stock         Int       @default(0) // 在庫数
+  imageUrl      String?   // 商品画像URL
+  categoryId    String?   // カテゴリID
+  sortOrder     Int       @default(0) // 並び順（小さい値が先頭）
+  isActive      Boolean   @default(true) // 販売中フラグ
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  category      Category? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  cartItems     CartItem[]
+  orderItems    OrderItem[]
+}
+
+// ショッピングカート
+model CartItem {
+  id          String    @id @default(cuid())
+  customerId  String
+  productId   String
+  quantity    Int       @default(1)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  customer    Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([customerId, productId])
+}
+
+// 注文情報
+model Order {
+  id            String    @id @default(cuid())
+  customerId    String
+  orderNumber   String    @unique // 注文番号
+  subtotalAmount Float    @default(0) // 商品小計
+  shippingFee   Float     @default(0) // 送料
+  totalAmount   Float     // 合計金額（商品小計 + 送料）
+  status        String    @default("PENDING") // PENDING(出荷前), SHIPPED(出荷済み), BACKORDERED(入荷待ち), CANCELLED(キャンセル), COMPLETED(完了)
+  shippingAddress String? // 配送先住所
+  recipientName String?   // 配送先宛名
+  contactPhone  String?   // 連絡先電話番号
+  notes         String?   // 備考
+  cancelledAt   DateTime? // キャンセル日時
+  cancelledBy   String?   // キャンセル実行者 (CUSTOMER/ADMIN)
+  cancelReason  String?   // キャンセル理由
+  orderedAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderItems    OrderItem[]
+}
+
+// 注文商品詳細
+model OrderItem {
+  id          String    @id @default(cuid())
+  orderId     String
+  productId   String
+  productName String    // 注文時の商品名（履歴保持）
+  price       Float     // 注文時の価格（履歴保持）
+  quantity    Int
+  subtotal    Float     // 小計
+  
+  order       Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  
+  @@unique([orderId, productId])
+}
+
+// 送料設定管理
+model ShippingRate {
+  id              String    @id @default(cuid())
+  categoryId      String?   // カテゴリID（nullの場合はデフォルト送料）
+  shippingFee     Float     @default(0)    // 送料
+  freeShippingThreshold Float?          // 送料無料の閾値
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  
+  category        Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  
+  @@unique([categoryId]) // カテゴリごとに1つの送料設定
+}

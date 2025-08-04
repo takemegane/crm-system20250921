@@ -1,0 +1,3 @@
+cmdqqqr2e0000y4a8f2d1ji2d|admin@example.com|システム管理者|$2a$12$6ccrWcnCpTrwDYMESHr.5ep7glwHPUvvTnqEXMAvs24AP.vTt62ey|OWNER|1753926819206|1753926819206
+cmdqqqr840007y4a8hndj3wsm|manager@example.com|管理者|$2a$12$WOpTDmiYi.0KMeki3Bn8iO6Dy9C5fI9XwlvJD04GchnY/t6yeN5c.|ADMIN|1753926819413|1753926819413
+cmdqqqrdm0008y4a8gk2vn2ls|operator@example.com|運営者|$2a$12$1YoPbBXRc8uVEyYsyzjAuutTH0b1AqRoR5W97X7p6OehNEkJaSqr2|OPERATOR|1753926819611|1753926819611

@@ -1,0 +1,8 @@
+total 1328
+drwxr-xr-x@ 7 motoki  staff     224  8  1 18:05 .
+drwxr-xr-x@ 3 motoki  staff      96  7 24 12:24 ..
+-rw-r--r--@ 1 motoki  staff   12870  7 23 19:07 1753265273408.png
+-rw-r--r--@ 1 motoki  staff   12870  7 23 21:49 1753274997489.png
+-rw-r--r--@ 1 motoki  staff   12870  7 24 12:24 1753327459276.png
+-rw-r--r--@ 1 motoki  staff  311427  8  1 18:05 1754039139044.png
+-rw-r--r--@ 1 motoki  staff  311427  8  1 18:05 1754039140592.png

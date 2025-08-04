@@ -1,0 +1,88 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/db'
+import { hasPermission, UserRole } from '@/lib/permissions'
+
+export async function GET() {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_TAGS')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    const tags = await prisma.tag.findMany({
+      include: {
+        customerTags: {
+          where: {
+            customer: {
+              isArchived: false
+            }
+          },
+          include: {
+            customer: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+    })
+
+    console.log('Found tags:', tags.length)
+    return NextResponse.json({ tags, total: tags.length })
+  } catch (error) {
+    console.error('Error fetching tags:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+
+    if (!session || !hasPermission(session.user.role as UserRole, 'CREATE_TAGS')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await request.json()
+    const { name, color, description } = body
+
+    if (!name) {
+      return NextResponse.json(
+        { error: 'タグ名は必須です' },
+        { status: 400 }
+      )
+    }
+
+    const existingTag = await prisma.tag.findUnique({
+      where: { name },
+    })
+
+    if (existingTag) {
+      return NextResponse.json(
+        { error: 'この名前のタグは既に存在します' },
+        { status: 400 }
+      )
+    }
+
+    const tag = await prisma.tag.create({
+      data: {
+        name,
+        color: color || '#3B82F6',
+        description: description || null,
+      },
+    })
+
+    return NextResponse.json(tag, { status: 201 })
+  } catch (error) {
+    console.error('Error creating tag:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}

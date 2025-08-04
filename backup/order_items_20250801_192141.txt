@@ -1,0 +1,12 @@
+cmdrgu0oi00169nx6vdmx5prt|cmdrgu0oh00149nx64qdwz1gx|cmdqqqu8h0008ux0fpv5ja1f7|フェイシャルクリーム|3200.0|3|9600.0
+cmdrgu0oi00189nx6xagtt58v|cmdrgu0oh00149nx64qdwz1gx|cmdqqqu8i000cux0fimnebhtz|オーガニック石鹸|800.0|7|5600.0
+cmdrgu0ok001a9nx6ko0ud1gy|cmdrgu0oh00149nx64qdwz1gx|cmdqqsiki0001hqwb0ng13dx9|最終テスト商品（CSRF確認用）|3000.0|2|6000.0
+cmdrgxek6001l9nx6x6vnzki7|cmdrgxek5001j9nx6etekcfss|cmdqqqu8h0008ux0fpv5ja1f7|フェイシャルクリーム|3200.0|3|9600.0
+cmdrgxek6001n9nx6p0cef653|cmdrgxek5001j9nx6etekcfss|cmdqqqu8i000cux0fimnebhtz|オーガニック石鹸|800.0|7|5600.0
+cmdrgxek7001p9nx61xj49q37|cmdrgxek5001j9nx6etekcfss|cmdqqsiki0001hqwb0ng13dx9|最終テスト商品（CSRF確認用）|3000.0|2|6000.0
+cmdrhrhco000c4ixdri56v368|cmdrhrhcn000a4ixdxr97clqf|cmdqqqu8h0008ux0fpv5ja1f7|フェイシャルクリーム|3200.0|2|6400.0
+cmdrhs9h5000l4ixd8vxiqkse|cmdrhs9h4000j4ixdbyf63pax|cmdqqqu8i000cux0fimnebhtz|オーガニック石鹸|800.0|2|1600.0
+cmdrhs9h6000n4ixdy3rwkeds|cmdrhs9h4000j4ixdbyf63pax|cmdqqsiki0001hqwb0ng13dx9|最終テスト商品（CSRF確認用）|3000.0|3|9000.0
+cmdrhug5p000w4ixdvady2gaa|cmdrhug5o000u4ixdnuq9vtqm|cmdqqqu8h0008ux0fpv5ja1f7|フェイシャルクリーム|3200.0|1|3200.0
+cmdrhug5q000y4ixd3j12xid0|cmdrhug5o000u4ixdnuq9vtqm|cmdqqsiki0001hqwb0ng13dx9|最終テスト商品（CSRF確認用）|3000.0|2|6000.0
+cmdsc8tn7000b5auwzc405dua|cmdsc8tn700095auwfddnj30l|cmdqqqu8i000cux0fimnebhtz|オーガニック石鹸|800.0|7|5600.0

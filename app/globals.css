@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply text-gray-900;
+  }
+  
+  :root {
+    --primary-color: #3B82F6;
+    --secondary-color: #1F2937;
+    --primary-50: rgba(59, 130, 246, 0.05);
+    --primary-100: rgba(59, 130, 246, 0.1);
+    --primary-600: #3B82F6;
+    --primary-700: #2563EB;
+    --primary-800: #1D4ED8;
+  }
+}
+
+@layer components {
+  /* モダンなボタンスタイル */
+  .btn-modern {
+    @apply px-6 py-3 rounded-xl font-medium transition-all duration-200 transform hover:-translate-y-0.5 hover:shadow-lg;
+  }
+  
+  .btn-primary {
+    @apply btn-modern text-white shadow-md;
+    background-color: var(--primary-color);
+  }
+  
+  .btn-primary:hover {
+    background-color: var(--secondary-color);
+    @apply shadow-xl;
+  }
+  
+  /* モダンなカードスタイル */
+  .card-modern {
+    @apply bg-white rounded-2xl shadow-sm border border-gray-100 hover:shadow-lg transition-all duration-300;
+  }
+  
+  /* モダンな入力フィールド */
+  .input-modern {
+    @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-3 focus:border-transparent transition-all duration-200;
+    focus-ring-color: var(--primary-50);
+  }
+  
+  /* グラデーション背景 */
+  .bg-gradient-modern {
+    background: linear-gradient(135deg, var(--primary-50) 0%, var(--primary-100) 100%);
+  }
+  
+  /* モダンなサイドバー */
+  .sidebar-modern {
+    @apply bg-gradient-to-b from-gray-800 to-gray-900 shadow-2xl;
+  }
+  
+  .sidebar-item {
+    @apply flex items-center px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 mx-2 my-1;
+  }
+  
+  .sidebar-item.active {
+    @apply text-white shadow-lg transform translate-x-1;
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+  }
+  
+  .sidebar-item:not(.active) {
+    @apply text-gray-300 hover:bg-gray-700 hover:text-white hover:translate-x-1;
+  }
+}
+
+@layer utilities {
+  /* カスタム影 */
+  .shadow-modern {
+    box-shadow: 0 10px 25px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  }
+  
+  .shadow-modern-lg {
+    box-shadow: 0 20px 40px -4px rgba(0, 0, 0, 0.1), 0 8px 16px -4px rgba(0, 0, 0, 0.05);
+  }
+  
+  /* スムーズなトランジション */
+  .transition-modern {
+    @apply transition-all duration-300 ease-in-out;
+  }
+}
