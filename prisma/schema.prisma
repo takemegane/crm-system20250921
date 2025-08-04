@@ -17,6 +17,8 @@ model User {
   updatedAt     DateTime  @updatedAt
   
   auditLogs     AuditLog[]
+
+  @@map("User")
 }
 
 model Customer {
@@ -232,11 +234,13 @@ model Order {
   cancelledBy   String?   // キャンセル実行者 (CUSTOMER/ADMIN)
   cancelReason  String?   // キャンセル理由
   orderedAt     DateTime  @default(now())
-  createdAt     DateTime  @default(now())
+  createdAt     DateTime  @default(now())  
   updatedAt     DateTime  @updatedAt
   
   customer      Customer  @relation(fields: [customerId], references: [id], onDelete: Cascade)
   orderItems    OrderItem[]
+
+  @@map("Order")
 }
 
 // 注文商品詳細
