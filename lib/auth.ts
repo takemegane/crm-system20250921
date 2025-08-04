@@ -28,7 +28,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // まず管理者ユーザーを確認
-          const user = await prisma.user.findUnique({
+          const user = await prisma!.user.findUnique({
             where: {
               email: credentials.email
             }
@@ -61,7 +61,7 @@ export const authOptions: NextAuthOptions = {
           }
 
           // 管理者が見つからない場合、顧客ユーザーを確認
-          const customer = await prisma.customer.findUnique({
+          const customer = await prisma!.customer.findUnique({
             where: {
               email: credentials.email,
               isECUser: true // ECユーザーのみログイン可能

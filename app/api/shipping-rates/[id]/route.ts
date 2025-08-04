@@ -4,18 +4,33 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_PRODUCTS')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
     
-    const shippingRate = await prisma.shippingRate.findUnique({
+    const shippingRate = await prisma!.shippingRate.findUnique({
       where: { id: params.id },
       include: {
         category: true
@@ -41,6 +56,17 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     if (!session || !hasPermission(session.user.role as UserRole, 'MANAGE_PRODUCTS')) {
@@ -66,7 +92,7 @@ export async function PUT(
     }
     
     // 存在チェック
-    const existingRate = await prisma.shippingRate.findUnique({
+    const existingRate = await prisma!.shippingRate.findUnique({
       where: { id: params.id }
     })
     
@@ -76,7 +102,7 @@ export async function PUT(
     
     // カテゴリが指定されている場合、カテゴリの存在確認
     if (categoryId) {
-      const category = await prisma.category.findUnique({
+      const category = await prisma!.category.findUnique({
         where: { id: categoryId }
       })
       
@@ -90,7 +116,7 @@ export async function PUT(
     
     // カテゴリ別送料の重複チェック（自分以外、デフォルト送料は除外）
     if (categoryId) {
-      const duplicateRate = await prisma.shippingRate.findFirst({
+      const duplicateRate = await prisma!.shippingRate.findFirst({
         where: {
           categoryId: categoryId,
           id: { not: params.id }
@@ -105,7 +131,7 @@ export async function PUT(
       }
     }
     
-    const shippingRate = await prisma.shippingRate.update({
+    const shippingRate = await prisma!.shippingRate.update({
       where: { id: params.id },
       data: {
         categoryId: categoryId || null,
@@ -133,6 +159,17 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     if (!session || !hasPermission(session.user.role as UserRole, 'MANAGE_PRODUCTS')) {
@@ -140,7 +177,7 @@ export async function DELETE(
     }
     
     // 存在チェック
-    const shippingRate = await prisma.shippingRate.findUnique({
+    const shippingRate = await prisma!.shippingRate.findUnique({
       where: { id: params.id }
     })
     
@@ -148,7 +185,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Shipping rate not found' }, { status: 404 })
     }
     
-    await prisma.shippingRate.delete({
+    await prisma!.shippingRate.delete({
       where: { id: params.id }
     })
     

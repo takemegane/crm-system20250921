@@ -5,8 +5,23 @@ import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import nodemailer from 'nodemailer'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'MANAGE_EMAIL_SETTINGS')) {
@@ -14,7 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get email settings
-    const settings = await prisma.emailSettings.findFirst()
+    const settings = await prisma!.emailSettings.findFirst()
 
     if (!settings || !settings.isActive) {
       return NextResponse.json(

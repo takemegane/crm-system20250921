@@ -3,8 +3,23 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     // 顧客は有効な商品のみ表示、管理者は全商品表示
@@ -72,6 +87,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     // 管理者のみ商品作成可能
@@ -97,7 +123,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    const product = await prisma.product.create({
+    const product = await prisma!.product.create({
       data: {
         name,
         description,

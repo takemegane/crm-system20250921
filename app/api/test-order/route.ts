@@ -1,15 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     console.log('=== Test Order Creation Start ===')
     
     // テスト用の固定顧客ID（鈴木花子）
     const testCustomerId = 'cmdgtptzz000211e1b5rqkerm' // suzuki@example.com
     
     // カートアイテムを取得
-    const cartItems = await prisma.cartItem.findMany({
+    const cartItems = await prisma!.cartItem.findMany({
       where: {
         customerId: testCustomerId
       },
@@ -39,7 +54,7 @@ export async function POST(request: NextRequest) {
     
     // カートの商品とそのカテゴリを取得
     const productIds = cartItems.map(item => item.productId)
-    const products = await prisma.product.findMany({
+    const products = await prisma!.product.findMany({
       where: { id: { in: productIds } },
       include: {
         category: {
@@ -106,7 +121,7 @@ export async function POST(request: NextRequest) {
     
     console.log('Creating test order...')
     
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma!.$transaction(async (tx) => {
       // 注文作成
       const newOrder = await tx.order.create({
         data: {

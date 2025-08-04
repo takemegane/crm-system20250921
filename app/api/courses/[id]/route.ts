@@ -4,18 +4,32 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_COURSES')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const course = await prisma.course.findUnique({
+    const course = await prisma!.course.findUnique({
       where: { id: params.id },
       include: {
         enrollments: {
@@ -50,6 +64,16 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'EDIT_COURSES')) {
@@ -73,7 +97,7 @@ export async function PUT(
       )
     }
 
-    const course = await prisma.course.update({
+    const course = await prisma!.course.update({
       where: { id: params.id },
       data: {
         name,
@@ -99,6 +123,16 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'DELETE_COURSES')) {
@@ -106,7 +140,7 @@ export async function DELETE(
     }
 
     // Check if course has enrollments
-    const enrollmentsCount = await prisma.enrollment.count({
+    const enrollmentsCount = await prisma!.enrollment.count({
       where: { 
         courseId: params.id,
         customer: {
@@ -122,7 +156,7 @@ export async function DELETE(
       )
     }
 
-    await prisma.course.delete({
+    await prisma!.course.delete({
       where: { id: params.id },
     })
 

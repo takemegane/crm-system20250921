@@ -16,7 +16,7 @@ export type SystemSettings = {
 
 export async function getSystemSettings(): Promise<SystemSettings> {
   try {
-    let settings = await prisma.systemSettings.findFirst({
+    let settings = await prisma!.systemSettings.findFirst({
       where: {
         isActive: true
       }
@@ -24,7 +24,7 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 
     // 設定が存在しない場合はデフォルト値を作成
     if (!settings) {
-      settings = await prisma.systemSettings.create({
+      settings = await prisma!.systemSettings.create({
         data: {
           systemName: "CRM管理システム",
           primaryColor: "#3B82F6",

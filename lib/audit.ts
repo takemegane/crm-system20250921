@@ -30,7 +30,7 @@ export async function createAuditLog({
     
     const userAgent = request?.headers.get('user-agent') || 'unknown'
 
-    await prisma.auditLog.create({
+    await prisma!.auditLog.create({
       data: {
         userId,
         action,

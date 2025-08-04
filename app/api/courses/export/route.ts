@@ -4,8 +4,23 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'EXPORT_COURSES')) {
@@ -13,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     // コースデータを取得（登録者数も含める）
-    const courses = await prisma.course.findMany({
+    const courses = await prisma!.course.findMany({
       include: {
         enrollments: {
           where: {

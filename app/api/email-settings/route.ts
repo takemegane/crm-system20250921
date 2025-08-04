@@ -4,8 +4,23 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'MANAGE_EMAIL_SETTINGS')) {
@@ -13,7 +28,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Get current email settings (only one record should exist)
-    let settings = await prisma.emailSettings.findFirst({
+    let settings = await prisma!.emailSettings.findFirst({
       select: {
         id: true,
         smtpHost: true,
@@ -29,7 +44,7 @@ export async function GET(request: NextRequest) {
 
     // If no settings exist, create default
     if (!settings) {
-      settings = await prisma.emailSettings.create({
+      settings = await prisma!.emailSettings.create({
         data: {
           smtpHost: 'smtp.gmail.com',
           smtpPort: 587,
@@ -61,6 +76,17 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'MANAGE_EMAIL_SETTINGS')) {
@@ -78,7 +104,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get or create settings
-    const existingSettings = await prisma.emailSettings.findFirst()
+    const existingSettings = await prisma!.emailSettings.findFirst()
 
     const updateData: any = {
       smtpHost,
@@ -98,7 +124,7 @@ export async function PUT(request: NextRequest) {
     let responseSettings
     if (existingSettings) {
       // Update existing settings
-      responseSettings = await prisma.emailSettings.update({
+      responseSettings = await prisma!.emailSettings.update({
         where: { id: existingSettings.id },
         data: updateData,
         select: {
@@ -114,7 +140,7 @@ export async function PUT(request: NextRequest) {
       })
     } else {
       // Create new settings
-      responseSettings = await prisma.emailSettings.create({
+      responseSettings = await prisma!.emailSettings.create({
         data: updateData,
         select: {
           id: true,

@@ -4,15 +4,30 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, type UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     const isCustomer = session?.user?.userType === 'customer'
     
-    const product = await prisma.product.findUnique({
+    const product = await prisma!.product.findUnique({
       where: { id: params.id }
     })
     
@@ -40,6 +55,17 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     // EDIT_PRODUCTS権限チェック
@@ -65,7 +91,7 @@ export async function PUT(
       )
     }
     
-    const product = await prisma.product.update({
+    const product = await prisma!.product.update({
       where: { id: params.id },
       data: {
         name,
@@ -97,6 +123,17 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     // DELETE_PRODUCTS権限チェック
@@ -111,7 +148,7 @@ export async function DELETE(
     
     console.log('Attempting to delete product:', params.id)
     
-    await prisma.product.delete({
+    await prisma!.product.delete({
       where: { id: params.id }
     })
     

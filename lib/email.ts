@@ -13,7 +13,7 @@ export interface EmailOptions {
 export async function sendEmail(options: EmailOptions): Promise<boolean> {
   try {
     // Get email settings
-    const settings = await prisma.emailSettings.findFirst()
+    const settings = await prisma!.emailSettings.findFirst()
 
     if (!settings || !settings.isActive) {
       throw new Error('メール送信が無効になっています')
@@ -52,7 +52,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
     })
 
     // Log successful send
-    await prisma.emailLog.create({
+    await prisma!.emailLog.create({
       data: {
         templateId: options.templateId,
         customerId: options.customerId,
@@ -72,7 +72,7 @@ export async function sendEmail(options: EmailOptions): Promise<boolean> {
 
     // Log failed send
     try {
-      await prisma.emailLog.create({
+      await prisma!.emailLog.create({
         data: {
           templateId: options.templateId,
           customerId: options.customerId,

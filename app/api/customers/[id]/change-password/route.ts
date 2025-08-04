@@ -5,11 +5,26 @@ import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import bcrypt from 'bcryptjs'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     // 管理者権限のチェック（管理者・オーナーのみ）
@@ -29,7 +44,7 @@ export async function PUT(
     }
 
     // 顧客の存在確認
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma!.customer.findUnique({
       where: { id: params.id }
     })
 
@@ -44,7 +59,7 @@ export async function PUT(
     const hashedPassword = await bcrypt.hash(newPassword, 12)
 
     // 顧客のパスワードを更新（ECユーザーフラグも有効化）
-    await prisma.customer.update({
+    await prisma!.customer.update({
       where: { id: params.id },
       data: {
         password: hashedPassword,
@@ -53,12 +68,12 @@ export async function PUT(
     })
 
     // 監査ログの記録（セッションユーザーの存在確認）
-    const sessionUser = await prisma.user.findUnique({
+    const sessionUser = await prisma!.user.findUnique({
       where: { email: session.user.email }
     })
     
     if (sessionUser) {
-      await prisma.auditLog.create({
+      await prisma!.auditLog.create({
         data: {
           userId: sessionUser.id,
           action: 'UPDATE',

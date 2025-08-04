@@ -5,11 +5,26 @@ import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { logCustomerCourseUpdate } from '@/lib/audit'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'EDIT_CUSTOMERS')) {
@@ -27,7 +42,7 @@ export async function POST(
     }
 
     // Check if customer exists
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma!.customer.findUnique({
       where: { id: params.id }
     })
 
@@ -36,7 +51,7 @@ export async function POST(
     }
 
     // Check if course exists and is active
-    const course = await prisma.course.findUnique({
+    const course = await prisma!.course.findUnique({
       where: { id: courseId }
     })
 
@@ -49,7 +64,7 @@ export async function POST(
     }
 
     // Check if enrollment already exists
-    const existingEnrollment = await prisma.enrollment.findFirst({
+    const existingEnrollment = await prisma!.enrollment.findFirst({
       where: {
         customerId: params.id,
         courseId: courseId
@@ -64,13 +79,13 @@ export async function POST(
     }
 
     // Get courses before enrollment for audit log
-    const oldEnrollments = await prisma.enrollment.findMany({
+    const oldEnrollments = await prisma!.enrollment.findMany({
       where: { customerId: params.id },
       include: { course: true }
     })
 
     // Create enrollment
-    const enrollment = await prisma.enrollment.create({
+    const enrollment = await prisma!.enrollment.create({
       data: {
         customerId: params.id,
         courseId: courseId,
@@ -80,7 +95,7 @@ export async function POST(
     })
 
     // Get courses after enrollment for audit log
-    const newEnrollments = await prisma.enrollment.findMany({
+    const newEnrollments = await prisma!.enrollment.findMany({
       where: { customerId: params.id },
       include: { course: true }
     })

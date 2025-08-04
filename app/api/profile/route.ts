@@ -5,15 +5,30 @@ import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import bcrypt from 'bcryptjs'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET() {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id || !hasPermission(session.user.role as UserRole, 'EDIT_PROFILE')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const user = await prisma.user.findUnique({
+    const user = await prisma!.user.findUnique({
       where: { id: session.user.id },
       select: {
         id: true,
@@ -39,6 +54,17 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id || !hasPermission(session.user.role as UserRole, 'EDIT_PROFILE')) {
@@ -56,7 +82,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Check if email is already taken by another user
-    const existingUser = await prisma.user.findFirst({
+    const existingUser = await prisma!.user.findFirst({
       where: {
         email,
         NOT: { id: session.user.id },
@@ -71,7 +97,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // Get current user data
-    const currentUser = await prisma.user.findUnique({
+    const currentUser = await prisma!.user.findUnique({
       where: { id: session.user.id }
     })
 
@@ -114,7 +140,7 @@ export async function PUT(request: NextRequest) {
       updateData.password = hashedPassword
     }
 
-    const updatedUser = await prisma.user.update({
+    const updatedUser = await prisma!.user.update({
       where: { id: session.user.id },
       data: updateData,
       select: {

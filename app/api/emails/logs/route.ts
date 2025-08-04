@@ -4,8 +4,22 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_EMAIL_LOGS')) {
@@ -20,7 +34,7 @@ export async function GET(request: NextRequest) {
     const where = customerId ? { customerId } : {}
 
     const [emailLogs, total] = await Promise.all([
-      prisma.emailLog.findMany({
+      prisma!.emailLog.findMany({
         where,
         include: {
           template: {
@@ -43,7 +57,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: offset
       }),
-      prisma.emailLog.count({ where })
+      prisma!.emailLog.count({ where })
     ])
 
     return NextResponse.json({

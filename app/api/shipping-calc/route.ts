@@ -2,8 +2,23 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { calculateShipping } from '@/lib/shipping-calculator'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(req: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const body = await req.json()
     const { cartItems } = body
     
@@ -22,7 +37,7 @@ export async function POST(req: NextRequest) {
     // カートアイテムを統一送料計算関数用の形式に変換
     const convertedCartItems = await Promise.all(
       cartItems.map(async (item: any) => {
-        const product = await prisma.product.findUnique({
+        const product = await prisma!.product.findUnique({
           where: { id: item.productId },
           select: {
             id: true,

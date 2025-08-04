@@ -4,8 +4,23 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET() {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     // 顧客のみプロフィール閲覧可能
@@ -13,7 +28,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Customer access required' }, { status: 403 })
     }
     
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma!.customer.findUnique({
       where: {
         id: session.user.id
       },
@@ -46,6 +61,17 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     // 顧客のみプロフィール更新可能
@@ -65,7 +91,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // 現在の顧客情報を取得
-    const currentCustomer = await prisma.customer.findUnique({
+    const currentCustomer = await prisma!.customer.findUnique({
       where: { id: session.user.id }
     })
 
@@ -111,7 +137,7 @@ export async function PUT(request: NextRequest) {
 
     // メールアドレスの重複チェック（他の顧客との重複）
     if (email !== currentCustomer.email) {
-      const existingCustomer = await prisma.customer.findFirst({
+      const existingCustomer = await prisma!.customer.findFirst({
         where: {
           email,
           id: { not: session.user.id }
@@ -127,7 +153,7 @@ export async function PUT(request: NextRequest) {
     }
 
     try {
-      const updatedCustomer = await prisma.customer.update({
+      const updatedCustomer = await prisma!.customer.update({
         where: {
           id: session.user.id
         },

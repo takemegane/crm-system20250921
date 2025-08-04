@@ -4,8 +4,23 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_CUSTOMERS')) {
@@ -42,7 +57,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    const customers = await prisma.customer.findMany({
+    const customers = await prisma!.customer.findMany({
       where: whereClause,
       include: {
         enrollments: {
@@ -73,6 +88,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'CREATE_CUSTOMERS')) {
@@ -89,7 +115,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const existingCustomer = await prisma.customer.findUnique({
+    const existingCustomer = await prisma!.customer.findUnique({
       where: { email },
     })
 
@@ -100,7 +126,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const customer = await prisma.customer.create({
+    const customer = await prisma!.customer.create({
       data: {
         name,
         nameKana: nameKana || null,
@@ -121,7 +147,7 @@ export async function POST(request: NextRequest) {
         enrolledAt: joinedAt ? new Date(joinedAt) : new Date(),
       }))
 
-      await prisma.enrollment.createMany({
+      await prisma!.enrollment.createMany({
         data: enrollments,
       })
     }
@@ -133,7 +159,7 @@ export async function POST(request: NextRequest) {
         tagId,
       }))
 
-      await prisma.customerTag.createMany({
+      await prisma!.customerTag.createMany({
         data: customerTags,
       })
     }

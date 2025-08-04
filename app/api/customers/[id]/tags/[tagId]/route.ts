@@ -5,11 +5,26 @@ import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { logCustomerTagUpdate } from '@/lib/audit'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function DELETE(
   request: NextRequest,
   { params }: { params: { id: string; tagId: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'EDIT_CUSTOMERS')) {
@@ -17,13 +32,13 @@ export async function DELETE(
     }
 
     // Get tags before deletion for audit log
-    const oldTags = await prisma.customerTag.findMany({
+    const oldTags = await prisma!.customerTag.findMany({
       where: { customerId: params.id },
       include: { tag: true }
     })
 
     // Find and delete the customer-tag association
-    const customerTag = await prisma.customerTag.findFirst({
+    const customerTag = await prisma!.customerTag.findFirst({
       where: {
         customerId: params.id,
         tagId: params.tagId
@@ -37,12 +52,12 @@ export async function DELETE(
       )
     }
 
-    await prisma.customerTag.delete({
+    await prisma!.customerTag.delete({
       where: { id: customerTag.id }
     })
 
     // Get tags after deletion for audit log
-    const newTags = await prisma.customerTag.findMany({
+    const newTags = await prisma!.customerTag.findMany({
       where: { customerId: params.id },
       include: { tag: true }
     })

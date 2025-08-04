@@ -56,7 +56,7 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
 
   // カートの商品とそのカテゴリを取得
   const productIds = cartItems.map(item => item.productId)
-  const products = await prisma.product.findMany({
+  const products = await prisma!.product.findMany({
     where: { id: { in: productIds } },
     include: {
       category: {
@@ -81,7 +81,7 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
   }
 
   // デフォルト送料設定を取得
-  const defaultShippingRate = await prisma.shippingRate.findFirst({
+  const defaultShippingRate = await prisma!.shippingRate.findFirst({
     where: { categoryId: null }
   })
 

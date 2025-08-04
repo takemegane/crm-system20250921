@@ -14,13 +14,23 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_CUSTOMERS')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const customer = await prisma.customer.findUnique({
+    const customer = await prisma!.customer.findUnique({
       where: { id: params.id },
       include: {
         enrollments: {
@@ -58,6 +68,16 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'EDIT_CUSTOMERS')) {
@@ -74,7 +94,7 @@ export async function PUT(
       )
     }
 
-    const existingCustomer = await prisma.customer.findFirst({
+    const existingCustomer = await prisma!.customer.findFirst({
       where: {
         email,
         NOT: { id: params.id },
@@ -89,7 +109,7 @@ export async function PUT(
     }
 
     // Get old data for audit log
-    const oldCustomer = await prisma.customer.findUnique({
+    const oldCustomer = await prisma!.customer.findUnique({
       where: { id: params.id },
       include: {
         enrollments: { include: { course: true } },
@@ -101,7 +121,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
     }
 
-    const customer = await prisma.customer.update({
+    const customer = await prisma!.customer.update({
       where: { id: params.id },
       data: {
         name,
@@ -117,7 +137,7 @@ export async function PUT(
 
     // コースの申し込みを更新
     // 既存の申し込みを削除してから新しく作成
-    await prisma.enrollment.deleteMany({
+    await prisma!.enrollment.deleteMany({
       where: { customerId: params.id },
     })
 
@@ -128,14 +148,14 @@ export async function PUT(
         enrolledAt: joinedAt ? new Date(joinedAt) : new Date(),
       }))
 
-      await prisma.enrollment.createMany({
+      await prisma!.enrollment.createMany({
         data: enrollments,
       })
     }
 
     // タグの関連付けを更新
     // 既存のタグ関連付けを削除してから新しく作成
-    await prisma.customerTag.deleteMany({
+    await prisma!.customerTag.deleteMany({
       where: { customerId: params.id },
     })
 
@@ -145,7 +165,7 @@ export async function PUT(
         tagId,
       }))
 
-      await prisma.customerTag.createMany({
+      await prisma!.customerTag.createMany({
         data: customerTags,
       })
     }
@@ -190,13 +210,23 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'DELETE_CUSTOMERS')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    await prisma.customer.delete({
+    await prisma!.customer.delete({
       where: { id: params.id },
     })
 

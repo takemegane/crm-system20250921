@@ -40,7 +40,7 @@ export async function GET(
       where.customerId = session.user.id
     }
     
-    const order = await prisma.order.findFirst({
+    const order = await prisma!.order.findFirst({
       where,
       select: {
         id: true,
@@ -118,7 +118,7 @@ export async function PUT(
     // 顧客のキャンセルアクション
     if (action === 'cancel' && session.user?.userType === 'customer') {
       // 注文を取得し、キャンセル可能かチェック
-      const order = await prisma.order.findUnique({
+      const order = await prisma!.order.findUnique({
         where: { id: params.id },
         include: {
           customer: true,
@@ -150,7 +150,7 @@ export async function PUT(
       }
 
       // トランザクションでキャンセル処理
-      const cancelledOrder = await prisma.$transaction(async (tx) => {
+      const cancelledOrder = await prisma!.$transaction(async (tx) => {
         // 注文をキャンセル
         const updatedOrder = await tx.order.update({
           where: { id: params.id },
@@ -195,7 +195,7 @@ export async function PUT(
     }
 
     // 注文を取得して存在確認
-    const order = await prisma.order.findUnique({
+    const order = await prisma!.order.findUnique({
       where: { id: params.id }
     })
 
@@ -215,7 +215,7 @@ export async function PUT(
       updateData.cancelReason = '管理者による注文キャンセル'
     }
 
-    const updatedOrder = await prisma.order.update({
+    const updatedOrder = await prisma!.order.update({
       where: { id: params.id },
       data: updateData,
       select: {
@@ -287,7 +287,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     // 顧客のキャンセルアクション（DELETEメソッド用）
     if (session.user?.userType === 'customer') {
       // 注文を取得し、キャンセル可能かチェック
-      const order = await prisma.order.findUnique({
+      const order = await prisma!.order.findUnique({
         where: { id: params.id },
         include: {
           customer: true,
@@ -319,7 +319,7 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
       }
 
       // トランザクションでキャンセル処理
-      const cancelledOrder = await prisma.$transaction(async (tx) => {
+      const cancelledOrder = await prisma!.$transaction(async (tx) => {
         // 注文をキャンセル
         const updatedOrder = await tx.order.update({
           where: { id: params.id },

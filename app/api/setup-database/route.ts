@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
 
     // データベース接続テスト
     try {
-      await prisma.$connect()
+      await prisma!.$connect()
       console.log('Database connection successful')
     } catch (error) {
       console.error('Database connection failed:', error)
@@ -32,11 +32,11 @@ export async function POST(request: NextRequest) {
     // テーブル存在確認とスキーマ同期
     try {
       // 簡単なクエリでテーブル存在を確認
-      await prisma.$queryRaw`SELECT 1`
+      await prisma!.$queryRaw`SELECT 1`
       console.log('Database query test successful')
 
       // テーブル作成 (CREATE TABLE IF NOT EXISTS相当)
-      await prisma.$executeRaw`
+      await prisma!.$executeRaw`
         CREATE TABLE IF NOT EXISTS "User" (
           id TEXT PRIMARY KEY,
           email TEXT UNIQUE NOT NULL,
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
         )
       `
 
-      await prisma.$executeRaw`
+      await prisma!.$executeRaw`
         CREATE TABLE IF NOT EXISTS "Customer" (
           id TEXT PRIMARY KEY,
           name TEXT NOT NULL,
@@ -91,6 +91,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     )
   } finally {
-    await prisma.$disconnect()
+    await prisma!.$disconnect()
   }
 }

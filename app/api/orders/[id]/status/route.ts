@@ -11,11 +11,26 @@ import {
   successResponse
 } from '@/lib/api-responses'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function PUT(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     if (!session || session.user.userType !== 'admin') {
@@ -37,7 +52,7 @@ export async function PUT(
     }
 
     // 注文を取得
-    const order = await prisma.order.findUnique({
+    const order = await prisma!.order.findUnique({
       where: { id: orderId }
     })
 
@@ -57,7 +72,7 @@ export async function PUT(
       updateData.cancelReason = '管理者による注文キャンセル'
     }
 
-    const updatedOrder = await prisma.order.update({
+    const updatedOrder = await prisma!.order.update({
       where: { id: orderId },
       data: updateData
     })

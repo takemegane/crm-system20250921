@@ -13,8 +13,23 @@ import {
   successResponse
 } from '@/lib/api-responses'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -118,6 +133,17 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
     
     // 顧客のみ注文作成可能
@@ -138,7 +164,7 @@ export async function POST(request: NextRequest) {
     }
     
     // カートアイテムを取得
-    const cartItems = await prisma.cartItem.findMany({
+    const cartItems = await prisma!.cartItem.findMany({
       where: {
         customerId: session.user.id
       },
@@ -170,7 +196,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
     
     // トランザクションで注文作成と在庫更新
-    const order = await prisma.$transaction(async (tx) => {
+    const order = await prisma!.$transaction(async (tx) => {
       // 注文作成
       const newOrder = await tx.order.create({
         data: {
@@ -222,7 +248,7 @@ export async function POST(request: NextRequest) {
     })
     
     // 作成された注文を詳細情報付きで取得
-    const orderWithDetails = await prisma.order.findUnique({
+    const orderWithDetails = await prisma!.order.findUnique({
       where: { id: order.id },
       include: {
         orderItems: {

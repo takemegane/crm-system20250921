@@ -4,14 +4,29 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET() {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_TAGS')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    const tags = await prisma.tag.findMany({
+    const tags = await prisma!.tag.findMany({
       include: {
         customerTags: {
           where: {
@@ -42,6 +57,17 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
+
     const session = await getServerSession(authOptions)
 
     if (!session || !hasPermission(session.user.role as UserRole, 'CREATE_TAGS')) {
@@ -58,7 +84,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const existingTag = await prisma.tag.findUnique({
+    const existingTag = await prisma!.tag.findUnique({
       where: { name },
     })
 
@@ -69,7 +95,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const tag = await prisma.tag.create({
+    const tag = await prisma!.tag.create({
       data: {
         name,
         color: color || '#3B82F6',
