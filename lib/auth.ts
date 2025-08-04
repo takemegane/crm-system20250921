@@ -21,11 +21,20 @@ export const authOptions: NextAuthOptions = {
         }
 
         try {
+          // ビルド時はダミーレスポンスを返す
+          if (!process.env.DATABASE_URL) {
+            console.log('⚠️ Database not available during build, skipping auth')
+            return null
+          }
+
           // まず管理者ユーザーを確認
           const user = await prisma.user.findUnique({
             where: {
               email: credentials.email
             }
+          }).catch((error) => {
+            console.error('Database connection error in auth:', error)
+            return null
           })
           console.log('👤 Admin user found:', !!user)
 
@@ -57,6 +66,9 @@ export const authOptions: NextAuthOptions = {
               email: credentials.email,
               isECUser: true // ECユーザーのみログイン可能
             }
+          }).catch((error) => {
+            console.error('Database connection error in customer auth:', error)
+            return null
           })
           console.log('🛍️ Customer found:', !!customer, customer?.isECUser)
 
