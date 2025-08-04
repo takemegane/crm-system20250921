@@ -5,6 +5,10 @@ import { prisma } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { logCustomerUpdate } from '@/lib/audit'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }

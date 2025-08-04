@@ -5,11 +5,20 @@ import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // ビルド時の実行を防ぐ
+    if (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
 
-    if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_ADMINS')) {
+    const session = await getServerSession(authOptions).catch(() => null)
+
+    if (!session || !hasPermission(session.user?.role as UserRole, 'VIEW_ADMINS')) {
       return NextResponse.json({ error: 'Unauthorized - Admin management access required' }, { status: 403 })
     }
 

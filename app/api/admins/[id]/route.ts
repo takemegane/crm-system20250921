@@ -5,15 +5,24 @@ import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 import { hasPermission, UserRole } from '@/lib/permissions'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function GET(
   request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
-    // ビルド時のエラーを防ぐため、セッション確認を先に実行
-    const session = await getServerSession(authOptions)
+    // ビルド時の実行を防ぐ
+    if (process.env.NODE_ENV === 'development' && !process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
 
-    if (!session || session.user.role !== 'OWNER') {
+    // セッション確認
+    const session = await getServerSession(authOptions).catch(() => null)
+
+    if (!session || session.user?.role !== 'OWNER') {
       return NextResponse.json({ error: 'Unauthorized - Owner access required' }, { status: 403 })
     }
 
