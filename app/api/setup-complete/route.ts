@@ -32,53 +32,82 @@ export async function POST(request: NextRequest) {
       console.log('Existing tables:', tables.map(t => t.table_name))
 
       // 必要なテーブルを個別に作成
+      console.log('Creating tables...')
       await createAllTables(prisma)
+      console.log('Tables created successfully')
 
       // サンプルデータの作成
+      console.log('Creating sample data...')
       await createSampleData(prisma)
+      console.log('Sample data created successfully')
 
       return NextResponse.json({
         message: 'データベースの完全セットアップが完了しました',
         details: 'すべてのテーブルとサンプルデータが作成されました'
+      }, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
 
     } catch (error) {
       console.error('Database setup error:', error)
       return NextResponse.json(
         { error: `データベースセットアップエラー: ${error instanceof Error ? error.message : 'Unknown error'}` },
-        { status: 500 }
+        { 
+          status: 500,
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
       )
     }
   } catch (error) {
     console.error('Setup error:', error)
     return NextResponse.json(
       { error: `セットアップエラー: ${error instanceof Error ? error.message : 'Unknown error'}` },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      }
     )
+  } finally {
+    const prisma = getPrismaClient()
+    if (prisma) {
+      await prisma.$disconnect()
+    }
   }
 }
 
 async function createAllTables(prisma: any) {
-  // Customer テーブル
-  await prisma.$executeRaw`
-    CREATE TABLE IF NOT EXISTS "Customer" (
-      id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
-      name TEXT NOT NULL,
-      "nameKana" TEXT,
-      email TEXT UNIQUE NOT NULL,
-      phone TEXT,
-      address TEXT,
-      "birthDate" TIMESTAMP,
-      gender TEXT,
-      password TEXT,
-      "isECUser" BOOLEAN DEFAULT FALSE,
-      "joinedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      "isArchived" BOOLEAN DEFAULT FALSE,
-      "archivedAt" TIMESTAMP,
-      "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-    )
-  `
+  try {
+    // Customer テーブル（既存の場合はスキップ）
+    console.log('Creating Customer table...')
+    await prisma.$executeRaw`
+      CREATE TABLE IF NOT EXISTS "Customer" (
+        id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+        name TEXT NOT NULL,
+        "nameKana" TEXT,
+        email TEXT UNIQUE NOT NULL,
+        phone TEXT,
+        address TEXT,
+        "birthDate" TIMESTAMP,
+        gender TEXT,
+        password TEXT,
+        "isECUser" BOOLEAN DEFAULT FALSE,
+        "joinedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        "isArchived" BOOLEAN DEFAULT FALSE,
+        "archivedAt" TIMESTAMP,
+        "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `
+    console.log('Customer table OK')
+  } catch (error) {
+    console.log('Customer table already exists or error:', error)
+  }
 
   // Course テーブル
   await prisma.$executeRaw`

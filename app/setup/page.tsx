@@ -68,20 +68,22 @@ export default function SetupPage() {
     setCompleteSetupResult('')
 
     try {
-      const response = await fetch('/api/setup-complete', {
+      const response = await fetch('/api/setup-complete-simple', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         }
       })
 
-      const data = await response.json()
-
-      if (response.ok) {
-        setCompleteSetupResult(`✅ 完全セットアップ成功: ${data.message}`)
-      } else {
-        setCompleteSetupResult(`❌ セットアップエラー: ${data.error}`)
+      if (!response.ok) {
+        const errorText = await response.text()
+        setCompleteSetupResult(`❌ セットアップエラー: ${response.status} - ${errorText}`)
+        return
       }
+
+      const data = await response.json()
+      setCompleteSetupResult(`✅ 完全セットアップ成功: ${data.message}`)
+
     } catch (error) {
       setCompleteSetupResult(`❌ 接続エラー: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
