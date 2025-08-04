@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import bcrypt from 'bcryptjs'
 
+// 静的生成を無効にして動的ルートとして扱う
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
@@ -32,14 +36,22 @@ export async function POST(request: NextRequest) {
       )
     }
     
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json(
+        { error: 'データベースに接続できません' },
+        { status: 503 }
+      )
+    }
+
     // メールアドレスの重複確認（管理者ユーザーとも重複チェック）
     const [existingCustomer, existingUser] = await Promise.all([
       prisma.customer.findUnique({
         where: { email }
-      }),
+      }).catch(() => null),
       prisma.user.findUnique({
         where: { email }
-      })
+      }).catch(() => null)
     ])
     
     if (existingCustomer || existingUser) {
@@ -65,6 +77,9 @@ export async function POST(request: NextRequest) {
         password: hashedPassword,
         isECUser: true // ECサイトユーザーフラグ
       }
+    }).catch((error) => {
+      console.error('Database creation error:', error)
+      throw new Error('データベースへの保存に失敗しました')
     })
     
     // パスワードを除外してレスポンス
