@@ -8,6 +8,16 @@ export const runtime = 'nodejs'
 
 export async function POST(request: NextRequest) {
   try {
+    // データベース接続確認
+    if (!process.env.DATABASE_URL) {
+      return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
+    }
+
+    // Prismaクライアントの存在確認
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
+
     const body = await request.json()
     const { 
       name, 
@@ -46,10 +56,10 @@ export async function POST(request: NextRequest) {
 
     // メールアドレスの重複確認（管理者ユーザーとも重複チェック）
     const [existingCustomer, existingUser] = await Promise.all([
-      prisma.customer.findUnique({
+      prisma!.customer.findUnique({
         where: { email }
       }).catch(() => null),
-      prisma.user.findUnique({
+      prisma!.user.findUnique({
         where: { email }
       }).catch(() => null)
     ])
@@ -65,7 +75,7 @@ export async function POST(request: NextRequest) {
     const hashedPassword = await bcrypt.hash(password, 12)
     
     // 顧客アカウント作成
-    const customer = await prisma.customer.create({
+    const customer = await prisma!.customer.create({
       data: {
         name,
         nameKana,
