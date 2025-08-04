@@ -1,23 +1,25 @@
 import { PrismaClient } from '@prisma/client'
 
-// Vercel サーバーレス環境用のPrismaクライアント管理
-let prismaInstance: PrismaClient | null = null
+// グローバルキャッシュ
+declare global {
+  var __prisma: PrismaClient | undefined
+}
 
-// 遅延初期化関数
-function getPrismaClient(): PrismaClient | null {
-  // クライアントサイドでは何もしない
-  if (typeof window !== 'undefined') {
-    return null
-  }
-
-  // 既存のインスタンスがあれば返す
-  if (prismaInstance) {
-    return prismaInstance
-  }
-
+// API呼び出し時の動的初期化関数
+export function getPrismaClient(): PrismaClient | null {
   try {
+    // クライアントサイドでは何もしない
+    if (typeof window !== 'undefined') {
+      return null
+    }
+
+    // 既存のグローバルインスタンスがあれば返す
+    if (global.__prisma) {
+      return global.__prisma
+    }
+
     const databaseUrl = process.env.DATABASE_URL
-    console.log('=== Prisma Lazy Initialization ===')
+    console.log('=== Dynamic Prisma Initialization ===')
     console.log('DATABASE_URL exists:', !!databaseUrl)
     console.log('Environment:', process.env.NODE_ENV)
     
@@ -28,7 +30,7 @@ function getPrismaClient(): PrismaClient | null {
 
     console.log('Creating new Prisma client instance...')
     
-    prismaInstance = new PrismaClient({
+    const client = new PrismaClient({
       log: process.env.NODE_ENV === 'development' ? ['query', 'error', 'warn'] : ['error'],
       datasources: {
         db: {
@@ -37,18 +39,30 @@ function getPrismaClient(): PrismaClient | null {
       }
     })
 
-    console.log('✅ Prisma client created successfully')
-    return prismaInstance
+    // グローバルキャッシュに保存
+    global.__prisma = client
+    
+    console.log('✅ Prisma client created and cached globally')
+    return client
   } catch (error) {
     console.error('❌ Failed to create Prisma client:', error)
+    console.error('Error details:', {
+      name: error instanceof Error ? error.name : 'Unknown',
+      message: error instanceof Error ? error.message : 'Unknown error'
+    })
     return null
   }
 }
 
-// エクスポートは関数として提供
-export const prisma = getPrismaClient()
+// 後方互換性のためのエクスポート（nullの可能性あり）
+export const prisma = null
 
 // ヘルスチェック用の初期化確認関数
 export function isPrismaInitialized(): boolean {
-  return prisma !== null
+  try {
+    const client = getPrismaClient()
+    return client !== null
+  } catch {
+    return false
+  }
 }

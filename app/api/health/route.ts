@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { prisma, isPrismaInitialized } from '@/lib/db'
+import { getPrismaClient, isPrismaInitialized } from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
@@ -16,21 +16,23 @@ export async function GET() {
     }
     
     console.log('Health check - Prisma initialized:', isPrismaInitialized())
-    console.log('Health check - Prisma instance:', !!prisma)
 
-    // データベース接続テスト
-    if (prisma) {
+    // データベース接続テスト（動的初期化）
+    const prismaClient = getPrismaClient()
+    if (prismaClient) {
       try {
-        await prisma!.$connect()
-        const testQuery = await prisma!.$queryRaw`SELECT 1 as test`
+        await prismaClient.$connect()
+        const testQuery = await prismaClient.$queryRaw`SELECT 1 as test`
         health.database_connection = 'ok'
         health.test_query = 'ok'
       } catch (error) {
         health.database_connection = 'error'
         health.database_error = error instanceof Error ? error.message : 'Unknown error'
       } finally {
-        await prisma!.$disconnect()
+        await prismaClient.$disconnect()
       }
+    } else {
+      health.database_connection = 'not_initialized'
     }
 
     return NextResponse.json(health, {
