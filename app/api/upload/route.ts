@@ -50,12 +50,37 @@ export async function POST(request: NextRequest) {
     console.log('✅ File validation passed')
 
     // Cloudinary環境変数チェック
-    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+    const cloudName = process.env.CLOUDINARY_CLOUD_NAME
+    const apiKey = process.env.CLOUDINARY_API_KEY
+    const apiSecret = process.env.CLOUDINARY_API_SECRET
+    
+    console.log('🔍 Cloudinary environment check:')
+    console.log('  - CLOUD_NAME:', cloudName ? '✅ Set' : '❌ Missing')
+    console.log('  - API_KEY:', apiKey ? '✅ Set' : '❌ Missing')
+    console.log('  - API_SECRET:', apiSecret ? '✅ Set' : '❌ Missing')
+    
+    if (!cloudName || !apiKey || !apiSecret) {
       console.log('❌ Cloudinary environment variables not configured')
-      return NextResponse.json({ error: 'Image upload service not configured' }, { status: 500 })
+      return NextResponse.json({ 
+        error: 'Image upload service not configured',
+        missing_vars: {
+          CLOUDINARY_CLOUD_NAME: !cloudName,
+          CLOUDINARY_API_KEY: !apiKey,
+          CLOUDINARY_API_SECRET: !apiSecret
+        }
+      }, { status: 500 })
     }
 
     console.log('✅ Cloudinary configuration found')
+    
+    // Cloudinaryクライアント再設定（デバッグ用）
+    console.log('🔧 Reconfiguring Cloudinary client...')
+    cloudinary.config({
+      cloud_name: cloudName,
+      api_key: apiKey,
+      api_secret: apiSecret,
+    })
+    console.log('✅ Cloudinary client reconfigured')
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
@@ -101,10 +126,43 @@ export async function POST(request: NextRequest) {
       })
     } catch (cloudinaryError) {
       console.error('❌ Cloudinary upload failed:', cloudinaryError)
+      console.error('❌ Cloudinary error type:', typeof cloudinaryError)
+      console.error('❌ Cloudinary error JSON:', JSON.stringify(cloudinaryError, null, 2))
+      
+      // Cloudinaryエラーの詳細解析
+      let errorMessage = 'Unknown error'
+      let errorDetails = {}
+      
+      if (cloudinaryError instanceof Error) {
+        errorMessage = cloudinaryError.message
+        errorDetails = {
+          name: cloudinaryError.name,
+          message: cloudinaryError.message,
+          stack: cloudinaryError.stack
+        }
+      } else if (typeof cloudinaryError === 'object' && cloudinaryError !== null) {
+        // Cloudinary特有のエラーオブジェクト処理
+        const errorObj = cloudinaryError as any
+        errorMessage = errorObj.message || errorObj.error?.message || 'Cloudinary service error'
+        errorDetails = {
+          http_code: errorObj.http_code,
+          message: errorObj.message,
+          error: errorObj.error,
+          full_error: cloudinaryError
+        }
+      } else {
+        errorMessage = String(cloudinaryError)
+      }
+      
+      console.error('❌ Processed error message:', errorMessage)
+      console.error('❌ Processed error details:', errorDetails)
+      
       return NextResponse.json(
         { 
           error: 'Image upload failed',
-          details: cloudinaryError instanceof Error ? cloudinaryError.message : String(cloudinaryError)
+          message: errorMessage,
+          details: errorDetails,
+          raw_error: String(cloudinaryError)
         },
         { status: 500 }
       )
