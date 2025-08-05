@@ -31,7 +31,10 @@ export interface ProductWithCategory {
  * 送料計算ロジック統一関数
  * カテゴリごとに独立して送料を計算し、各カテゴリの閾値で無料判定
  */
-export async function calculateShipping(cartItems: CartItem[]): Promise<{
+export async function calculateShipping(
+  cartItems: CartItem[], 
+  prismaClient?: any
+): Promise<{
   shippingFee: number
   subtotalAmount: number
   totalAmount: number
@@ -51,10 +54,11 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
 }> {
   console.log('💰 calculateShipping called with items:', cartItems.length)
   
-  const prisma = getPrismaClient()
+  // 外部から渡されたPrismaクライアントを優先使用
+  const prisma = prismaClient || getPrismaClient()
   if (!prisma) {
-    console.log('❌ Prisma client not initialized in shipping calculator')
-    throw new Error('Prisma client not initialized')
+    console.log('❌ Prisma client not available in shipping calculator')
+    throw new Error('Prisma client not available')
   }
 
   console.log('✅ Prisma client ready in shipping calculator')

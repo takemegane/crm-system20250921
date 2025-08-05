@@ -65,8 +65,8 @@ export async function POST(req: NextRequest) {
       })
     )
     
-    // 統一送料計算関数を使用
-    const shippingCalculation = await calculateShipping(convertedCartItems)
+    // 統一送料計算関数を使用（Prismaクライアントを渡す）
+    const shippingCalculation = await calculateShipping(convertedCartItems, prisma)
     
     return NextResponse.json({
       success: true,

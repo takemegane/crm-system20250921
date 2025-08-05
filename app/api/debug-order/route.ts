@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
         }
       })
 
-      const shippingCalculation = await calculateShipping(cartItems)
+      const shippingCalculation = await calculateShipping(cartItems, prisma)
       console.log('✅ Step 8 Passed: Shipping calculation', shippingCalculation)
 
     } catch (error) {

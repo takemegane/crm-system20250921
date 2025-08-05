@@ -227,9 +227,9 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ Inventory check passed')
     
-    // 統一送料計算関数を使用
+    // 統一送料計算関数を使用（Prismaクライアントを渡す）
     console.log('💰 Calculating shipping...')
-    const shippingCalculation = await calculateShipping(cartItems)
+    const shippingCalculation = await calculateShipping(cartItems, prisma)
     const { subtotalAmount, shippingFee, totalAmount } = shippingCalculation
     console.log('💰 Shipping calculation result:', { subtotalAmount, shippingFee, totalAmount })
     
