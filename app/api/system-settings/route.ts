@@ -10,27 +10,35 @@ export const runtime = 'nodejs'
 
 export async function GET() {
   try {
+    console.log('⚙️ System settings API called')
+    
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
+      console.log('❌ DATABASE_URL not available')
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
     // Prismaクライアントの動的初期化
     const prisma = getPrismaClient()
     if (!prisma) {
+      console.log('❌ Prisma client not initialized')
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
 
+    console.log('✅ Prisma client ready')
 
     // システム設定の取得は認証不要（公開情報として使用）
+    console.log('🔍 Fetching system settings...')
     let settings = await prisma.systemSettings.findFirst({
       where: {
         isActive: true
       }
     })
+    console.log('✅ Settings query completed:', !!settings)
 
     // 設定が存在しない場合はデフォルト値を作成
     if (!settings) {
+      console.log('🔧 Creating default system settings...')
       settings = await prisma.systemSettings.create({
         data: {
           systemName: "CRM管理システム",
@@ -40,13 +48,18 @@ export async function GET() {
           isActive: true
         }
       })
+      console.log('✅ Default settings created:', settings.id)
     }
 
+    console.log('✅ Returning system settings')
     return NextResponse.json(settings)
   } catch (error) {
-    console.error('Error fetching system settings:', error)
+    console.error('❌ Error fetching system settings:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }
@@ -54,19 +67,25 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    console.log('⚙️ System settings PUT API called')
+    
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
+      console.log('❌ DATABASE_URL not available')
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
     // Prismaクライアントの動的初期化
     const prisma = getPrismaClient()
     if (!prisma) {
+      console.log('❌ Prisma client not initialized')
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
 
+    console.log('✅ Prisma client ready')
 
     const session = await getServerSession(authOptions)
+    console.log('👤 Session user:', session?.user?.email || 'No session')
 
     // オーナーのみがシステム設定を変更可能
     if (!session || session.user.role !== 'OWNER') {
@@ -102,11 +121,15 @@ export async function PUT(request: NextRequest) {
       }
     })
 
+    console.log('✅ System settings updated successfully:', settings.id)
     return NextResponse.json(settings)
   } catch (error) {
-    console.error('Error updating system settings:', error)
+    console.error('❌ Error updating system settings:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }
