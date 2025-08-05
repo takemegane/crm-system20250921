@@ -10,28 +10,42 @@ export const runtime = 'nodejs'
 
 export async function GET() {
   try {
+    console.log('📋 Category GET API called')
+    
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
+      console.log('❌ DATABASE_URL not available')
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
     // Prismaクライアントの動的初期化
     const prisma = getPrismaClient()
     if (!prisma) {
+      console.log('❌ Prisma client not initialized')
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
 
+    console.log('✅ Prisma client ready')
+
     const session = await getServerSession(authOptions)
+    console.log('👤 Session user:', session?.user?.email || 'No session')
+    console.log('👤 User type:', session?.user?.userType || 'No userType')
+    console.log('👤 User role:', session?.user?.role || 'No role')
     
     // 認証チェック（管理者と顧客の両方がアクセス可能）
     if (!session) {
+      console.log('❌ No session found')
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
     
     // 管理者の場合は権限チェック、顧客の場合は認証済みであればOK
     if (session.user.userType === 'admin' && !hasPermission(session.user.role as UserRole, 'VIEW_PRODUCTS')) {
+      console.log('❌ Permission denied for admin user:', session.user.email, 'role:', session.user.role)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
+    
+    console.log('✅ Permission check passed')
+    console.log('🔍 Fetching categories...')
     
     const categories = await prisma.category.findMany({
       where: {
@@ -49,11 +63,15 @@ export async function GET() {
       }
     })
     
+    console.log('✅ Categories fetched successfully, count:', categories.length)
     return NextResponse.json({ categories })
   } catch (error) {
-    console.error('Error fetching categories:', error)
+    console.error('❌ Error fetching categories:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }
