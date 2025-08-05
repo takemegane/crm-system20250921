@@ -153,6 +153,31 @@ export async function POST(request: NextRequest) {
         console.log('ℹ️ SystemSettings.isActive column already exists or table does not exist')
       }
 
+      // ShippingRateテーブルの不足カラム追加
+      try {
+        await prisma.$executeRaw`ALTER TABLE "ShippingRate" ADD COLUMN "shippingFee" DOUBLE PRECISION DEFAULT 0`
+        console.log('✅ Added ShippingRate.shippingFee column')
+        migrations.push('ShippingRate.shippingFee column added')
+      } catch (error) {
+        console.log('ℹ️ ShippingRate.shippingFee column already exists or table does not exist')
+      }
+
+      try {
+        await prisma.$executeRaw`ALTER TABLE "ShippingRate" ADD COLUMN "freeShippingThreshold" DOUBLE PRECISION`
+        console.log('✅ Added ShippingRate.freeShippingThreshold column')
+        migrations.push('ShippingRate.freeShippingThreshold column added')
+      } catch (error) {
+        console.log('ℹ️ ShippingRate.freeShippingThreshold column already exists or table does not exist')
+      }
+
+      try {
+        await prisma.$executeRaw`ALTER TABLE "ShippingRate" ADD COLUMN "isActive" BOOLEAN DEFAULT true`
+        console.log('✅ Added ShippingRate.isActive column')
+        migrations.push('ShippingRate.isActive column added')
+      } catch (error) {
+        console.log('ℹ️ ShippingRate.isActive column already exists or table does not exist')
+      }
+
       console.log('🎉 Database schema migration completed')
 
       return NextResponse.json(
