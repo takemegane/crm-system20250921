@@ -129,6 +129,7 @@ model EmailLog {
 model AuditLog {
   id          String    @id @default(cuid())
   userId      String    // 操作したユーザーID
+  userName    String?   // 操作したユーザー名
   action      String    // LOGIN, LOGOUT, CREATE, UPDATE, DELETE
   entity      String?   // 操作対象（Customer, Course, Tag, User, etc.）
   entityId    String?   // 操作対象のID

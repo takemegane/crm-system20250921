@@ -203,6 +203,14 @@ async function executeSetup() {
         console.log('ℹ️ AuditLog.userAgent column already exists or table does not exist')
       }
 
+      try {
+        await prisma.$executeRaw`ALTER TABLE "AuditLog" ADD COLUMN "userName" TEXT`
+        console.log('✅ Added AuditLog.userName column')
+        migrations.push('AuditLog.userName column added')
+      } catch (error) {
+        console.log('ℹ️ AuditLog.userName column already exists or table does not exist')
+      }
+
       console.log('🎉 Database schema migration completed')
 
       return NextResponse.json(
