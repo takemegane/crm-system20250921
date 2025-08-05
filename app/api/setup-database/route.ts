@@ -220,6 +220,14 @@ async function executeSetup() {
         console.log('ℹ️ ShippingRate.name column may not exist or already removed')
       }
 
+      try {
+        await prisma.$executeRaw`ALTER TABLE "ShippingRate" DROP COLUMN "rate"`
+        console.log('✅ Removed ShippingRate.rate column (not in Prisma schema)')
+        migrations.push('ShippingRate.rate column removed')
+      } catch (error) {
+        console.log('ℹ️ ShippingRate.rate column may not exist or already removed')
+      }
+
       console.log('🎉 Database schema migration completed')
 
       return NextResponse.json(
