@@ -145,6 +145,14 @@ export async function POST(request: NextRequest) {
         console.log('ℹ️ SystemSettings.description column already exists or table does not exist')
       }
 
+      try {
+        await prisma.$executeRaw`ALTER TABLE "SystemSettings" ADD COLUMN "isActive" BOOLEAN DEFAULT true`
+        console.log('✅ Added SystemSettings.isActive column')
+        migrations.push('SystemSettings.isActive column added')
+      } catch (error) {
+        console.log('ℹ️ SystemSettings.isActive column already exists or table does not exist')
+      }
+
       console.log('🎉 Database schema migration completed')
 
       return NextResponse.json(
