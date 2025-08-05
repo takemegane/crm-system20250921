@@ -211,6 +211,15 @@ async function executeSetup() {
         console.log('ℹ️ AuditLog.userName column already exists or table does not exist')
       }
 
+      // ShippingRate不要カラムの削除
+      try {
+        await prisma.$executeRaw`ALTER TABLE "ShippingRate" DROP COLUMN "name"`
+        console.log('✅ Removed ShippingRate.name column (not in Prisma schema)')
+        migrations.push('ShippingRate.name column removed')
+      } catch (error) {
+        console.log('ℹ️ ShippingRate.name column may not exist or already removed')
+      }
+
       console.log('🎉 Database schema migration completed')
 
       return NextResponse.json(
