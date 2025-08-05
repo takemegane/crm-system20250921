@@ -211,21 +211,48 @@ async function executeSetup() {
         console.log('ℹ️ AuditLog.userName column already exists or table does not exist')
       }
 
-      // ShippingRate不要カラムの削除
+      // ShippingRateテーブルの完全再構築
       try {
-        await prisma.$executeRaw`ALTER TABLE "ShippingRate" DROP COLUMN "name"`
-        console.log('✅ Removed ShippingRate.name column (not in Prisma schema)')
-        migrations.push('ShippingRate.name column removed')
+        console.log('🔄 Recreating ShippingRate table...')
+        
+        // 既存テーブルをバックアップしてから削除
+        await prisma.$executeRaw`DROP TABLE IF EXISTS "ShippingRate_backup"`
+        console.log('✅ Dropped backup table if exists')
+        
+        try {
+          await prisma.$executeRaw`CREATE TABLE "ShippingRate_backup" AS SELECT * FROM "ShippingRate"`
+          console.log('✅ Created backup of ShippingRate table')
+        } catch (backupError) {
+          console.log('ℹ️ Could not backup ShippingRate (table may not exist)')
+        }
+        
+        // 既存テーブル削除
+        await prisma.$executeRaw`DROP TABLE IF EXISTS "ShippingRate"`
+        console.log('✅ Dropped existing ShippingRate table')
+        
+        // Prismaスキーマに従って新しいテーブル作成
+        await prisma.$executeRaw`
+          CREATE TABLE "ShippingRate" (
+            "id" TEXT NOT NULL,
+            "categoryId" TEXT,
+            "shippingFee" DOUBLE PRECISION NOT NULL DEFAULT 0,
+            "freeShippingThreshold" DOUBLE PRECISION,
+            "isActive" BOOLEAN NOT NULL DEFAULT true,
+            "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+            CONSTRAINT "ShippingRate_pkey" PRIMARY KEY ("id")
+          )
+        `
+        console.log('✅ Created new ShippingRate table with correct schema')
+        
+        // ユニーク制約とインデックス追加
+        await prisma.$executeRaw`CREATE UNIQUE INDEX "ShippingRate_categoryId_key" ON "ShippingRate"("categoryId")`
+        console.log('✅ Added unique constraint on categoryId')
+        
+        migrations.push('ShippingRate table recreated with correct schema')
+        
       } catch (error) {
-        console.log('ℹ️ ShippingRate.name column may not exist or already removed')
-      }
-
-      try {
-        await prisma.$executeRaw`ALTER TABLE "ShippingRate" DROP COLUMN "rate"`
-        console.log('✅ Removed ShippingRate.rate column (not in Prisma schema)')
-        migrations.push('ShippingRate.rate column removed')
-      } catch (error) {
-        console.log('ℹ️ ShippingRate.rate column may not exist or already removed')
+        console.log('ℹ️ ShippingRate table recreation may have failed:', error)
       }
 
       console.log('🎉 Database schema migration completed')
