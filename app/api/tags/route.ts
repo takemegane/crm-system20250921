@@ -64,57 +64,74 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('🏷️ Tag creation API called')
+    
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
+      console.log('❌ DATABASE_URL not available')
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
     }
 
     // Prismaクライアントの動的初期化
     const prisma = getPrismaClient()
     if (!prisma) {
+      console.log('❌ Prisma client not initialized')
       return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
     }
 
+    console.log('✅ Prisma client ready')
 
     const session = await getServerSession(authOptions)
+    console.log('👤 Session user:', session?.user?.email || 'No session')
 
     if (!session || !hasPermission(session.user.role as UserRole, 'CREATE_TAGS')) {
+      console.log('❌ Permission denied for user:', session?.user?.email, 'role:', session?.user?.role)
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await request.json()
-    const { name, color } = body
+    console.log('📝 Request body:', body)
+    const { name, color, description } = body
 
     if (!name) {
+      console.log('❌ Tag name is missing')
       return NextResponse.json(
         { error: 'タグ名は必須です' },
         { status: 400 }
       )
     }
 
+    console.log('🔍 Checking for existing tag with name:', name)
     const existingTag = await prisma.tag.findUnique({
       where: { name },
     })
 
     if (existingTag) {
+      console.log('❌ Tag already exists:', existingTag.id)
       return NextResponse.json(
         { error: 'この名前のタグは既に存在します' },
         { status: 400 }
       )
     }
 
+    console.log('✅ Creating new tag...')
     const tag = await prisma.tag.create({
       data: {
         name,
         color: color || '#3B82F6',
+        description: description || null,
       },
     })
 
+    console.log('✅ Tag created successfully:', tag.id)
     return NextResponse.json(tag, { status: 201 })
   } catch (error) {
-    console.error('Error creating tag:', error)
+    console.error('❌ Error creating tag:', error)
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error)
+      },
       { status: 500 }
     )
   }
