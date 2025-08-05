@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { writeFile, mkdir } from 'fs/promises'
-import { join } from 'path'
-import { existsSync } from 'fs'
+import { v2 as cloudinary } from 'cloudinary'
+
+// Cloudinary設定
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+})
 
 export async function POST(request: NextRequest) {
   try {
@@ -44,48 +49,66 @@ export async function POST(request: NextRequest) {
 
     console.log('✅ File validation passed')
 
-    // Vercel環境チェック
-    console.log('🌐 Environment:', process.env.VERCEL ? 'Vercel' : 'Local')
-    console.log('📂 Process CWD:', process.cwd())
+    // Cloudinary環境変数チェック
+    if (!process.env.CLOUDINARY_CLOUD_NAME || !process.env.CLOUDINARY_API_KEY || !process.env.CLOUDINARY_API_SECRET) {
+      console.log('❌ Cloudinary environment variables not configured')
+      return NextResponse.json({ error: 'Image upload service not configured' }, { status: 500 })
+    }
+
+    console.log('✅ Cloudinary configuration found')
 
     const bytes = await file.arrayBuffer()
     const buffer = Buffer.from(bytes)
     console.log('✅ File buffer created, size:', buffer.length)
 
-    // アップロードディレクトリの作成
-    const uploadDir = join(process.cwd(), 'public', 'uploads')
-    console.log('📁 Upload directory path:', uploadDir)
-    
-    if (!existsSync(uploadDir)) {
-      console.log('📁 Creating upload directory...')
-      await mkdir(uploadDir, { recursive: true })
-      console.log('✅ Upload directory created')
-    } else {
-      console.log('✅ Upload directory already exists')
+    // Cloudinaryにアップロード
+    console.log('☁️ Uploading to Cloudinary...')
+    try {
+      const uploadResult = await new Promise((resolve, reject) => {
+        cloudinary.uploader.upload_stream(
+          {
+            resource_type: 'image',
+            folder: 'crm-system', // Cloudinary内のフォルダ名
+            public_id: `${Date.now()}-${file.name.split('.')[0]}`, // 一意のID生成
+            overwrite: true,
+            transformation: [
+              { width: 1000, height: 1000, crop: 'limit' }, // 最大サイズ制限
+              { quality: 'auto' } // 自動品質最適化
+            ]
+          },
+          (error, result) => {
+            if (error) {
+              console.error('❌ Cloudinary upload error:', error)
+              reject(error)
+            } else {
+              console.log('✅ Cloudinary upload successful:', result?.public_id)
+              resolve(result)
+            }
+          }
+        ).end(buffer)
+      })
+
+      const result = uploadResult as any
+      const fileUrl = result.secure_url
+      console.log('🔗 Cloudinary URL:', fileUrl)
+
+      console.log('🎉 Upload completed successfully')
+      return NextResponse.json({ 
+        success: true, 
+        url: fileUrl,
+        fileName: result.public_id,
+        cloudinaryId: result.public_id
+      })
+    } catch (cloudinaryError) {
+      console.error('❌ Cloudinary upload failed:', cloudinaryError)
+      return NextResponse.json(
+        { 
+          error: 'Image upload failed',
+          details: cloudinaryError instanceof Error ? cloudinaryError.message : String(cloudinaryError)
+        },
+        { status: 500 }
+      )
     }
-
-    // ファイル名の生成（重複を避けるためタイムスタンプを使用）
-    const timestamp = Date.now()
-    const fileExtension = file.name.split('.').pop()
-    const fileName = `${timestamp}.${fileExtension}`
-    const filePath = join(uploadDir, fileName)
-    console.log('📝 Generated file path:', filePath)
-
-    // ファイルを保存
-    console.log('💾 Writing file to disk...')
-    await writeFile(filePath, buffer)
-    console.log('✅ File written successfully')
-
-    // アクセス可能なURLを返す
-    const fileUrl = `/uploads/${fileName}`
-    console.log('🔗 Generated file URL:', fileUrl)
-
-    console.log('🎉 Upload completed successfully')
-    return NextResponse.json({ 
-      success: true, 
-      url: fileUrl,
-      fileName: fileName
-    })
   } catch (error) {
     console.error('❌ Error uploading file:', error)
     console.error('❌ Error details:', error instanceof Error ? error.message : String(error))
