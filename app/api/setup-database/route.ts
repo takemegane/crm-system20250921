@@ -186,6 +186,23 @@ async function executeSetup() {
         console.log('ℹ️ ShippingRate.isActive column already exists or table does not exist')
       }
 
+      // AuditLogテーブルの不足カラム追加
+      try {
+        await prisma.$executeRaw`ALTER TABLE "AuditLog" ADD COLUMN "ipAddress" TEXT`
+        console.log('✅ Added AuditLog.ipAddress column')
+        migrations.push('AuditLog.ipAddress column added')
+      } catch (error) {
+        console.log('ℹ️ AuditLog.ipAddress column already exists or table does not exist')
+      }
+
+      try {
+        await prisma.$executeRaw`ALTER TABLE "AuditLog" ADD COLUMN "userAgent" TEXT`
+        console.log('✅ Added AuditLog.userAgent column')
+        migrations.push('AuditLog.userAgent column added')
+      } catch (error) {
+        console.log('ℹ️ AuditLog.userAgent column already exists or table does not exist')
+      }
+
       console.log('🎉 Database schema migration completed')
 
       return NextResponse.json(
