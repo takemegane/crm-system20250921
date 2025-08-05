@@ -104,6 +104,47 @@ export async function POST(request: NextRequest) {
         console.log('ℹ️ Category.sortOrder column already exists or table does not exist')
       }
 
+      // SystemSettings の不足フィールド追加
+      try {
+        await prisma.$executeRaw`ALTER TABLE "SystemSettings" ADD COLUMN "communityLinkText" TEXT`
+        console.log('✅ Added SystemSettings.communityLinkText column')
+        migrations.push('SystemSettings.communityLinkText column added')
+      } catch (error) {
+        console.log('ℹ️ SystemSettings.communityLinkText column already exists or table does not exist')
+      }
+
+      try {
+        await prisma.$executeRaw`ALTER TABLE "SystemSettings" ADD COLUMN "communityLinkUrl" TEXT`
+        console.log('✅ Added SystemSettings.communityLinkUrl column')
+        migrations.push('SystemSettings.communityLinkUrl column added')
+      } catch (error) {
+        console.log('ℹ️ SystemSettings.communityLinkUrl column already exists or table does not exist')
+      }
+
+      try {
+        await prisma.$executeRaw`ALTER TABLE "SystemSettings" ADD COLUMN "logoUrl" TEXT`
+        console.log('✅ Added SystemSettings.logoUrl column')
+        migrations.push('SystemSettings.logoUrl column added')
+      } catch (error) {
+        console.log('ℹ️ SystemSettings.logoUrl column already exists or table does not exist')
+      }
+
+      try {
+        await prisma.$executeRaw`ALTER TABLE "SystemSettings" ADD COLUMN "faviconUrl" TEXT`
+        console.log('✅ Added SystemSettings.faviconUrl column')
+        migrations.push('SystemSettings.faviconUrl column added')
+      } catch (error) {
+        console.log('ℹ️ SystemSettings.faviconUrl column already exists or table does not exist')
+      }
+
+      try {
+        await prisma.$executeRaw`ALTER TABLE "SystemSettings" ADD COLUMN "description" TEXT`
+        console.log('✅ Added SystemSettings.description column')
+        migrations.push('SystemSettings.description column added')
+      } catch (error) {
+        console.log('ℹ️ SystemSettings.description column already exists or table does not exist')
+      }
+
       console.log('🎉 Database schema migration completed')
 
       return NextResponse.json(
