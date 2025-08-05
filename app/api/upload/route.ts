@@ -86,6 +86,23 @@ export async function POST(request: NextRequest) {
     const buffer = Buffer.from(bytes)
     console.log('✅ File buffer created, size:', buffer.length)
 
+    // ファイル名をCloudinary対応形式にサニタイズ
+    const sanitizeFileName = (filename: string): string => {
+      return filename
+        .split('.')[0] // 拡張子を除去
+        .replace(/[^a-zA-Z0-9_-]/g, '_') // 英数字、_、-以外を_に置換
+        .replace(/_{2,}/g, '_') // 連続する_を単一の_に
+        .replace(/^_+|_+$/g, '') // 先頭・末尾の_を除去
+        .substring(0, 50) // 最大50文字に制限
+    }
+    
+    const sanitizedFileName = sanitizeFileName(file.name)
+    const publicId = `${Date.now()}-${sanitizedFileName}`
+    
+    console.log('📝 Original filename:', file.name)
+    console.log('📝 Sanitized filename:', sanitizedFileName)
+    console.log('📝 Generated public_id:', publicId)
+
     // Cloudinaryにアップロード
     console.log('☁️ Uploading to Cloudinary...')
     try {
@@ -94,7 +111,7 @@ export async function POST(request: NextRequest) {
           {
             resource_type: 'image',
             folder: 'crm-system', // Cloudinary内のフォルダ名
-            public_id: `${Date.now()}-${file.name.split('.')[0]}`, // 一意のID生成
+            public_id: publicId, // サニタイズされた一意のID
             overwrite: true,
             transformation: [
               { width: 1000, height: 1000, crop: 'limit' }, // 最大サイズ制限
