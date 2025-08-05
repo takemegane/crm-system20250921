@@ -10,14 +10,15 @@ type Tag = {
   id: string
   name: string
   color: string
-  description?: string
   createdAt: string
-  customerTags: Array<{
+  updatedAt: string
+  customerTags: {
     id: string
     customer: {
+      id: string
       name: string
     }
-  }>
+  }[]
 }
 
 export default function TagsPage() {
@@ -186,14 +187,14 @@ export default function TagsPage() {
                             {tag.name}
                           </div>
                           <div className="text-sm text-gray-500">
-                            {tag.description || 'タグ説明なし'}
+                            作成日: {new Date(tag.createdAt).toLocaleDateString()}
                           </div>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
                       <div className="text-sm text-gray-500 mr-4">
-                        使用顧客: {tag.customerTags.length}人
+                        カラー: {tag.color}
                       </div>
                       <Link href={`/dashboard/tags/${tag.id}/edit`}>
                         <Button

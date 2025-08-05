@@ -33,7 +33,18 @@ export async function GET() {
         name: true,
         color: true,
         createdAt: true,
-        updatedAt: true
+        updatedAt: true,
+        customerTags: {
+          select: {
+            id: true,
+            customer: {
+              select: {
+                id: true,
+                name: true
+              }
+            }
+          }
+        }
       },
       orderBy: {
         createdAt: 'desc',
