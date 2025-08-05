@@ -4,6 +4,19 @@ const nextConfig = {
   experimental: {
     serverComponentsExternalPackages: ['@prisma/client', 'bcryptjs'],
   },
+  // 画像最適化設定
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'res.cloudinary.com',
+        port: '',
+        pathname: '/**',
+      },
+    ],
+    // 外部画像の最適化を有効化
+    unoptimized: false,
+  },
   // Prisma用のWebpackとSWC設定
   webpack: (config, { isServer }) => {
     if (isServer) {

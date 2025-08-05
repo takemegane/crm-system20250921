@@ -93,9 +93,20 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json()
+    console.log('📝 Request body received:', JSON.stringify(body, null, 2))
+    
     const { systemName, logoUrl, faviconUrl, primaryColor, secondaryColor, backgroundColor, description, communityLinkText, communityLinkUrl, shippingFee, freeShippingThreshold } = body
+    
+    console.log('🔍 Extracted fields:')
+    console.log('  - systemName:', systemName)
+    console.log('  - logoUrl:', logoUrl)
+    console.log('  - faviconUrl:', faviconUrl)
+    console.log('  - primaryColor:', primaryColor)
+    console.log('  - secondaryColor:', secondaryColor)
+    console.log('  - backgroundColor:', backgroundColor)
 
     // 現在のアクティブな設定を無効化
+    console.log('🔄 Deactivating current settings...')
     await prisma.systemSettings.updateMany({
       where: {
         isActive: true
@@ -104,22 +115,29 @@ export async function PUT(request: NextRequest) {
         isActive: false
       }
     })
+    console.log('✅ Current settings deactivated')
 
     // 新しい設定を作成
+    console.log('🔄 Creating new settings...')
+    const settingsData = {
+      systemName: systemName || "CRM管理システム",
+      logoUrl,
+      faviconUrl,
+      primaryColor: primaryColor || "#3B82F6",
+      secondaryColor: secondaryColor || "#1F2937",
+      backgroundColor: backgroundColor || "#F8FAFC",
+      description,
+      communityLinkText,
+      communityLinkUrl,
+      isActive: true
+    }
+    
+    console.log('📝 Settings data to create:', JSON.stringify(settingsData, null, 2))
+    
     const settings = await prisma.systemSettings.create({
-      data: {
-        systemName: systemName || "CRM管理システム",
-        logoUrl,
-        faviconUrl,
-        primaryColor: primaryColor || "#3B82F6",
-        secondaryColor: secondaryColor || "#1F2937",
-        backgroundColor: backgroundColor || "#F8FAFC",
-        description,
-        communityLinkText,
-        communityLinkUrl,
-        isActive: true
-      }
+      data: settingsData
     })
+    console.log('✅ New settings created with ID:', settings.id)
 
     console.log('✅ System settings updated successfully:', settings.id)
     return NextResponse.json(settings)
