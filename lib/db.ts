@@ -83,3 +83,35 @@ export function isPrismaInitialized(): boolean {
     return false
   }
 }
+
+// Prismaクライアントキャッシュをリセットする関数
+export async function resetPrismaClient(): Promise<void> {
+  try {
+    console.log('🔄 Resetting Prisma client cache...')
+    
+    // 既存のクライアントを切断
+    if (global.__prisma) {
+      console.log('🔄 Disconnecting existing client...')
+      await global.__prisma.$disconnect()
+      console.log('✅ Existing client disconnected')
+    }
+    
+    // グローバルキャッシュをクリア
+    global.__prisma = undefined
+    console.log('✅ Global cache cleared')
+    
+    // 新しいクライアントを作成
+    const newClient = getPrismaClient()
+    if (newClient) {
+      console.log('✅ New Prisma client created')
+      // 接続テスト
+      await newClient.$connect()
+      console.log('✅ New client connected successfully')
+    } else {
+      console.log('❌ Failed to create new client')
+    }
+  } catch (error) {
+    console.error('❌ Error resetting Prisma client:', error)
+    throw error
+  }
+}
