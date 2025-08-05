@@ -52,7 +52,7 @@ model Course {
   name          String
   description   String?
   price         Float
-  duration      String?
+  duration      Int?
   isActive      Boolean   @default(true)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
