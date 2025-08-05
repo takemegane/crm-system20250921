@@ -166,10 +166,14 @@ export default function CustomerDetailPage() {
       })
 
       if (response.ok) {
+        // Clear any existing error messages
+        setError('')
+        alert('顧客を正常にアーカイブしました')
         router.push('/dashboard/customers')
         router.refresh()
       } else {
-        setError('顧客のアーカイブに失敗しました')
+        const errorData = await response.json()
+        setError(errorData.error || '顧客のアーカイブに失敗しました')
       }
     } catch (error) {
       console.error('Error archiving customer:', error)
@@ -188,14 +192,24 @@ export default function CustomerDetailPage() {
       })
 
       if (response.ok) {
+        // Clear any existing error messages
+        setError('')
+        
         // Refresh the customer data to reflect the restore
         const customerRes = await fetch(`/api/customers/${params.id}`)
         if (customerRes.ok) {
           const customerData = await customerRes.json()
           setCustomer(customerData)
+          // Show success message
+          alert('顧客を正常に復元しました')
+        } else {
+          console.error('Failed to refresh customer data after restore')
+          // Even if refresh fails, the restore was successful
+          alert('顧客の復元は成功しましたが、データの更新に問題が発生しました。ページを再読み込みしてください。')
         }
       } else {
-        setError('顧客の復元に失敗しました')
+        const errorData = await response.json()
+        setError(errorData.error || '顧客の復元に失敗しました')
       }
     } catch (error) {
       console.error('Error restoring customer:', error)
@@ -214,10 +228,14 @@ export default function CustomerDetailPage() {
       })
 
       if (response.ok) {
+        // Clear any existing error messages
+        setError('')
+        alert('顧客を正常に削除しました')
         router.push('/dashboard/customers')
         router.refresh()
       } else {
-        setError('顧客の削除に失敗しました')
+        const errorData = await response.json()
+        setError(errorData.error || '顧客の削除に失敗しました')
       }
     } catch (error) {
       console.error('Error deleting customer:', error)
