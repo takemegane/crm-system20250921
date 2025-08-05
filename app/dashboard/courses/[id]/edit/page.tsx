@@ -9,7 +9,7 @@ type Course = {
   name: string
   description?: string
   price: number
-  duration?: string
+  duration?: number
   isActive: boolean
 }
 
@@ -38,7 +38,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
             name: courseData.name,
             description: courseData.description || '',
             price: courseData.price.toString(),
-            duration: courseData.duration || '',
+            duration: courseData.duration ? courseData.duration.toString() : '',
             isActive: courseData.isActive
           })
         } else {
@@ -90,7 +90,7 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
           name: formData.name.trim(),
           description: formData.description.trim() || null,
           price,
-          duration: formData.duration.trim() || null,
+          duration: formData.duration.trim() ? parseInt(formData.duration.trim()) : null,
           isActive: formData.isActive
         }),
       })

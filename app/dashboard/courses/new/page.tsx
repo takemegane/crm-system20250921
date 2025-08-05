@@ -50,7 +50,7 @@ export default function NewCoursePage() {
           name: formData.name.trim(),
           description: formData.description.trim() || null,
           price,
-          duration: formData.duration.trim() || null,
+          duration: formData.duration.trim() ? parseInt(formData.duration.trim()) : null,
         }),
       })
 
