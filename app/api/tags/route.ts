@@ -28,17 +28,12 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     const tags = await prisma.tag.findMany({
-      include: {
-        customerTags: {
-          where: {
-            customer: {
-              isArchived: false
-            }
-          },
-          include: {
-            customer: true,
-          },
-        },
+      select: {
+        id: true,
+        name: true,
+        color: true,
+        createdAt: true,
+        updatedAt: true
       },
       orderBy: {
         createdAt: 'desc',
@@ -77,7 +72,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { name, color, description } = body
+    const { name, color } = body
 
     if (!name) {
       return NextResponse.json(
@@ -101,7 +96,6 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         color: color || '#3B82F6',
-        description: description || null,
       },
     })
 
