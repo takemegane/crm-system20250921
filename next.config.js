@@ -40,8 +40,8 @@ const nextConfig = {
           }
         ]
       },
-      // CSP設定を一時的に無効化（デバッグ用）
-      ...(false ? [
+      // CSP設定を再有効化（セキュリティ強化）
+      ...(true ? [
         {
           source: '/(.*)',
           headers: [
@@ -49,7 +49,7 @@ const nextConfig = {
               key: 'Content-Security-Policy',
               value: [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:",
+                "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: data:",
                 "style-src 'self' 'unsafe-inline'",
                 "img-src 'self' data: blob: https:",
                 "font-src 'self' data:",
