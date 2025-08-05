@@ -25,7 +25,7 @@ export async function GET() {
       }, { status: 503 })
     }
 
-    const debug = {
+    const debug: any = {
       timestamp: new Date().toISOString(),
       environment: process.env.NODE_ENV,
       database_url_exists: true,
