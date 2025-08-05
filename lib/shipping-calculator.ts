@@ -49,18 +49,27 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
     isOverFreeShippingThreshold?: boolean
   }
 }> {
+  console.log('💰 calculateShipping called with items:', cartItems.length)
+  
   const prisma = getPrismaClient()
   if (!prisma) {
+    console.log('❌ Prisma client not initialized in shipping calculator')
     throw new Error('Prisma client not initialized')
   }
+
+  console.log('✅ Prisma client ready in shipping calculator')
 
   // 商品小計計算
   const subtotalAmount = cartItems.reduce((sum, item) => {
     return sum + (item.product.price * item.quantity)
   }, 0)
+  
+  console.log('💰 Subtotal calculated:', subtotalAmount)
 
   // カートの商品とそのカテゴリを取得
   const productIds = cartItems.map(item => item.productId)
+  console.log('🔍 Fetching products:', productIds)
+  
   const products = await prisma.product.findMany({
     where: { id: { in: productIds } },
     include: {
@@ -71,6 +80,15 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
       }
     }
   })
+  
+  console.log('📦 Products fetched:', products.length)
+  console.log('📦 Products details:', products.map(p => ({
+    id: p.id,
+    name: p.name,
+    categoryId: p.categoryId,
+    hasCategory: !!p.category,
+    hasShippingRate: !!p.category?.shippingRate
+  })))
 
   // カテゴリ別小計を計算
   const categorySubtotals = new Map<string, number>()
@@ -86,9 +104,17 @@ export async function calculateShipping(cartItems: CartItem[]): Promise<{
   }
 
   // デフォルト送料設定を取得
+  console.log('🔍 Fetching default shipping rate...')
   const defaultShippingRate = await prisma.shippingRate.findFirst({
     where: { categoryId: null }
   })
+  
+  console.log('💰 Default shipping rate:', defaultShippingRate ? {
+    id: defaultShippingRate.id,
+    shippingFee: defaultShippingRate.shippingFee,
+    freeShippingThreshold: defaultShippingRate.freeShippingThreshold,
+    isActive: defaultShippingRate.isActive
+  } : 'None found')
 
   // カテゴリ別送料システム: 全体合計での送料無料ルールは適用しない
   
