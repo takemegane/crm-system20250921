@@ -5,7 +5,15 @@ import { getPrismaClient } from '@/lib/db'
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
+export async function GET() {
+  return await executeSetup()
+}
+
 export async function POST(request: NextRequest) {
+  return await executeSetup()
+}
+
+async function executeSetup() {
   try {
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
