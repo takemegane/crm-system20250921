@@ -46,45 +46,71 @@ export async function POST(request: NextRequest) {
       await prisma.$queryRaw`SELECT 1`
       console.log('Database query test successful')
 
-      // テーブル作成 (CREATE TABLE IF NOT EXISTS相当)
-      await prisma.$executeRaw`
-        CREATE TABLE IF NOT EXISTS "User" (
-          id TEXT PRIMARY KEY,
-          email TEXT UNIQUE NOT NULL,
-          name TEXT,
-          password TEXT NOT NULL,
-          role TEXT DEFAULT 'ADMIN',
-          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `
+      const migrations = []
 
-      await prisma.$executeRaw`
-        CREATE TABLE IF NOT EXISTS "Customer" (
-          id TEXT PRIMARY KEY,
-          name TEXT NOT NULL,
-          "nameKana" TEXT,
-          email TEXT UNIQUE NOT NULL,
-          phone TEXT,
-          address TEXT,
-          "birthDate" TIMESTAMP,
-          gender TEXT,
-          password TEXT,
-          "isECUser" BOOLEAN DEFAULT FALSE,
-          "joinedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          "isArchived" BOOLEAN DEFAULT FALSE,
-          "archivedAt" TIMESTAMP,
-          "createdAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        )
-      `
+      // 不足しているカラムを追加するマイグレーション
+      console.log('🔧 Checking and adding missing columns...')
 
-      console.log('Database tables created successfully')
+      // Tag.description カラム追加
+      try {
+        await prisma.$executeRaw`ALTER TABLE "Tag" ADD COLUMN description TEXT`
+        console.log('✅ Added Tag.description column')
+        migrations.push('Tag.description column added')
+      } catch (error) {
+        console.log('ℹ️ Tag.description column already exists or Tag table does not exist')
+      }
+
+      // SystemSettings.backgroundColor カラム追加
+      try {
+        await prisma.$executeRaw`ALTER TABLE "SystemSettings" ADD COLUMN "backgroundColor" TEXT DEFAULT '#F8FAFC'`
+        console.log('✅ Added SystemSettings.backgroundColor column')
+        migrations.push('SystemSettings.backgroundColor column added')
+      } catch (error) {
+        console.log('ℹ️ SystemSettings.backgroundColor column already exists or table does not exist')
+      }
+
+      // AuditLog.oldData と newData カラム追加
+      try {
+        await prisma.$executeRaw`ALTER TABLE "AuditLog" ADD COLUMN "oldData" TEXT`
+        console.log('✅ Added AuditLog.oldData column')
+        migrations.push('AuditLog.oldData column added')
+      } catch (error) {
+        console.log('ℹ️ AuditLog.oldData column already exists or table does not exist')
+      }
+
+      try {
+        await prisma.$executeRaw`ALTER TABLE "AuditLog" ADD COLUMN "newData" TEXT`
+        console.log('✅ Added AuditLog.newData column')
+        migrations.push('AuditLog.newData column added')
+      } catch (error) {
+        console.log('ℹ️ AuditLog.newData column already exists or table does not exist')
+      }
+
+      // Product.sortOrder カラム追加
+      try {
+        await prisma.$executeRaw`ALTER TABLE "Product" ADD COLUMN "sortOrder" INTEGER DEFAULT 0`
+        console.log('✅ Added Product.sortOrder column')
+        migrations.push('Product.sortOrder column added')
+      } catch (error) {
+        console.log('ℹ️ Product.sortOrder column already exists or table does not exist')
+      }
+
+      // Category.sortOrder カラム追加
+      try {
+        await prisma.$executeRaw`ALTER TABLE "Category" ADD COLUMN "sortOrder" INTEGER DEFAULT 0`
+        console.log('✅ Added Category.sortOrder column')
+        migrations.push('Category.sortOrder column added')
+      } catch (error) {
+        console.log('ℹ️ Category.sortOrder column already exists or table does not exist')
+      }
+
+      console.log('🎉 Database schema migration completed')
 
       return NextResponse.json(
         { 
-          message: 'データベースセットアップが完了しました',
-          details: '基本テーブルが作成されました'
+          message: 'データベースマイグレーションが完了しました',
+          migrations: migrations,
+          details: 'スキーマの不整合が修復されました'
         },
         { status: 200 }
       )
