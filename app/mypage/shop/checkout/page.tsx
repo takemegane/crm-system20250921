@@ -141,7 +141,7 @@ export default function CheckoutPage() {
       console.error('送料計算中にエラーが発生しました:', error)
       setShippingInfo(null)
     }
-  }, [cart.items, cart.total])
+  }, [cart])
 
   // カート更新時に送料を再計算
   useEffect(() => {
@@ -415,7 +415,7 @@ export default function CheckoutPage() {
             <h2 className="text-lg font-semibold text-gray-900 mb-4">注文内容確認</h2>
             
             <div className="space-y-4 mb-6">
-              {cart.items.map((item) => (
+              {cart?.items.map((item) => (
                 <div key={item.id} className="flex items-center space-x-4">
                   {item.product.imageUrl && (
                     <img
@@ -445,8 +445,8 @@ export default function CheckoutPage() {
             
             <div className="border-t pt-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span>小計 ({cart.itemCount}点)</span>
-                <span>{formatPrice(cart.total)}</span>
+                <span>小計 ({cart?.itemCount || 0}点)</span>
+                <span>{formatPrice(cart?.total || 0)}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>送料</span>
@@ -468,7 +468,7 @@ export default function CheckoutPage() {
                   <span>
                     {shippingInfo 
                       ? formatPrice(shippingInfo.totalAmount)
-                      : formatPrice(cart.total)
+                      : formatPrice(cart?.total || 0)
                     }
                   </span>
                 </div>

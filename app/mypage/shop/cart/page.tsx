@@ -69,6 +69,8 @@ export default function CartPage() {
   }, [session, router])
 
   const calculateShipping = useCallback(async () => {
+    if (!cart) return
+    
     console.log('🛒 送料計算関数開始, カート件数:', cart.items.length)
     
     if (cart.items.length === 0) {
@@ -120,7 +122,7 @@ export default function CartPage() {
       console.error('❌ 送料計算中にエラーが発生しました:', error)
       setShippingInfo(null)
     }
-  }, [cart.items, cart.total])
+  }, [cart])
 
   // カート更新時に送料を再計算
   useEffect(() => {

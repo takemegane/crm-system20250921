@@ -61,8 +61,7 @@ export function useCart() {
     enabled: !!session && session.user?.userType === 'customer',
     staleTime: 2 * 60 * 1000, // 2分（カートは頻繁に変更されるため短め）
     gcTime: 5 * 60 * 1000, // 5分
-    // エラー時は空のカートを表示
-    initialData: emptyCart,
+    // initialDataを削除し、ローディング状態を適切に処理
     retry: (failureCount, error) => {
       // 認証エラーや権限エラーはリトライしない
       if (error instanceof ApiError && [401, 403].includes(error.status)) {

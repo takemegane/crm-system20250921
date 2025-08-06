@@ -37,7 +37,7 @@ export default function ShopPage() {
   // TanStack Query hooks を使用
   const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({ search, category })
   const { data: categoriesData } = useCategories()
-  const { data: cart } = useCart()
+  const { data: cart, isLoading: cartLoading } = useCart()
   const { data: systemSettings } = useSystemSettings()
   const addToCartMutation = useAddToCart()
 
@@ -123,7 +123,7 @@ export default function ShopPage() {
                   <Link href="/mypage/shop/cart">
                     <Button variant="outline" className="relative">
                       カート
-                      {cart?.itemCount && cart.itemCount > 0 && (
+                      {!cartLoading && cart?.itemCount && cart.itemCount > 0 && (
                         <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                           {cart.itemCount}
                         </span>
