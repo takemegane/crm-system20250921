@@ -104,7 +104,8 @@
       "Bash(/opt/homebrew/bin/psql postgresql://postgres@localhost:5432/crm_system_dev -c \"SELECT NOW();\")",
       "Bash(/opt/homebrew/bin/psql postgresql://motoki@localhost:5432/crm_system_dev -c \"SELECT NOW();\")",
       "Bash(/opt/homebrew/bin/psql postgresql://motoki@localhost:5432/crm_system_dev -c \"SELECT name, price, \"\"categoryId\"\", \"\"courseMapping\"\" FROM \"\"Product\"\" WHERE \"\"courseMapping\"\" IS NOT NULL;\")",
-      "Bash(/opt/homebrew/bin/psql:*)"
+      "Bash(/opt/homebrew/bin/psql:*)",
+      "Bash(gh pr:*)"
     ],
     "deny": []
   }
