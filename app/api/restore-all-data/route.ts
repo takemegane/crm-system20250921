@@ -38,10 +38,10 @@ export async function POST(request: NextRequest) {
     console.log('✅ Permission check passed')
 
     const results = {
-      categories: [],
-      products: [],
-      shippingRates: [],
-      errors: []
+      categories: [] as any[],
+      products: [] as any[],
+      shippingRates: [] as any[],
+      errors: [] as string[]
     }
 
     // 1. カテゴリ復元
