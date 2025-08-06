@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useSession } from 'next-auth/react'
+import { apiClient, ApiError } from '@/utils/api-error-handler'
 
 type CartItem = {
   id: string
@@ -27,48 +28,27 @@ const emptyCart: Cart = {
 }
 
 async function fetchCart(): Promise<Cart> {
-  const response = await fetch('/api/cart')
-  if (!response.ok) {
-    throw new Error('カートの取得に失敗しました')
-  }
-  return response.json()
+  return apiClient<Cart>('/api/cart')
 }
 
 async function updateCartItem({ itemId, quantity }: { itemId: string, quantity: number }) {
-  const response = await fetch(`/api/cart/${itemId}`, {
+  return apiClient(`/api/cart/${itemId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ quantity })
   })
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.error || '更新に失敗しました')
-  }
-  return response.json()
 }
 
 async function addToCart({ productId, quantity }: { productId: string, quantity: number }) {
-  const response = await fetch('/api/cart', {
+  return apiClient('/api/cart', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ productId, quantity })
   })
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.error || 'カートに追加できませんでした')
-  }
-  return response.json()
 }
 
 async function removeCartItem(itemId: string) {
-  const response = await fetch(`/api/cart/${itemId}`, {
+  return apiClient(`/api/cart/${itemId}`, {
     method: 'DELETE'
   })
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.error || '削除に失敗しました')
-  }
-  return response.json()
 }
 
 export function useCart() {
@@ -82,7 +62,14 @@ export function useCart() {
     staleTime: 2 * 60 * 1000, // 2分（カートは頻繁に変更されるため短め）
     gcTime: 5 * 60 * 1000, // 5分
     // エラー時は空のカートを表示
-    initialData: emptyCart
+    initialData: emptyCart,
+    retry: (failureCount, error) => {
+      // 認証エラーや権限エラーはリトライしない
+      if (error instanceof ApiError && [401, 403].includes(error.status)) {
+        return false
+      }
+      return failureCount < 2
+    }
   })
 }
 
@@ -92,8 +79,14 @@ export function useUpdateCartItem() {
   return useMutation({
     mutationFn: updateCartItem,
     onSuccess: () => {
-      // カートとシステム設定を再取得
+      // カートを再取得
       queryClient.invalidateQueries({ queryKey: ['cart'] })
+    },
+    onError: (error) => {
+      console.error('Failed to update cart item:', error)
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.clear()
+      }
     }
   })
 }
@@ -106,6 +99,12 @@ export function useAddToCart() {
     onSuccess: () => {
       // カートを再取得
       queryClient.invalidateQueries({ queryKey: ['cart'] })
+    },
+    onError: (error) => {
+      console.error('Failed to add to cart:', error)
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.clear()
+      }
     }
   })
 }
@@ -118,6 +117,12 @@ export function useRemoveCartItem() {
     onSuccess: () => {
       // カートを再取得
       queryClient.invalidateQueries({ queryKey: ['cart'] })
+    },
+    onError: (error) => {
+      console.error('Failed to remove cart item:', error)
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.clear()
+      }
     }
   })
 }

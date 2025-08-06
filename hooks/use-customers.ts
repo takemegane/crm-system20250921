@@ -1,6 +1,7 @@
 'use client'
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { apiClient, ApiError } from '@/utils/api-error-handler'
 
 type Customer = {
   id: string
@@ -42,15 +43,18 @@ export function useCustomers(params?: CustomersParams) {
     queryKey: ['customers', params],
     queryFn: async () => {
       const url = `/api/customers${urlParams ? `?${urlParams}` : ''}`
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error('Failed to fetch customers')
-      }
-      const data = await response.json()
-      return data.customers || data
+      const data = await apiClient<{ customers?: Customer[] } | Customer[]>(url)
+      return Array.isArray(data) ? data : data.customers || []
     },
     staleTime: 5 * 60 * 1000, // 5分
-    gcTime: 10 * 60 * 1000, // 10分
+    gcTime: 10 * 60 * 1000, // 10分,
+    retry: (failureCount, error) => {
+      // 認証エラーや権限エラーはリトライしない
+      if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
+        return false
+      }
+      return failureCount < 2
+    }
   })
 }
 
@@ -58,15 +62,18 @@ export function useCustomer(id: string) {
   return useQuery({
     queryKey: ['customer', id],
     queryFn: async () => {
-      const response = await fetch(`/api/customers/${id}`)
-      if (!response.ok) {
-        throw new Error('Failed to fetch customer')
-      }
-      return response.json()
+      return apiClient<Customer>(`/api/customers/${id}`)
     },
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
+    retry: (failureCount, error) => {
+      // 認証エラーや権限エラー、404エラーはリトライしない
+      if (error instanceof ApiError && [401, 403, 404].includes(error.status)) {
+        return false
+      }
+      return failureCount < 2
+    }
   })
 }
 
@@ -75,22 +82,22 @@ export function useCreateCustomer() {
   
   return useMutation({
     mutationFn: async (customerData: any) => {
-      const response = await fetch('/api/customers', {
+      return apiClient<Customer>('/api/customers', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(customerData),
       })
-      if (!response.ok) {
-        throw new Error('Failed to create customer')
-      }
-      return response.json()
     },
     onSuccess: () => {
       // 顧客一覧のキャッシュを無効化
       queryClient.invalidateQueries({ queryKey: ['customers'] })
     },
+    onError: (error) => {
+      console.error('Failed to create customer:', error)
+      // 認証エラーの場合はキャッシュをクリア
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.clear()
+      }
+    }
   })
 }
 
@@ -99,23 +106,22 @@ export function useUpdateCustomer() {
   
   return useMutation({
     mutationFn: async ({ id, ...customerData }: { id: string } & any) => {
-      const response = await fetch(`/api/customers/${id}`, {
+      return apiClient<Customer>(`/api/customers/${id}`, {
         method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify(customerData),
       })
-      if (!response.ok) {
-        throw new Error('Failed to update customer')
-      }
-      return response.json()
     },
     onSuccess: (data, variables) => {
       // 特定顧客とリストのキャッシュを無効化
       queryClient.invalidateQueries({ queryKey: ['customer', variables.id] })
       queryClient.invalidateQueries({ queryKey: ['customers'] })
     },
+    onError: (error) => {
+      console.error('Failed to update customer:', error)
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.clear()
+      }
+    }
   })
 }
 
@@ -124,17 +130,19 @@ export function useDeleteCustomer() {
   
   return useMutation({
     mutationFn: async (id: string) => {
-      const response = await fetch(`/api/customers/${id}`, {
+      return apiClient(`/api/customers/${id}`, {
         method: 'DELETE',
       })
-      if (!response.ok) {
-        throw new Error('Failed to delete customer')
-      }
-      return response.json()
     },
     onSuccess: () => {
       // 顧客一覧のキャッシュを無効化
       queryClient.invalidateQueries({ queryKey: ['customers'] })
     },
+    onError: (error) => {
+      console.error('Failed to delete customer:', error)
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.clear()
+      }
+    }
   })
 }
