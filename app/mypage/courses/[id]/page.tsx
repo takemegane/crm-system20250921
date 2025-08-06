@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useSession } from 'next-auth/react'
 
@@ -36,19 +36,7 @@ export default function CourseDetailsPage() {
 
   const courseId = params.id as string
 
-  useEffect(() => {
-    if (status === 'loading') return
-
-    if (!session || session.user?.userType !== 'customer') {
-      router.push('/login')
-      return
-    }
-
-    fetchCourseData()
-    fetchSystemSettings()
-  }, [session, status, courseId, router])
-
-  const fetchCourseData = async () => {
+  const fetchCourseData = useCallback(async () => {
     try {
       console.log('🎓 Fetching course data for:', courseId)
       const response = await fetch(`/api/courses/${courseId}/customer-details`)
@@ -69,9 +57,9 @@ export default function CourseDetailsPage() {
       console.error('❌ Error fetching course data:', error)
       setError(error instanceof Error ? error.message : 'エラーが発生しました')
     }
-  }
+  }, [courseId])
 
-  const fetchSystemSettings = async () => {
+  const fetchSystemSettings = useCallback(async () => {
     try {
       const response = await fetch('/api/system-settings')
       if (response.ok) {
@@ -86,7 +74,19 @@ export default function CourseDetailsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    if (status === 'loading') return
+
+    if (!session || session.user?.userType !== 'customer') {
+      router.push('/login')
+      return
+    }
+
+    fetchCourseData()
+    fetchSystemSettings()
+  }, [session, status, fetchCourseData, fetchSystemSettings, router])
 
   if (loading) {
     return (
