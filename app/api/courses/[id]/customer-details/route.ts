@@ -31,11 +31,25 @@ export async function GET(
 
     // 認証チェック
     const session = await getServerSession(authOptions)
-    console.log('👤 Session user:', session?.user?.email || 'No session', 'userType:', session?.user?.userType)
+    console.log('👤 Session info:', {
+      hasSession: !!session,
+      email: session?.user?.email,
+      userType: session?.user?.userType,
+      role: session?.user?.role,
+      id: session?.user?.id
+    })
     
-    if (!session || session.user.userType !== 'customer') {
-      console.log('❌ Permission denied - not a customer')
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
+    if (!session) {
+      console.log('❌ No session found')
+      return NextResponse.json({ error: 'Unauthorized - no session' }, { status: 403 })
+    }
+    
+    // 顧客チェック（roleがCUSTOMERまたはuserTypeがcustomerの場合を許可）
+    const isCustomer = session.user?.userType === 'customer' || session.user?.role === 'CUSTOMER'
+    
+    if (!isCustomer) {
+      console.log('❌ Permission denied - not a customer. userType:', session.user?.userType, 'role:', session.user?.role)
+      return NextResponse.json({ error: 'Unauthorized - not a customer' }, { status: 403 })
     }
 
     console.log('✅ Customer authentication passed')
@@ -69,9 +83,17 @@ export async function GET(
     console.log('✅ Course found:', course.name)
 
     // 顧客のコース登録状況を確認
+    const customerId = session.user?.id
+    if (!customerId) {
+      console.log('❌ No customer ID in session')
+      return NextResponse.json({ error: 'Customer ID not found' }, { status: 403 })
+    }
+    
+    console.log('🔍 Checking enrollment for customerId:', customerId, 'courseId:', params.id)
+    
     const enrollment = await prisma.enrollment.findFirst({
       where: {
-        customerId: session.user.id,
+        customerId: customerId,
         courseId: params.id
       },
       select: {
