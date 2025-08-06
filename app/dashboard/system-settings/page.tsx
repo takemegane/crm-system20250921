@@ -358,36 +358,44 @@ export default function SystemSettingsPage() {
         </div>
 
         <div className="bg-white shadow rounded-lg p-6">
-          <h2 className="text-lg font-medium text-gray-900 mb-6">コミュニティリンク設定</h2>
+          <h2 className="text-lg font-medium text-gray-900 mb-6">デフォルトコミュニティリンク設定</h2>
+          
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-blue-800">
+              <strong>📌 この設定について：</strong><br />
+              ここで設定したリンクは、<strong>コース専用のコミュニティリンクが設定されていない場合のデフォルト</strong>として使用されます。
+              各コースに個別のコミュニティリンクを設定したい場合は、コース管理 → 各コースの編集画面から設定してください。
+            </p>
+          </div>
           
           <div className="grid grid-cols-1 gap-6">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                リンクテキスト
+                デフォルトリンクテキスト
               </label>
               <Input
                 type="text"
                 value={formData.communityLinkText}
                 onChange={(e) => handleInputChange('communityLinkText', e.target.value)}
-                placeholder="コミュニティに参加する（空の場合は「準備中」を表示）"
+                placeholder="例：コミュニティに参加する"
               />
               <p className="text-xs text-gray-500 mt-1">
-                顧客のコミュニティページで表示されるボタンのテキストです
+                コース専用リンクが未設定の場合に表示されるボタンのテキストです
               </p>
             </div>
 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                リンクURL
+                デフォルトリンクURL
               </label>
               <Input
                 type="url"
                 value={formData.communityLinkUrl}
                 onChange={(e) => handleInputChange('communityLinkUrl', e.target.value)}
-                placeholder="https://example.com/community"
+                placeholder="例：https://discord.gg/example"
               />
               <p className="text-xs text-gray-500 mt-1">
-                コミュニティページのURLを入力してください（空の場合はボタンが無効になります）
+                全コース共通のコミュニティページがある場合に設定してください（任意）
               </p>
             </div>
           </div>
