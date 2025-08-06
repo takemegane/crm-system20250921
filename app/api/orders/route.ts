@@ -250,8 +250,7 @@ export async function POST(request: NextRequest) {
         totalAmount,
         shippingAddress,
         recipientName,
-        recipientPhone: contactPhone, // contactPhoneをrecipientPhoneにマッピング
-        contactPhone,
+        contactPhone, // Prismaスキーマに合わせてcontactPhoneのみ使用
         notes,
         status: 'PENDING'
       }
