@@ -37,6 +37,7 @@ type SystemSettings = {
   primaryColor?: string
   secondaryColor?: string
   backgroundColor?: string
+  logoUrl?: string
 }
 
 export default function OrdersPage() {
