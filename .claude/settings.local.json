@@ -96,7 +96,8 @@
       "Bash(./verify_all_data.sh:*)",
       "Bash(git add:*)",
       "Bash(git commit:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebFetch(domain:crm-system-seven-steel.vercel.app)"
     ],
     "deny": []
   }

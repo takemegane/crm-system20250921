@@ -50,35 +50,40 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    // デフォルトカテゴリデータ
+    // デフォルトカテゴリデータ（categoryType含む）
     const defaultCategories = [
       {
         name: '書籍・教材',
         description: '参考書、テキスト、学習用教材など',
+        categoryType: 'PHYSICAL',
         sortOrder: 1,
         isActive: true
       },
       {
         name: 'デジタルコンテンツ',
         description: 'オンライン教材、動画講座、PDFファイルなど',
+        categoryType: 'DIGITAL',
         sortOrder: 2,
         isActive: true
       },
       {
         name: '学習用品',
         description: '文房具、ノート、計算機などの学習用具',
+        categoryType: 'PHYSICAL',
         sortOrder: 3,
         isActive: true
       },
       {
         name: '認定証・修了証',
         description: 'コース修了証明書、認定証などの発行物',
+        categoryType: 'PHYSICAL',
         sortOrder: 4,
         isActive: true
       },
       {
         name: 'その他',
         description: 'その他の商品・サービス',
+        categoryType: 'PHYSICAL',
         sortOrder: 5,
         isActive: true
       }
