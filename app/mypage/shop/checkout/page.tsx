@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/button'
 import { useSystemSettings } from '@/hooks/use-system-settings'
 import { useCustomerProfile } from '@/hooks/use-customer-profile'
 import { useCart } from '@/hooks/use-cart'
+import { useQueryClient } from '@tanstack/react-query'
+import { useCrossTabSync } from '@/hooks/use-cross-tab-sync'
 
 type CartItem = {
   id: string
@@ -39,6 +41,8 @@ type SystemSettings = {
 export default function CheckoutPage() {
   const { data: session } = useSession()
   const router = useRouter()
+  const queryClient = useQueryClient()
+  const { invalidateAcrossTabs } = useCrossTabSync()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
@@ -170,6 +174,11 @@ export default function CheckoutPage() {
       }
 
       const order = await response.json()
+      
+      // カートキャッシュを無効化（現在のタブ + 全タブ同期）
+      console.log('🛒 注文作成成功 - カートキャッシュを無効化')
+      queryClient.invalidateQueries({ queryKey: ['cart'] })
+      invalidateAcrossTabs(['cart'])
       
       // 購入完了ポップアップ表示
       alert('🎉 購入が完了しました！\n\nありがとうございます！\n注文詳細画面に移動します。')
