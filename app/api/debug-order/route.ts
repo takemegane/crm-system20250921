@@ -167,12 +167,67 @@ export async function POST(request: NextRequest) {
       }, { status: 500 })
     }
 
+    // ステップ9: Orderテーブル構造確認
+    console.log('🔄 Step 9: Checking Order table structure...')
+    
+    try {
+      // PostgreSQLでテーブル構造を確認
+      const orderTableInfo = await prisma.$queryRaw`
+        SELECT column_name, data_type, is_nullable, column_default
+        FROM information_schema.columns 
+        WHERE table_name = 'Order' 
+        ORDER BY ordinal_position;
+      `
+      console.log('📊 Order table structure:', orderTableInfo)
+    } catch (structureError) {
+      console.log('❌ Failed to get table structure:', structureError)
+    }
+
+    // ステップ10: 実際の注文作成テスト
+    console.log('🔄 Step 10: Testing order creation...')
+    
+    try {
+      const testOrderData = {
+        customerId: session.user.id,
+        orderNumber: `TEST-ORDER-${Date.now()}`,
+        subtotalAmount: 100.0,
+        shippingFee: 500.0,
+        totalAmount: 600.0,
+        shippingAddress: 'テスト住所',
+        recipientName: 'テスト宛名',
+        contactPhone: '090-1234-5678',
+        notes: 'テスト注文',
+        status: 'PENDING'
+      }
+      
+      console.log('📝 Test order data:', testOrderData)
+      
+      const testOrder = await prisma.order.create({
+        data: testOrderData
+      })
+      console.log('✅ Test order created:', testOrder.id)
+      
+      // テスト注文を削除
+      await prisma.order.delete({
+        where: { id: testOrder.id }
+      })
+      console.log('🗑️ Test order deleted')
+    } catch (orderCreateError) {
+      console.log('❌ Step 10 Failed: Order creation error', orderCreateError)
+      return NextResponse.json({ 
+        error: 'Step 10 Failed: Order creation', 
+        details: orderCreateError instanceof Error ? orderCreateError.message : String(orderCreateError),
+        step: 10,
+        errorStack: orderCreateError instanceof Error ? orderCreateError.stack : undefined
+      }, { status: 500 })
+    }
+
     // All steps passed
     console.log('🎉 All debug steps passed!')
     return NextResponse.json({
       success: true,
       message: 'All debug steps passed successfully',
-      stepsCompleted: 8,
+      stepsCompleted: 10,
       timestamp: new Date().toISOString()
     })
 
