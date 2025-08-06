@@ -210,9 +210,6 @@ export default function ShopPage() {
                   <span className="text-sm text-gray-600">
                     こんにちは、{session.user.name}さん
                   </span>
-                  <Link href="/mypage">
-                    <Button variant="outline">🏠 マイページ</Button>
-                  </Link>
                   <Link href="/mypage/shop/cart">
                     <Button variant="outline" className="relative">
                       カート
@@ -228,6 +225,9 @@ export default function ShopPage() {
                   </Link>
                   <Link href="/mypage/profile">
                     <Button variant="outline">アカウント</Button>
+                  </Link>
+                  <Link href="/mypage">
+                    <Button variant="outline">🏠 マイページ</Button>
                   </Link>
                   <Button 
                     variant="outline" 

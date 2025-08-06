@@ -214,13 +214,11 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
-                <Link href="/mypage">
-                  <Button variant="outline">🏠 マイページ</Button>
-                </Link>
-                <Link href="/mypage/shop" className="ml-2">
-                  <Button variant="outline">← ショップ</Button>
-                </Link>
-                <h1 className="text-2xl font-bold text-gray-900 ml-4">注文詳細</h1>
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center mr-3 shadow-lg"
+                     style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)' }}>
+                  <span className="text-white font-bold text-lg">S</span>
+                </div>
+                <h1 className="text-2xl font-bold text-gray-900">システム名</h1>
               </div>
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600">
@@ -272,25 +270,27 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/mypage">
-                <Button variant="outline">🏠 マイページ</Button>
-              </Link>
-              <Link href="/mypage/shop/orders" className="ml-2">
-                <Button variant="outline">← 注文履歴</Button>
-              </Link>
-              <h1 className="text-2xl font-bold text-gray-900 ml-4">
-                {isCompleted ? '注文完了' : '注文詳細'}
-              </h1>
+              <div className="h-10 w-10 rounded-xl flex items-center justify-center mr-3 shadow-lg"
+                   style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)' }}>
+                <span className="text-white font-bold text-lg">S</span>
+              </div>
+              <h1 className="text-2xl font-bold text-gray-900">システム名</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
                 こんにちは、{session?.user?.name}さん
               </span>
-              <Link href="/mypage/shop/cart">
-                <Button variant="outline">カート</Button>
+              <Link href="/mypage/shop">
+                <Button variant="outline">ショップ</Button>
+              </Link>
+              <Link href="/mypage/shop/orders">
+                <Button variant="outline">注文履歴</Button>
               </Link>
               <Link href="/mypage/profile">
                 <Button variant="outline">アカウント</Button>
+              </Link>
+              <Link href="/mypage">
+                <Button variant="outline">🏠 マイページ</Button>
               </Link>
               <Button 
                 variant="outline" 
