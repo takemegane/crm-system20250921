@@ -101,6 +101,35 @@ export async function POST(request: NextRequest) {
       }
 
       try {
+        // 配送関連カラム追加
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "shippingAddress" TEXT;
+        `
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "recipientName" TEXT;
+        `
+        console.log('✅ Shipping-related columns added to Order table')
+      } catch (error) {
+        console.log('ℹ️ Shipping-related columns already exist or failed:', error)
+      }
+
+      try {
+        // 注文詳細カラム追加
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "notes" TEXT;
+        `
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "status" TEXT DEFAULT 'PENDING';
+        `
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "orderNumber" TEXT;
+        `
+        console.log('✅ Order details columns added to Order table')
+      } catch (error) {
+        console.log('ℹ️ Order details columns already exist or failed:', error)
+      }
+
+      try {
         // キャンセル関連カラム追加
         await prisma.$executeRaw`
           ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "cancelledAt" TIMESTAMP(3);
