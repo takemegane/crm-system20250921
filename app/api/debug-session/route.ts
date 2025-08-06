@@ -20,8 +20,7 @@ export async function GET(request: NextRequest) {
         email: session.user?.email,
         name: session.user?.name,
         role: session.user?.role,
-        userType: session.user?.userType,
-        image: session.user?.image
+        userType: session.user?.userType
       },
       expires: session.expires
     })
