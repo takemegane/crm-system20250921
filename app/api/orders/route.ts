@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
         subtotalAmount,
         shippingFee,
         totalAmount,
-        shippingAddress,
+        recipientAddress: shippingAddress, // データベース実構造に合わせてrecipientAddress使用
         recipientName,
         contactPhone, // Prismaスキーマに合わせてcontactPhoneのみ使用
         notes,
