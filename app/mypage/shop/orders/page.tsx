@@ -182,7 +182,10 @@ export default function OrdersPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Link href="/mypage/shop">
+              <Link href="/mypage">
+                <Button variant="outline">🏠 マイページ</Button>
+              </Link>
+              <Link href="/mypage/shop" className="ml-2">
                 <Button variant="outline">← ショップ</Button>
               </Link>
               <h1 className="text-2xl font-bold text-gray-900 ml-4">注文履歴</h1>

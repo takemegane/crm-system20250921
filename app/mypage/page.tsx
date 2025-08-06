@@ -184,53 +184,8 @@ export default function MyPage() {
                 </p>
               </div>
 
-              {/* Course Status */}
-              {hasEnrollments ? (
-                <div className="mb-6">
-                  <h4 className="text-lg font-medium text-gray-900 mb-4">受講中のコース</h4>
-                  <div className="grid gap-4">
-                    {enrollments.map((enrollment) => (
-                      <div key={enrollment.id} className="border border-gray-200 rounded-lg p-4">
-                        <h5 className="font-semibold text-gray-900">{enrollment.course.name}</h5>
-                        {enrollment.course.description && (
-                          <p className="text-sm text-gray-600 mt-1">{enrollment.course.description}</p>
-                        )}
-                        <div className="flex justify-between items-center mt-3">
-                          <div>
-                            <span className="text-sm text-gray-500">
-                              受講開始: {new Date(enrollment.enrolledAt).toLocaleDateString('ja-JP')}
-                            </span>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <span className="inline-flex px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
-                              受講中
-                            </span>
-                            <Link
-                              href={`/mypage/courses/${enrollment.courseId}`}
-                              className="inline-flex px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
-                            >
-                              コース画面
-                            </Link>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <div className="text-gray-500 mb-4">
-                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-                    </svg>
-                  </div>
-                  <h4 className="text-lg font-medium text-gray-900 mb-2">コースが見つかりません</h4>
-                  <p className="text-gray-600">現在受講中のコースはありません。</p>
-                </div>
-              )}
-
               {/* Quick Actions */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
                 <Link href="/mypage/profile">
                   <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer">
                     <h5 className="font-semibold text-gray-900 mb-2">アカウント設定</h5>
@@ -243,7 +198,33 @@ export default function MyPage() {
                     <p className="text-sm text-gray-600">商品の閲覧・購入</p>
                   </div>
                 </Link>
+                {hasEnrollments && (
+                  <Link href="/mypage/community">
+                    <div className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors cursor-pointer">
+                      <h5 className="font-semibold text-gray-900 mb-2">コミュニティ</h5>
+                      <p className="text-sm text-gray-600">受講中コースのコミュニティ</p>
+                    </div>
+                  </Link>
+                )}
               </div>
+
+              {/* Course Status */}
+              {!hasEnrollments && (
+                <div className="text-center py-8">
+                  <div className="text-gray-500 mb-4">
+                    <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.746 0 3.332.477 4.5 1.253v13C19.832 18.477 18.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                    </svg>
+                  </div>
+                  <h4 className="text-lg font-medium text-gray-900 mb-2">コースが見つかりません</h4>
+                  <p className="text-gray-600">現在受講中のコースはありません。</p>
+                  <Link href="/mypage/shop">
+                    <Button className="mt-4">
+                      ショップでコースを見る
+                    </Button>
+                  </Link>
+                </div>
+              )}
             </div>
           </div>
         </div>
