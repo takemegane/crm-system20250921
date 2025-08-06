@@ -108,9 +108,22 @@ export async function POST(request: NextRequest) {
         await prisma.$executeRaw`
           ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "recipientName" TEXT;
         `
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "recipientPhone" TEXT;
+        `
         console.log('✅ Shipping-related columns added to Order table')
       } catch (error) {
         console.log('ℹ️ Shipping-related columns already exist or failed:', error)
+      }
+
+      try {
+        // 既存のrecipientPhoneカラムのNOT NULL制約を削除（存在する場合）
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ALTER COLUMN "recipientPhone" DROP NOT NULL;
+        `
+        console.log('✅ recipientPhone NULL constraint removed')
+      } catch (error) {
+        console.log('ℹ️ recipientPhone NULL constraint removal failed or not needed:', error)
       }
 
       try {

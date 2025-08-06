@@ -250,6 +250,7 @@ export async function POST(request: NextRequest) {
         totalAmount,
         shippingAddress,
         recipientName,
+        recipientPhone: contactPhone, // contactPhoneをrecipientPhoneにマッピング
         contactPhone,
         notes,
         status: 'PENDING'
