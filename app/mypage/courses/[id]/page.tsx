@@ -11,6 +11,8 @@ interface CourseDetails {
   price: number
   duration: number
   isActive: boolean
+  communityLinkText?: string
+  communityLinkUrl?: string
   enrollment?: {
     id: string
     status: string
@@ -281,20 +283,20 @@ export default function CourseDetailsPage() {
 
           {/* サイドバー */}
           <div className="space-y-6">
-            {/* コミュニティリンク */}
-            {systemSettings.communityLinkUrl && (
+            {/* コミュニティリンク（コース専用またはシステム設定） */}
+            {(course.communityLinkUrl || systemSettings.communityLinkUrl) && (
               <div className="bg-white rounded-lg shadow-lg p-6">
                 <h3 className="font-semibold text-gray-800 mb-4 flex items-center">
                   <span className="mr-2">💬</span>
-                  コミュニティ
+                  {course.communityLinkUrl ? 'コース専用コミュニティ' : 'コミュニティ'}
                 </h3>
                 <a
-                  href={systemSettings.communityLinkUrl}
+                  href={course.communityLinkUrl || systemSettings.communityLinkUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block w-full bg-blue-600 text-white py-3 px-4 rounded text-center hover:bg-blue-700 transition-colors"
                 >
-                  {systemSettings.communityLinkText || 'コミュニティに参加'}
+                  {course.communityLinkText || systemSettings.communityLinkText || 'コミュニティに参加'}
                 </a>
                 <p className="text-xs text-gray-500 mt-2 text-center">
                   ※外部サイトが開きます

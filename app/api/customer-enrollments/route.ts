@@ -40,7 +40,9 @@ export async function GET() {
             name: true,
             description: true,
             price: true,
-            isActive: true
+            isActive: true,
+            communityLinkText: true,
+            communityLinkUrl: true
           }
         }
       },

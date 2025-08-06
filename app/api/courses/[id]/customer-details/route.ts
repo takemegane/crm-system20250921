@@ -52,7 +52,9 @@ export async function GET(
         description: true,
         price: true,
         duration: true,
-        isActive: true
+        isActive: true,
+        communityLinkText: true,
+        communityLinkUrl: true
       }
     })
 

@@ -83,7 +83,7 @@ export async function PUT(
     }
 
     const body = await request.json()
-    const { name, description, price, duration, isActive } = body
+    const { name, description, price, duration, isActive, communityLinkText, communityLinkUrl } = body
 
     if (!name || price === undefined) {
       return NextResponse.json(
@@ -107,6 +107,8 @@ export async function PUT(
         price,
         duration: duration || null,
         isActive: isActive !== undefined ? isActive : true,
+        communityLinkText: communityLinkText || null,
+        communityLinkUrl: communityLinkUrl || null,
       },
     })
 

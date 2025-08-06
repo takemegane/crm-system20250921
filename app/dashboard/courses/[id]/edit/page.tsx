@@ -11,6 +11,8 @@ type Course = {
   price: number
   duration?: number
   isActive: boolean
+  communityLinkText?: string
+  communityLinkUrl?: string
 }
 
 export default function EditCoursePage({ params }: { params: { id: string } }) {
@@ -21,7 +23,9 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
     description: '',
     price: '',
     duration: '',
-    isActive: true
+    isActive: true,
+    communityLinkText: '',
+    communityLinkUrl: ''
   })
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
@@ -39,7 +43,9 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
             description: courseData.description || '',
             price: courseData.price.toString(),
             duration: courseData.duration ? courseData.duration.toString() : '',
-            isActive: courseData.isActive
+            isActive: courseData.isActive,
+            communityLinkText: courseData.communityLinkText || '',
+            communityLinkUrl: courseData.communityLinkUrl || ''
           })
         } else {
           setError('コースが見つかりません')
@@ -91,7 +97,9 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
           description: formData.description.trim() || null,
           price,
           duration: formData.duration.trim() ? parseInt(formData.duration.trim()) : null,
-          isActive: formData.isActive
+          isActive: formData.isActive,
+          communityLinkText: formData.communityLinkText.trim() || null,
+          communityLinkUrl: formData.communityLinkUrl.trim() || null
         }),
       })
 
@@ -201,6 +209,45 @@ export default function EditCoursePage({ params }: { params: { id: string } }) {
               onChange={handleChange}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
             />
+          </div>
+
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">コース専用コミュニティ設定</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              このコース専用のコミュニティリンクを設定できます。設定すると、コース受講者にコース専用のリンクが表示されます。
+            </p>
+            
+            <div className="space-y-4">
+              <div>
+                <label htmlFor="communityLinkText" className="block text-sm font-medium text-gray-700 mb-2">
+                  リンクテキスト
+                </label>
+                <input
+                  type="text"
+                  id="communityLinkText"
+                  name="communityLinkText"
+                  value={formData.communityLinkText}
+                  onChange={handleChange}
+                  placeholder="例：ベーシックコース専用Discord"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="communityLinkUrl" className="block text-sm font-medium text-gray-700 mb-2">
+                  リンクURL
+                </label>
+                <input
+                  type="url"
+                  id="communityLinkUrl"
+                  name="communityLinkUrl"
+                  value={formData.communityLinkUrl}
+                  onChange={handleChange}
+                  placeholder="例：https://discord.gg/..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                />
+              </div>
+            </div>
           </div>
 
           <div>

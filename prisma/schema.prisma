@@ -54,6 +54,8 @@ model Course {
   price         Float
   duration      Int?
   isActive      Boolean   @default(true)
+  communityLinkText String?  // コース専用コミュニティリンクのテキスト
+  communityLinkUrl  String?  // コース専用コミュニティリンクのURL
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   

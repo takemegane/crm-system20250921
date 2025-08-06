@@ -16,6 +16,8 @@ interface Enrollment {
     name: string
     description?: string
     price: number
+    communityLinkText?: string
+    communityLinkUrl?: string
   }
 }
 
@@ -162,7 +164,17 @@ export default function CommunityPage() {
                         </p>
                       </div>
                       <div className="ml-4">
-                        {systemSettings?.communityLinkText && systemSettings?.communityLinkUrl ? (
+                        {/* コース専用リンクがあればそれを、なければシステム設定のリンクを使用 */}
+                        {enrollment.course.communityLinkUrl ? (
+                          <a
+                            href={enrollment.course.communityLinkUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+                          >
+                            {enrollment.course.communityLinkText || 'コース専用コミュニティ'}
+                          </a>
+                        ) : systemSettings?.communityLinkText && systemSettings?.communityLinkUrl ? (
                           <a
                             href={systemSettings.communityLinkUrl}
                             target="_blank"
@@ -182,7 +194,9 @@ export default function CommunityPage() {
                       </div>
                     </div>
                     <div className="mt-3 text-xs text-gray-500">
-                      {systemSettings?.communityLinkText && systemSettings?.communityLinkUrl ? (
+                      {enrollment.course.communityLinkUrl ? (
+                        <p>💡 このコース専用のコミュニティページにアクセスできます。</p>
+                      ) : systemSettings?.communityLinkText && systemSettings?.communityLinkUrl ? (
                         <p>💡 コミュニティページにアクセスできます。</p>
                       ) : (
                         <p>💡 コミュニティ機能は現在準備中です。近日中に公開予定です。</p>

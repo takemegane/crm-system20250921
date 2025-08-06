@@ -14,6 +14,8 @@ type Course = {
   duration?: string
   isActive: boolean
   createdAt: string
+  communityLinkText?: string
+  communityLinkUrl?: string
   enrollments: Array<{
     id: string
     customer: {
@@ -201,6 +203,11 @@ export default function CoursesPage() {
                           <div className="text-sm text-gray-500 mt-1">
                             価格: ¥{course.price.toLocaleString()} 
                             {course.duration && ` | 期間: ${course.duration}`}
+                            {course.communityLinkUrl && (
+                              <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800">
+                                専用コミュニティあり
+                              </span>
+                            )}
                           </div>
                         </div>
                       </div>
