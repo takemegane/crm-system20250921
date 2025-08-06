@@ -6,6 +6,10 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { useProducts } from '@/hooks/use-products'
+import { useCategories } from '@/hooks/use-categories'
+import { useCart, useAddToCart } from '@/hooks/use-cart'
+import { useSystemSettings } from '@/hooks/use-system-settings'
 
 type Product = {
   id: string
@@ -23,81 +27,21 @@ type Product = {
   isActive: boolean
 }
 
-type CartItem = {
-  items: any[]
-  total: number
-  itemCount: number
-}
-
-type SystemSettings = {
-  systemName: string
-  primaryColor?: string
-  secondaryColor?: string
-  backgroundColor?: string
-  logoUrl?: string
-}
-
 export default function ShopPage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<{id: string, name: string}[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState('')
   const [search, setSearch] = useState('')
   const [category, setCategory] = useState('')
-  const [cart, setCart] = useState<CartItem>({ items: [], total: 0, itemCount: 0 })
   const [addingToCart, setAddingToCart] = useState<string | null>(null)
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'ECショップ' })
+  
+  // TanStack Query hooks を使用
+  const { data: productsData, isLoading: productsLoading, error: productsError } = useProducts({ search, category })
+  const { data: categoriesData } = useCategories()
+  const { data: cart } = useCart()
+  const { data: systemSettings } = useSystemSettings()
+  const addToCartMutation = useAddToCart()
 
-  const fetchProducts = useCallback(async () => {
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({
-        ...(search && { search }),
-        ...(category && { category })
-      })
-
-      const response = await fetch(`/api/products?${params}`)
-      
-      if (!response.ok) {
-        throw new Error('商品の取得に失敗しました')
-      }
-
-      const data = await response.json()
-      setProducts(data.products)
-    } catch (error) {
-      console.error('Error fetching products:', error)
-      setError(error instanceof Error ? error.message : '商品の取得に失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }, [search, category])
-
-  const fetchCart = useCallback(async () => {
-    try {
-      const response = await fetch('/api/cart')
-      
-      if (response.ok) {
-        const data = await response.json()
-        setCart(data)
-      }
-    } catch (error) {
-      console.error('Error fetching cart:', error)
-    }
-  }, [])
-
-  const fetchCategories = useCallback(async () => {
-    try {
-      const response = await fetch('/api/categories')
-      if (response.ok) {
-        const data = await response.json()
-        setCategories(data.categories || [])
-      }
-    } catch (error) {
-      console.error('Error fetching categories:', error)
-    }
-  }, [])
+  // キャッシュシステムを使用するため、手動のfetch関数は不要
 
   useEffect(() => {
     if (session === undefined) {
@@ -105,36 +49,15 @@ export default function ShopPage() {
       return
     }
     
-    if (session?.user?.userType === 'customer') {
-      fetchProducts()
-      fetchCategories()
-      fetchCart()
-    } else if (session?.user?.userType === 'admin') {
+    if (session?.user?.userType === 'admin') {
       router.push('/dashboard')
     } else if (session === null) {
       // セッションが明示的にnullの場合のみログインページにリダイレクト
       router.push('/login')
     }
-  }, [session, router, fetchProducts, fetchCategories, fetchCart])
+  }, [session, router])
 
-
-  // システム設定を取得
-  useEffect(() => {
-    const fetchSystemSettings = async () => {
-      try {
-        const response = await fetch('/api/system-settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setSystemSettings(settings)
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error)
-      }
-    }
-    fetchSystemSettings()
-  }, [])
-
-  const addToCart = async (productId: string) => {
+  const handleAddToCart = async (productId: string) => {
     if (!session?.user || session.user.userType !== 'customer') {
       alert('カートに追加するにはログインが必要です')
       return
@@ -142,23 +65,10 @@ export default function ShopPage() {
 
     setAddingToCart(productId)
     try {
-      const response = await fetch('/api/cart', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          productId,
-          quantity: 1
-        })
+      await addToCartMutation.mutateAsync({
+        productId,
+        quantity: 1
       })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'カートに追加できませんでした')
-      }
-
-      await fetchCart()
       alert('カートに追加しました')
     } catch (error) {
       console.error('Error adding to cart:', error)
@@ -186,7 +96,7 @@ export default function ShopPage() {
                 <div className="h-10 w-10 rounded-xl overflow-hidden mr-3 shadow-lg">
                   <Image
                     src={systemSettings.logoUrl}
-                    alt={systemSettings.systemName}
+                    alt={systemSettings?.systemName || 'ECショップ'}
                     width={40}
                     height={40}
                     className="object-cover w-full h-full"
@@ -202,7 +112,7 @@ export default function ShopPage() {
                   </span>
                 </div>
               )}
-              <h1 className="text-2xl font-bold text-gray-900">{systemSettings.systemName}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{systemSettings?.systemName || 'ECショップ'}</h1>
             </div>
             <div className="flex items-center space-x-4">
               {session?.user ? (
@@ -213,7 +123,7 @@ export default function ShopPage() {
                   <Link href="/mypage/shop/cart">
                     <Button variant="outline" className="relative">
                       カート
-                      {cart.itemCount > 0 && (
+                      {cart?.itemCount && cart.itemCount > 0 && (
                         <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                           {cart.itemCount}
                         </span>
@@ -272,32 +182,32 @@ export default function ShopPage() {
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-primary-500 focus:border-primary-500"
               >
                 <option value="">全てのカテゴリ</option>
-                {categories.map((cat) => (
+                {categoriesData?.categories?.map((cat: { id: string, name: string }) => (
                   <option key={cat.id} value={cat.id}>
                     {cat.name}
                   </option>
-                ))}
+                )) || []}
               </select>
             </div>
           </div>
         </div>
 
         {/* Products Grid */}
-        {loading ? (
+        {productsLoading ? (
           <div className="text-center py-16">
             <div className="text-lg">読み込み中...</div>
           </div>
-        ) : error ? (
+        ) : productsError ? (
           <div className="text-center py-16 text-red-600">
-            <p>{error}</p>
+            <p>商品の取得に失敗しました</p>
           </div>
-        ) : products.length === 0 ? (
+        ) : !productsData?.products || productsData.products.length === 0 ? (
           <div className="text-center py-16 text-gray-500">
             <p>商品が見つかりません</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map((product) => (
+            {productsData.products.map((product: Product) => (
               <div key={product.id} className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow">
                 {product.imageUrl && (
                   <div className="aspect-w-1 aspect-h-1 w-full">
@@ -332,11 +242,11 @@ export default function ShopPage() {
                       在庫: {product.stock}個
                     </span>
                     <Button
-                      onClick={() => addToCart(product.id)}
-                      disabled={product.stock === 0 || addingToCart === product.id}
+                      onClick={() => handleAddToCart(product.id)}
+                      disabled={product.stock === 0 || addingToCart === product.id || addToCartMutation.isPending}
                       size="sm"
                     >
-                      {addingToCart === product.id ? (
+                      {addingToCart === product.id || addToCartMutation.isPending ? (
                         '追加中...'
                       ) : product.stock === 0 ? (
                         '在庫切れ'

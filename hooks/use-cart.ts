@@ -47,6 +47,19 @@ async function updateCartItem({ itemId, quantity }: { itemId: string, quantity: 
   return response.json()
 }
 
+async function addToCart({ productId, quantity }: { productId: string, quantity: number }) {
+  const response = await fetch('/api/cart', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ productId, quantity })
+  })
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || 'カートに追加できませんでした')
+  }
+  return response.json()
+}
+
 async function removeCartItem(itemId: string) {
   const response = await fetch(`/api/cart/${itemId}`, {
     method: 'DELETE'
@@ -80,6 +93,18 @@ export function useUpdateCartItem() {
     mutationFn: updateCartItem,
     onSuccess: () => {
       // カートとシステム設定を再取得
+      queryClient.invalidateQueries({ queryKey: ['cart'] })
+    }
+  })
+}
+
+export function useAddToCart() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: addToCart,
+    onSuccess: () => {
+      // カートを再取得
       queryClient.invalidateQueries({ queryKey: ['cart'] })
     }
   })
