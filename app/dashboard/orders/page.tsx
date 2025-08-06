@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { hasPermission, UserRole } from '@/lib/permissions'
+import { useOrders, useUpdateOrderStatus } from '@/hooks/use-orders'
 
 interface Customer {
   id: string
@@ -56,64 +57,44 @@ const ORDER_STATUS_COLORS = {
 
 export default function OrdersPage() {
   const { data: session } = useSession()
-  const [orders, setOrders] = useState<Order[]>([])
-  const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [statusFilter, setStatusFilter] = useState<string>('ALL')
   const [currentPage, setCurrentPage] = useState(1)
-  const [totalPages, setTotalPages] = useState(1)
   const [search, setSearch] = useState('')
 
-  const fetchOrders = useCallback(async () => {
-    try {
-      const params = new URLSearchParams({
-        page: currentPage.toString(),
-        search,
-        status: statusFilter === 'ALL' ? '' : statusFilter
-      })
+  // キャッシュされたデータを使用（パラメータ対応は後で実装）
+  const { data: ordersData, isLoading: ordersLoading, error: ordersError, refetch: refetchOrders } = useOrders()
+  const updateOrderStatusMutation = useUpdateOrderStatus()
 
-      const response = await fetch(`/api/orders?${params}`)
-      if (response.ok) {
-        const data = await response.json()
-        setOrders(data.orders || [])
-        setTotalPages(data.totalPages || 1)
-      } else {
-        console.error('注文一覧の取得に失敗しました')
-      }
-    } catch (error) {
-      console.error('注文一覧の取得中にエラーが発生しました:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [currentPage, search, statusFilter])
+  // 現在はシンプルなフィルタリングを実装
+  const orders = ordersData || []
+  const filteredOrders = orders.filter((order: Order) => {
+    const matchesSearch = !search || 
+      order.orderNumber.toLowerCase().includes(search.toLowerCase()) ||
+      order.customer.name.toLowerCase().includes(search.toLowerCase()) ||
+      order.customer.email.toLowerCase().includes(search.toLowerCase())
+    
+    const matchesStatus = statusFilter === 'ALL' || order.status === statusFilter
+    
+    return matchesSearch && matchesStatus
+  })
 
-  useEffect(() => {
-    fetchOrders()
-  }, [fetchOrders])
+  // シンプルなページネーション
+  const itemsPerPage = 10
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage)
+  const startIndex = (currentPage - 1) * itemsPerPage
+  const paginatedOrders = filteredOrders.slice(startIndex, startIndex + itemsPerPage)
 
   const handleStatusUpdate = async (orderId: string, newStatus: string) => {
     try {
-      const response = await fetch(`/api/orders/${orderId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ status: newStatus }),
-      })
-
-      if (response.ok) {
-        fetchOrders()
-        if (selectedOrder?.id === orderId) {
-          setSelectedOrder({ ...selectedOrder, status: newStatus })
-        }
-      } else {
-        const errorData = await response.json()
-        alert(errorData.error || 'ステータス更新に失敗しました')
+      await updateOrderStatusMutation.mutateAsync({ id: orderId, status: newStatus })
+      if (selectedOrder && selectedOrder.id === orderId) {
+        setSelectedOrder({ ...selectedOrder, status: newStatus })
       }
     } catch (error) {
-      console.error('ステータス更新中にエラーが発生しました:', error)
-      alert('ステータス更新に失敗しました')
+      console.error('ステータス更新エラー:', error)
+      alert(error instanceof Error ? error.message : 'ステータスの更新に失敗しました')
     }
   }
 
@@ -144,10 +125,18 @@ export default function OrdersPage() {
     setSelectedOrder(null)
   }
 
-  if (loading) {
+  if (ordersLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+      </div>
+    )
+  }
+
+  if (ordersError) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="text-red-600">注文データの取得に失敗しました</div>
       </div>
     )
   }
@@ -194,10 +183,10 @@ export default function OrdersPage() {
           </div>
           <div className="flex items-end">
             <button
-              onClick={fetchOrders}
+              onClick={() => refetchOrders()}
               className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
             >
-              検索
+              更新
             </button>
           </div>
         </div>
@@ -230,7 +219,7 @@ export default function OrdersPage() {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {orders.map((order) => (
+            {paginatedOrders.map((order: Order) => (
               <tr key={order.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                   {canManage && (

@@ -5,6 +5,8 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useSystemSettings } from '@/hooks/use-system-settings'
+import { useCustomerProfile } from '@/hooks/use-customer-profile'
 
 type Customer = {
   id: string
@@ -29,12 +31,13 @@ type SystemSettings = {
 export default function ProfilePage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [customer, setCustomer] = useState<Customer | null>(null)
-  const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'ECショップ' })
+  
+  // キャッシュされたデータを使用
+  const { data: systemSettings } = useSystemSettings()
+  const { data: customer, isLoading: customerLoading, error: customerError } = useCustomerProfile()
   
   const [formData, setFormData] = useState({
     name: '',
@@ -47,63 +50,33 @@ export default function ProfilePage() {
     confirmPassword: ''
   })
 
+  // 顧客データが読み込まれたらフォームを更新
+  useEffect(() => {
+    if (customer) {
+      setFormData(prev => ({
+        ...prev,
+        name: customer.name,
+        nameKana: customer.nameKana || '',
+        email: customer.email,
+        phone: customer.phone || '',
+        address: customer.address || ''
+      }))
+    }
+  }, [customer])
+
   useEffect(() => {
     if (session === undefined) {
       // セッション読み込み中は何もしない
       return
     }
     
-    if (session?.user?.userType === 'customer') {
-      fetchProfile()
-    } else if (session?.user?.userType === 'admin') {
+    if (session?.user?.userType === 'admin') {
       router.push('/dashboard')
     } else if (session === null) {
       // セッションが明示的にnullの場合のみログインページにリダイレクト
       router.push('/login')
     }
   }, [session, router])
-
-  // システム設定を取得
-  useEffect(() => {
-    const fetchSystemSettings = async () => {
-      try {
-        const response = await fetch('/api/system-settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setSystemSettings(settings)
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error)
-      }
-    }
-    fetchSystemSettings()
-  }, [])
-
-  const fetchProfile = async () => {
-    try {
-      const response = await fetch('/api/customer-profile')
-      
-      if (!response.ok) {
-        throw new Error('プロフィールの取得に失敗しました')
-      }
-
-      const data = await response.json()
-      setCustomer(data)
-      setFormData({
-        ...formData,
-        name: data.name,
-        nameKana: data.nameKana || '',
-        email: data.email,
-        phone: data.phone || '',
-        address: data.address || ''
-      })
-    } catch (error) {
-      console.error('Error fetching profile:', error)
-      setError(error instanceof Error ? error.message : 'プロフィールの取得に失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -153,8 +126,6 @@ export default function ProfilePage() {
         throw new Error(errorData.error || 'プロフィールの更新に失敗しました')
       }
 
-      const updatedCustomer = await response.json()
-      setCustomer(updatedCustomer)
       setSuccess('プロフィールを更新しました')
       
       // パスワード関連フィールドをクリア
@@ -189,7 +160,7 @@ export default function ProfilePage() {
     })
   }
 
-  if (loading) {
+  if (customerLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-lg">読み込み中...</div>
@@ -253,6 +224,12 @@ export default function ProfilePage() {
         {error && (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
             {error}
+          </div>
+        )}
+
+        {customerError && (
+          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+            プロフィール情報の取得に失敗しました: {customerError.message}
           </div>
         )}
 

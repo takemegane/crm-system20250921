@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useSystemSettings } from '@/hooks/use-system-settings'
 
 type OrderItem = {
   id: string
@@ -49,7 +50,9 @@ export default function OrdersPage() {
   const [totalCount, setTotalCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'ECショップ' })
+  
+  // キャッシュされたデータを使用
+  const { data: systemSettings } = useSystemSettings()
 
   const fetchOrders = useCallback(async (page = 1) => {
     setLoading(true)
@@ -94,21 +97,6 @@ export default function OrdersPage() {
     }
   }, [fetchOrders, session, router])
 
-  // システム設定を取得
-  useEffect(() => {
-    const fetchSystemSettings = async () => {
-      try {
-        const response = await fetch('/api/system-settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setSystemSettings(settings)
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error)
-      }
-    }
-    fetchSystemSettings()
-  }, [])
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('ja-JP', {

@@ -5,6 +5,8 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useSystemSettings } from '@/hooks/use-system-settings'
+import { useCart, useUpdateCartItem, useRemoveCartItem } from '@/hooks/use-cart'
 
 type CartItem = {
   id: string
@@ -36,11 +38,14 @@ type SystemSettings = {
 export default function CartPage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [cart, setCart] = useState<Cart>({ items: [], total: 0, itemCount: 0 })
-  const [loading, setLoading] = useState(true)
   const [updating, setUpdating] = useState<string | null>(null)
   const [error, setError] = useState('')
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'ECショップ' })
+  
+  // キャッシュされたデータを使用
+  const { data: systemSettings } = useSystemSettings()
+  const { data: cart, isLoading: cartLoading } = useCart()
+  const updateCartItem = useUpdateCartItem()
+  const removeCartItem = useRemoveCartItem()
   const [shippingInfo, setShippingInfo] = useState<{
     shippingFee: number
     originalShippingFee: number
@@ -49,55 +54,19 @@ export default function CartPage() {
     totalAmount: number
   } | null>(null)
 
-  const fetchCart = useCallback(async () => {
-    try {
-      const response = await fetch('/api/cart')
-      
-      if (!response.ok) {
-        throw new Error('カートの取得に失敗しました')
-      }
-
-      const data = await response.json()
-      setCart(data)
-    } catch (error) {
-      console.error('Error fetching cart:', error)
-      setError(error instanceof Error ? error.message : 'カートの取得に失敗しました')
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
   useEffect(() => {
     if (session === undefined) {
       // セッション読み込み中は何もしない
       return
     }
     
-    if (session?.user?.userType === 'customer') {
-      fetchCart()
-    } else if (session?.user?.userType === 'admin') {
+    if (session?.user?.userType === 'admin') {
       router.push('/dashboard')
     } else if (session === null) {
       // セッションが明示的にnullの場合のみログインページにリダイレクト
       router.push('/login')
     }
-  }, [fetchCart, session, router])
-
-  // システム設定を取得
-  useEffect(() => {
-    const fetchSystemSettings = async () => {
-      try {
-        const response = await fetch('/api/system-settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setSystemSettings(settings)
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error)
-      }
-    }
-    fetchSystemSettings()
-  }, [])
+  }, [session, router])
 
   const calculateShipping = useCallback(async () => {
     console.log('🛒 送料計算関数開始, カート件数:', cart.items.length)
@@ -155,30 +124,17 @@ export default function CartPage() {
 
   // カート更新時に送料を再計算
   useEffect(() => {
-    if (cart.items.length > 0 && session?.user?.userType === 'customer') {
+    if (cart && cart.items.length > 0 && session?.user?.userType === 'customer') {
       calculateShipping()
     }
-  }, [cart.items, cart.total, calculateShipping, session?.user?.userType])
+  }, [cart, calculateShipping, session?.user?.userType])
 
   const updateQuantity = async (itemId: string, quantity: number) => {
     if (quantity < 1) return
 
     setUpdating(itemId)
     try {
-      const response = await fetch(`/api/cart/${itemId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ quantity })
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || '更新に失敗しました')
-      }
-
-      await fetchCart()
+      await updateCartItem.mutateAsync({ itemId, quantity })
     } catch (error) {
       console.error('Error updating cart:', error)
       alert(error instanceof Error ? error.message : '更新に失敗しました')
@@ -194,16 +150,7 @@ export default function CartPage() {
 
     setUpdating(itemId)
     try {
-      const response = await fetch(`/api/cart/${itemId}`, {
-        method: 'DELETE'
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || '削除に失敗しました')
-      }
-
-      await fetchCart()
+      await removeCartItem.mutateAsync(itemId)
     } catch (error) {
       console.error('Error removing item:', error)
       alert(error instanceof Error ? error.message : '削除に失敗しました')
@@ -223,7 +170,7 @@ export default function CartPage() {
     router.push('/mypage/shop/checkout')
   }
 
-  if (loading) {
+  if (cartLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-lg">読み込み中...</div>
@@ -288,7 +235,7 @@ export default function CartPage() {
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
             {error}
           </div>
-        ) : cart.items.length === 0 ? (
+        ) : !cart || cart.items.length === 0 ? (
           <div className="text-center py-16">
             <div className="text-gray-500 mb-4">
               <svg className="mx-auto h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">

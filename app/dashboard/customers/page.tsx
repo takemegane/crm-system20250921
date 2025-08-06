@@ -1,10 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { hasPermission, UserRole } from '@/lib/permissions'
+import { useCustomers } from '@/hooks/use-customers'
+import { useTags } from '@/hooks/use-tags'
+import { useCourses } from '@/hooks/use-courses'
 
 type Customer = {
   id: string
@@ -44,71 +47,23 @@ type Course = {
 
 export default function CustomersPage() {
   const { data: session, status } = useSession()
-  const [customers, setCustomers] = useState<Customer[]>([])
-  const [allTags, setAllTags] = useState<Tag[]>([])
-  const [allCourses, setAllCourses] = useState<Course[]>([])
   const [selectedTagId, setSelectedTagId] = useState<string>('')
   const [selectedCourseId, setSelectedCourseId] = useState<string>('')
   const [searchQuery, setSearchQuery] = useState<string>('')
-  const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
-  const [error, setError] = useState('')
 
-  const fetchCustomers = async (tagId?: string, courseId?: string) => {
-    try {
-      setLoading(true)
-      const params = new URLSearchParams()
-      if (tagId) params.append('tagId', tagId)
-      if (courseId) params.append('courseId', courseId)
-      const url = `/api/customers${params.toString() ? `?${params.toString()}` : ''}`
-      const response = await fetch(url)
-      if (!response.ok) {
-        throw new Error('Failed to fetch customers')
-      }
-      const data = await response.json()
-      console.log('Customers API response:', data)
-      setCustomers(data.customers || data)
-    } catch (error) {
-      setError('顧客データの取得に失敗しました')
-      console.error('Error fetching customers:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const fetchTags = async () => {
-    try {
-      const response = await fetch('/api/tags')
-      if (response.ok) {
-        const data = await response.json()
-        setAllTags(data.tags || data)
-      }
-    } catch (error) {
-      console.error('Error fetching tags:', error)
-    }
-  }
-
-  const fetchCourses = async () => {
-    try {
-      const response = await fetch('/api/courses')
-      if (response.ok) {
-        const data = await response.json()
-        setAllCourses(data.courses || data)
-      }
-    } catch (error) {
-      console.error('Error fetching courses:', error)
-    }
-  }
-
-  useEffect(() => {
-    fetchCustomers()
-    fetchTags()
-    fetchCourses()
-  }, [])
-
-  useEffect(() => {
-    fetchCustomers(selectedTagId || undefined, selectedCourseId || undefined)
-  }, [selectedTagId, selectedCourseId])
+  // キャッシュされたデータを使用
+  const { 
+    data: customers = [], 
+    isLoading: customersLoading, 
+    error: customersError 
+  } = useCustomers({
+    tagId: selectedTagId || undefined,
+    courseId: selectedCourseId || undefined
+  })
+  
+  const { data: allTags = [] } = useTags()
+  const { data: allCourses = [] } = useCourses()
 
   // セッション読み込み中の場合は読み込み状態を表示
   if (status === 'loading') {
@@ -152,14 +107,14 @@ export default function CustomersPage() {
       window.URL.revokeObjectURL(downloadUrl)
     } catch (error) {
       console.error('Error downloading CSV:', error)
-      setError('CSVダウンロードに失敗しました')
+      alert('CSVダウンロードに失敗しました')
     } finally {
       setDownloading(false)
     }
   }
 
   // 検索とタグフィルターを適用した顧客リスト
-  const filteredCustomers = customers.filter(customer => {
+  const filteredCustomers = customers.filter((customer: Customer) => {
     const matchesSearch = searchQuery === '' || 
       customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       customer.email.toLowerCase().includes(searchQuery.toLowerCase())
@@ -167,7 +122,7 @@ export default function CustomersPage() {
     return matchesSearch
   })
 
-  if (loading) {
+  if (customersLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">読み込み中...</div>
@@ -175,10 +130,10 @@ export default function CustomersPage() {
     )
   }
 
-  if (error) {
+  if (customersError) {
     return (
       <div className="text-center text-red-600 mt-8">
-        <p>{error}</p>
+        <p>顧客データの取得に失敗しました</p>
       </div>
     )
   }
@@ -259,7 +214,7 @@ export default function CustomersPage() {
               >
                 すべて
               </button>
-              {allTags.map((tag) => (
+              {allTags.map((tag: Tag) => (
                 <button
                   key={tag.id}
                   onClick={() => setSelectedTagId(tag.id)}
@@ -295,7 +250,7 @@ export default function CustomersPage() {
               >
                 すべて
               </button>
-              {allCourses.map((course) => (
+              {allCourses.map((course: Course) => (
                 <button
                   key={course.id}
                   onClick={() => setSelectedCourseId(course.id)}
@@ -329,7 +284,7 @@ export default function CustomersPage() {
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {filteredCustomers.map((customer) => (
+            {filteredCustomers.map((customer: Customer) => (
               <li key={customer.id}>
                 <Link 
                   href={`/dashboard/customers/${customer.id}`}
@@ -372,7 +327,7 @@ export default function CustomersPage() {
                     {/* コース */}
                     {customer.enrollments.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {customer.enrollments.slice(0, 3).map((enrollment) => (
+                        {customer.enrollments.slice(0, 3).map((enrollment: any) => (
                           <span
                             key={enrollment.id}
                             className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-primary-100 text-primary-800"
@@ -390,7 +345,7 @@ export default function CustomersPage() {
                     {/* タグ */}
                     {customer.customerTags.length > 0 && (
                       <div className="flex flex-wrap gap-2">
-                        {customer.customerTags.slice(0, 5).map((customerTag) => (
+                        {customer.customerTags.slice(0, 5).map((customerTag: any) => (
                           <span
                             key={customerTag.id}
                             className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white"

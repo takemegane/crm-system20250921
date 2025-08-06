@@ -2,6 +2,7 @@
 
 import { SessionProvider } from 'next-auth/react'
 import { SystemSettingsProvider } from '@/contexts/SystemSettingsContext'
+import QueryProvider from '@/components/providers/query-provider'
 
 interface ProvidersProps {
   children: React.ReactNode
@@ -10,9 +11,11 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   return (
     <SessionProvider>
-      <SystemSettingsProvider>
-        {children}
-      </SystemSettingsProvider>
+      <QueryProvider>
+        <SystemSettingsProvider>
+          {children}
+        </SystemSettingsProvider>
+      </QueryProvider>
     </SessionProvider>
   )
 }

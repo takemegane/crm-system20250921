@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useSystemSettings } from '@/hooks/use-system-settings'
 
 interface Enrollment {
   id: string
@@ -35,7 +36,9 @@ export default function CommunityPage() {
   const router = useRouter()
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'コミュニティ' })
+  
+  // キャッシュされたデータを使用
+  const { data: systemSettings } = useSystemSettings()
 
   // 顧客のコース情報を取得
   const fetchEnrollments = useCallback(async () => {
@@ -52,21 +55,6 @@ export default function CommunityPage() {
     }
   }, [])
 
-  // システム設定を取得
-  useEffect(() => {
-    const fetchSystemSettings = async () => {
-      try {
-        const response = await fetch('/api/system-settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setSystemSettings(settings)
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error)
-      }
-    }
-    fetchSystemSettings()
-  }, [])
 
   useEffect(() => {
     if (session === undefined) {

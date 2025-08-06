@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { hasPermission, UserRole } from '@/lib/permissions'
+import { useTags, useDeleteTag } from '@/hooks/use-tags'
 
 type Tag = {
   id: string
@@ -23,43 +24,19 @@ type Tag = {
 
 export default function TagsPage() {
   const { data: session, status } = useSession()
-  const [tags, setTags] = useState<Tag[]>([])
-  const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
-  const [error, setError] = useState('')
 
-  const fetchTags = async () => {
-    try {
-      const response = await fetch('/api/tags')
-      if (!response.ok) {
-        throw new Error('Failed to fetch tags')
-      }
-      const data = await response.json()
-      setTags(data.tags || data)
-    } catch (error) {
-      setError('タグデータの取得に失敗しました')
-      console.error('Error fetching tags:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // キャッシュされたデータを使用
+  const { data: tags = [], isLoading: tagsLoading, error: tagsError } = useTags()
+  const deleteTagMutation = useDeleteTag()
 
-  const deleteTag = async (id: string) => {
+  const handleDeleteTag = async (id: string) => {
     if (!confirm('このタグを削除しますか？')) {
       return
     }
 
     try {
-      const response = await fetch(`/api/tags/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'タグの削除に失敗しました')
-      }
-
-      fetchTags()
+      await deleteTagMutation.mutateAsync(id)
     } catch (error) {
       alert(error instanceof Error ? error.message : 'タグの削除に失敗しました')
     }
@@ -85,15 +62,11 @@ export default function TagsPage() {
       window.URL.revokeObjectURL(downloadUrl)
     } catch (error) {
       console.error('Error downloading CSV:', error)
-      setError('CSVダウンロードに失敗しました')
+      alert('CSVダウンロードに失敗しました')
     } finally {
       setDownloading(false)
     }
   }
-
-  useEffect(() => {
-    fetchTags()
-  }, [])
 
   // セッション読み込み中の場合は読み込み状態を表示
   if (status === 'loading') {
@@ -115,7 +88,7 @@ export default function TagsPage() {
 
   const canDeleteTags = session?.user?.role && hasPermission(session.user.role as UserRole, 'DELETE_TAGS')
 
-  if (loading) {
+  if (tagsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">読み込み中...</div>
@@ -123,10 +96,10 @@ export default function TagsPage() {
     )
   }
 
-  if (error) {
+  if (tagsError) {
     return (
       <div className="text-center text-red-600 mt-8">
-        <p>{error}</p>
+        <p>タグデータの取得に失敗しました</p>
       </div>
     )
   }
@@ -170,7 +143,7 @@ export default function TagsPage() {
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {tags.map((tag) => (
+            {tags.map((tag: Tag) => (
               <li key={tag.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
@@ -209,10 +182,11 @@ export default function TagsPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => deleteTag(tag.id)}
+                          onClick={() => handleDeleteTag(tag.id)}
+                          disabled={deleteTagMutation.isPending}
                           className="text-red-600 hover:text-red-800 hover:bg-red-50"
                         >
-                          削除
+                          {deleteTagMutation.isPending ? '削除中...' : '削除'}
                         </Button>
                       )}
                     </div>
@@ -220,7 +194,7 @@ export default function TagsPage() {
                   {tag.customerTags.length > 0 && (
                     <div className="mt-2 ml-8">
                       <div className="text-sm text-gray-600">
-                        付与済み顧客: {tag.customerTags.slice(0, 3).map(customerTag => customerTag.customer.name).join(', ')}
+                        付与済み顧客: {tag.customerTags.slice(0, 3).map((customerTag: any) => customerTag.customer.name).join(', ')}
                         {tag.customerTags.length > 3 && ` 他${tag.customerTags.length - 3}人`}
                       </div>
                     </div>

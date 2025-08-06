@@ -5,6 +5,9 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useSystemSettings } from '@/hooks/use-system-settings'
+import { useCustomerProfile } from '@/hooks/use-customer-profile'
+import { useCart } from '@/hooks/use-cart'
 
 type CartItem = {
   id: string
@@ -36,8 +39,6 @@ type SystemSettings = {
 export default function CheckoutPage() {
   const { data: session } = useSession()
   const router = useRouter()
-  const [cart, setCart] = useState<Cart>({ items: [], total: 0, itemCount: 0 })
-  const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [formData, setFormData] = useState({
@@ -46,8 +47,11 @@ export default function CheckoutPage() {
     contactPhone: '',
     notes: ''
   })
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'ECショップ' })
-  const [customerProfile, setCustomerProfile] = useState<any>(null)
+  
+  // キャッシュされたデータを使用
+  const { data: systemSettings } = useSystemSettings()
+  const { data: customerProfile } = useCustomerProfile()
+  const { data: cart, isLoading: cartLoading } = useCart()
   const [addressSelection, setAddressSelection] = useState<'new' | 'profile'>('new')
   const [shippingInfo, setShippingInfo] = useState<{
     shippingFee: number
@@ -57,28 +61,23 @@ export default function CheckoutPage() {
     totalAmount: number
   } | null>(null)
 
-  const fetchCart = useCallback(async () => {
-    try {
-      const response = await fetch('/api/cart')
-      
-      if (!response.ok) {
-        throw new Error('カートの取得に失敗しました')
-      }
-
-      const data = await response.json()
-      setCart(data)
-      
-      // カートが空の場合はカート画面にリダイレクト
-      if (data.items.length === 0) {
-        router.push('/mypage/shop/cart')
-      }
-    } catch (error) {
-      console.error('Error fetching cart:', error)
-      setError(error instanceof Error ? error.message : 'カートの取得に失敗しました')
-    } finally {
-      setLoading(false)
+  // カートが空の場合はカート画面にリダイレクト
+  useEffect(() => {
+    if (cart && cart.items.length === 0) {
+      router.push('/mypage/shop/cart')
     }
-  }, [router])
+  }, [cart, router])
+
+  // 顧客プロフィール情報でフォームを初期化
+  useEffect(() => {
+    if (customerProfile) {
+      setFormData(prev => ({
+        ...prev,
+        recipientName: customerProfile.name || '',
+        contactPhone: customerProfile.phone || ''
+      }))
+    }
+  }, [customerProfile])
 
   useEffect(() => {
     if (session === undefined) {
@@ -86,39 +85,16 @@ export default function CheckoutPage() {
       return
     }
     
-    if (session?.user?.userType === 'customer') {
-      fetchCart()
-      fetchCustomerProfile()
-      
-      // 顧客情報から配送先住所を初期設定は後でcustomerProfileから行う
-    } else if (session?.user?.userType === 'admin') {
+    if (session?.user?.userType === 'admin') {
       router.push('/dashboard')
     } else if (session === null) {
       // セッションが明示的にnullの場合のみログインページにリダイレクト
       router.push('/login')
     }
-  }, [fetchCart, session, router])
-
-  const fetchCustomerProfile = async () => {
-    try {
-      const response = await fetch('/api/customer-profile')
-      if (response.ok) {
-        const profile = await response.json()
-        setCustomerProfile(profile)
-        // 顧客名と電話番号をデフォルトとして設定
-        setFormData(prev => ({
-          ...prev,
-          recipientName: profile.name || '',
-          contactPhone: profile.phone || ''
-        }))
-      }
-    } catch (error) {
-      console.error('Error fetching customer profile:', error)
-    }
-  }
+  }, [session, router])
 
   const calculateShipping = useCallback(async () => {
-    if (cart.items.length === 0) {
+    if (!cart || cart.items.length === 0) {
       setShippingInfo(null)
       return
     }
@@ -167,28 +143,12 @@ export default function CheckoutPage() {
     }
   }, [cart.items, cart.total])
 
-  // システム設定を取得
-  useEffect(() => {
-    const fetchSystemSettings = async () => {
-      try {
-        const response = await fetch('/api/system-settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setSystemSettings(settings)
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error)
-      }
-    }
-    fetchSystemSettings()
-  }, [])
-
   // カート更新時に送料を再計算
   useEffect(() => {
-    if (cart.items.length > 0 && session?.user?.userType === 'customer') {
+    if (cart && cart.items.length > 0 && session?.user?.userType === 'customer') {
       calculateShipping()
     }
-  }, [cart.items, cart.total, calculateShipping, session?.user?.userType])
+  }, [cart, calculateShipping, session?.user?.userType])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -229,7 +189,7 @@ export default function CheckoutPage() {
     if (selection === 'profile' && customerProfile?.address) {
       setFormData(prev => ({
         ...prev,
-        shippingAddress: customerProfile.address
+        shippingAddress: customerProfile.address || ''
       }))
     } else if (selection === 'new') {
       setFormData(prev => ({
@@ -257,7 +217,7 @@ export default function CheckoutPage() {
     }).format(price)
   }
 
-  if (loading) {
+  if (cartLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-lg">読み込み中...</div>
@@ -411,7 +371,7 @@ export default function CheckoutPage() {
                   onChange={handleChange}
                   required
                   rows={3}
-                  disabled={addressSelection === 'profile' && customerProfile?.address}
+                  disabled={addressSelection === 'profile' && !!customerProfile?.address}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500 disabled:bg-gray-100 disabled:text-gray-600"
                   placeholder="〒100-0001&#10;東京都千代田区千代田1-1&#10;千代田マンション101号室"
                 />

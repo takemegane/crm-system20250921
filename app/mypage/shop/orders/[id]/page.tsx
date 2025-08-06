@@ -5,6 +5,7 @@ import { useSession, signOut } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
+import { useSystemSettings } from '@/hooks/use-system-settings'
 
 type OrderItem = {
   id: string
@@ -68,7 +69,9 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [cancelling, setCancelling] = useState(false)
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'システム' })
+  
+  // キャッシュされたデータを使用
+  const { data: systemSettings } = useSystemSettings()
 
   const isCompleted = searchParams.get('completed') === 'true'
 
@@ -120,21 +123,6 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     }
   }, [])
 
-  // システム設定を取得
-  useEffect(() => {
-    const fetchSystemSettings = async () => {
-      try {
-        const response = await fetch('/api/system-settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setSystemSettings(settings)
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error)
-      }
-    }
-    fetchSystemSettings()
-  }, [])
 
   const handleCancelOrder = async () => {
     console.log('🔥🔥🔥 COMPLETELY NEW handleCancelOrder called, order:', order?.id)

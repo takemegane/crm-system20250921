@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { Button } from '@/components/ui/button'
 import { hasPermission, UserRole } from '@/lib/permissions'
+import { useCourses, useDeleteCourse } from '@/hooks/use-courses'
 
 type Course = {
   id: string
@@ -26,43 +27,19 @@ type Course = {
 
 export default function CoursesPage() {
   const { data: session, status } = useSession()
-  const [courses, setCourses] = useState<Course[]>([])
-  const [loading, setLoading] = useState(true)
   const [downloading, setDownloading] = useState(false)
-  const [error, setError] = useState('')
 
-  const fetchCourses = async () => {
-    try {
-      const response = await fetch('/api/courses')
-      if (!response.ok) {
-        throw new Error('Failed to fetch courses')
-      }
-      const data = await response.json()
-      setCourses(data.courses || data)
-    } catch (error) {
-      setError('コースデータの取得に失敗しました')
-      console.error('Error fetching courses:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
+  // キャッシュされたデータを使用
+  const { data: courses = [], isLoading: coursesLoading, error: coursesError } = useCourses()
+  const deleteCourseMutation = useDeleteCourse()
 
-  const deleteCourse = async (id: string) => {
+  const handleDeleteCourse = async (id: string) => {
     if (!confirm('このコースを削除しますか？')) {
       return
     }
 
     try {
-      const response = await fetch(`/api/courses/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.error || 'コースの削除に失敗しました')
-      }
-
-      fetchCourses()
+      await deleteCourseMutation.mutateAsync(id)
     } catch (error) {
       alert(error instanceof Error ? error.message : 'コースの削除に失敗しました')
     }
@@ -88,15 +65,11 @@ export default function CoursesPage() {
       window.URL.revokeObjectURL(downloadUrl)
     } catch (error) {
       console.error('Error downloading CSV:', error)
-      setError('CSVダウンロードに失敗しました')
+      alert('CSVダウンロードに失敗しました')
     } finally {
       setDownloading(false)
     }
   }
-
-  useEffect(() => {
-    fetchCourses()
-  }, [])
 
   // セッション読み込み中の場合は読み込み状態を表示
   if (status === 'loading') {
@@ -118,7 +91,7 @@ export default function CoursesPage() {
 
   const canDeleteCourses = session?.user?.role && hasPermission(session.user.role as UserRole, 'DELETE_COURSES')
 
-  if (loading) {
+  if (coursesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="text-lg">読み込み中...</div>
@@ -126,10 +99,10 @@ export default function CoursesPage() {
     )
   }
 
-  if (error) {
+  if (coursesError) {
     return (
       <div className="text-center text-red-600 mt-8">
-        <p>{error}</p>
+        <p>コースデータの取得に失敗しました</p>
       </div>
     )
   }
@@ -173,7 +146,7 @@ export default function CoursesPage() {
       ) : (
         <div className="bg-white shadow overflow-hidden sm:rounded-md">
           <ul className="divide-y divide-gray-200">
-            {courses.map((course) => (
+            {courses.map((course: Course) => (
               <li key={course.id}>
                 <div className="px-4 py-4 sm:px-6">
                   <div className="flex items-center justify-between">
@@ -229,10 +202,11 @@ export default function CoursesPage() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => deleteCourse(course.id)}
+                          onClick={() => handleDeleteCourse(course.id)}
+                          disabled={deleteCourseMutation.isPending}
                           className="text-red-600 hover:text-red-800 hover:bg-red-50"
                         >
-                          削除
+                          {deleteCourseMutation.isPending ? '削除中...' : '削除'}
                         </Button>
                       )}
                     </div>
@@ -240,7 +214,7 @@ export default function CoursesPage() {
                   {course.enrollments.length > 0 && (
                     <div className="mt-2 ml-14">
                       <div className="text-sm text-gray-600">
-                        受講者: {course.enrollments.slice(0, 3).map(enrollment => enrollment.customer.name).join(', ')}
+                        受講者: {course.enrollments.slice(0, 3).map((enrollment: any) => enrollment.customer.name).join(', ')}
                         {course.enrollments.length > 3 && ` 他${course.enrollments.length - 3}人`}
                       </div>
                     </div>
