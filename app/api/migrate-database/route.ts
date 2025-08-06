@@ -149,7 +149,7 @@ export async function GET() {
       const categoryTypeExists = checkResult.length > 0
       
       // 既存カテゴリの確認（フィールドが存在する場合のみ）
-      let categories = []
+      let categories: any[] = []
       if (categoryTypeExists) {
         categories = await prisma.category.findMany({
           select: {
