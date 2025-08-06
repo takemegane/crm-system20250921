@@ -25,6 +25,7 @@ type SystemSettings = {
   systemName: string
   primaryColor?: string
   secondaryColor?: string
+  logoUrl?: string
   communityLinkText?: string
   communityLinkUrl?: string
 }

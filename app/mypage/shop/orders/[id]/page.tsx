@@ -53,6 +53,13 @@ const ORDER_STATUS_COLORS = {
   COMPLETED: 'bg-purple-100 text-purple-800'
 } as const
 
+type SystemSettings = {
+  systemName: string
+  primaryColor?: string
+  secondaryColor?: string
+  logoUrl?: string
+}
+
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession()
   const router = useRouter()
@@ -61,6 +68,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [cancelling, setCancelling] = useState(false)
+  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'システム' })
 
   const isCompleted = searchParams.get('completed') === 'true'
 
@@ -110,6 +118,22 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     if (urlParams.get('completed') === 'true') {
       setShowThankYou(true)
     }
+  }, [])
+
+  // システム設定を取得
+  useEffect(() => {
+    const fetchSystemSettings = async () => {
+      try {
+        const response = await fetch('/api/system-settings')
+        if (response.ok) {
+          const settings = await response.json()
+          setSystemSettings(settings)
+        }
+      } catch (error) {
+        console.error('Error fetching system settings:', error)
+      }
+    }
+    fetchSystemSettings()
   }, [])
 
   const handleCancelOrder = async () => {
@@ -214,21 +238,39 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center h-16">
               <div className="flex items-center">
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center mr-3 shadow-lg"
-                     style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)' }}>
-                  <span className="text-white font-bold text-lg">S</span>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-900">システム名</h1>
+                {systemSettings?.logoUrl ? (
+                  <div className="h-10 w-10 rounded-xl overflow-hidden mr-3 shadow-lg">
+                    <img
+                      src={systemSettings.logoUrl}
+                      alt={systemSettings.systemName}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                ) : (
+                  <div className="h-10 w-10 rounded-xl flex items-center justify-center mr-3 shadow-lg"
+                       style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)' }}>
+                    <span className="text-white font-bold text-lg">
+                      {systemSettings?.systemName?.charAt(0) || 'S'}
+                    </span>
+                  </div>
+                )}
+                <h1 className="text-2xl font-bold text-gray-900">{systemSettings.systemName}</h1>
               </div>
               <div className="flex items-center space-x-4">
                 <span className="text-sm text-gray-600">
                   こんにちは、{session?.user?.name}さん
                 </span>
+                <Link href="/mypage/shop">
+                  <Button variant="outline">ショップ</Button>
+                </Link>
                 <Link href="/mypage/shop/orders">
                   <Button variant="outline">注文履歴</Button>
                 </Link>
                 <Link href="/mypage/profile">
                   <Button variant="outline">アカウント</Button>
+                </Link>
+                <Link href="/mypage">
+                  <Button variant="outline">🏠 マイページ</Button>
                 </Link>
                 <Button 
                   variant="outline" 
@@ -270,11 +312,23 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <div className="h-10 w-10 rounded-xl flex items-center justify-center mr-3 shadow-lg"
-                   style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)' }}>
-                <span className="text-white font-bold text-lg">S</span>
-              </div>
-              <h1 className="text-2xl font-bold text-gray-900">システム名</h1>
+              {systemSettings?.logoUrl ? (
+                <div className="h-10 w-10 rounded-xl overflow-hidden mr-3 shadow-lg">
+                  <img
+                    src={systemSettings.logoUrl}
+                    alt={systemSettings.systemName}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-10 w-10 rounded-xl flex items-center justify-center mr-3 shadow-lg"
+                     style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)' }}>
+                  <span className="text-white font-bold text-lg">
+                    {systemSettings?.systemName?.charAt(0) || 'S'}
+                  </span>
+                </div>
+              )}
+              <h1 className="text-2xl font-bold text-gray-900">{systemSettings.systemName}</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">
