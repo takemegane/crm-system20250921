@@ -76,7 +76,7 @@ export async function PUT(
     }
     
     const body = await request.json()
-    const { name, description, price, stock, categoryId, imageUrl, sortOrder, isActive } = body
+    const { name, description, price, stock, categoryId, imageUrl, sortOrder, isActive, courseMapping } = body
     
     // バリデーション
     if (!name || price === undefined) {
@@ -103,7 +103,8 @@ export async function PUT(
         categoryId: categoryId || null,
         imageUrl,
         sortOrder: parseInt(sortOrder || '0'),
-        isActive: isActive !== false
+        isActive: isActive !== false,
+        courseMapping: courseMapping || null
       }
     })
     

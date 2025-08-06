@@ -5,6 +5,21 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
+type Course = {
+  id: string
+  name: string
+  description: string
+  price: number
+  duration: number
+}
+
+type Category = {
+  id: string
+  name: string
+  categoryType: string
+  isActive: boolean
+}
+
 export default function NewProductPage() {
   const router = useRouter()
   const [formData, setFormData] = useState({
@@ -15,15 +30,21 @@ export default function NewProductPage() {
     categoryId: '',
     imageUrl: '',
     sortOrder: '0',
-    isActive: true
+    isActive: true,
+    // コース自動登録設定
+    enableCourseMapping: false,
+    courseId: '',
+    autoEnroll: true
   })
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
-  const [categories, setCategories] = useState([])
+  const [categories, setCategories] = useState<Category[]>([])
+  const [courses, setCourses] = useState<Course[]>([])
 
   useEffect(() => {
     fetchCategories()
+    fetchCourses()
   }, [])
 
   const fetchCategories = async () => {
@@ -38,22 +59,53 @@ export default function NewProductPage() {
     }
   }
 
+  const fetchCourses = async () => {
+    try {
+      const response = await fetch('/api/courses/list')
+      if (response.ok) {
+        const data = await response.json()
+        setCourses(data.courses || [])
+      }
+    } catch (error) {
+      console.error('Error fetching courses:', error)
+    }
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
 
     try {
+      // コース自動登録設定の準備
+      let courseMapping = null
+      if (formData.enableCourseMapping && formData.courseId) {
+        const selectedCourse = courses.find(course => course.id === formData.courseId)
+        if (selectedCourse) {
+          courseMapping = {
+            courseId: formData.courseId,
+            courseName: selectedCourse.name,
+            autoEnroll: formData.autoEnroll,
+            description: `購入時に${selectedCourse.name}へ自動登録`
+          }
+        }
+      }
+
       const response = await fetch('/api/products', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          ...formData,
+          name: formData.name,
+          description: formData.description,
           price: parseFloat(formData.price || '0'),
           stock: parseInt(formData.stock || '0'),
-          sortOrder: parseInt(formData.sortOrder || '0')
+          categoryId: formData.categoryId || null,
+          imageUrl: formData.imageUrl || null,
+          sortOrder: parseInt(formData.sortOrder || '0'),
+          isActive: formData.isActive,
+          courseMapping: courseMapping
         })
       })
 
@@ -73,11 +125,33 @@ export default function NewProductPage() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
-    }))
+    
+    setFormData(prev => {
+      const newFormData = {
+        ...prev,
+        [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      }
+      
+      // カテゴリが変更された場合、COURSE型かどうかチェック
+      if (name === 'categoryId') {
+        const selectedCategory = categories.find(cat => cat.id === value)
+        if (selectedCategory?.categoryType === 'COURSE') {
+          // COURSE型カテゴリが選択された場合、コース設定を有効に
+          newFormData.enableCourseMapping = true
+        } else {
+          // COURSE型以外が選択された場合、コース設定を無効に
+          newFormData.enableCourseMapping = false
+          newFormData.courseId = ''
+        }
+      }
+      
+      return newFormData
+    })
   }
+
+  // 選択されたカテゴリがCOURSE型かどうか判定
+  const selectedCategory = categories.find(cat => cat.id === formData.categoryId)
+  const isCourseCategory = selectedCategory?.categoryType === 'COURSE'
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0]
@@ -283,6 +357,93 @@ export default function NewProductPage() {
               </div>
             )}
           </div>
+
+          {/* コース自動登録設定 */}
+          {isCourseCategory && (
+            <div className="border-t border-gray-200 pt-6">
+              <div className="mb-4">
+                <h3 className="text-lg font-medium text-gray-900 flex items-center">
+                  🎓 コース自動登録設定
+                </h3>
+                <p className="mt-1 text-sm text-gray-600">
+                  この商品を購入した顧客に自動的にコースを登録する設定を行えます
+                </p>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="enableCourseMapping"
+                    name="enableCourseMapping"
+                    checked={formData.enableCourseMapping}
+                    onChange={handleChange}
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="enableCourseMapping" className="ml-2 block text-sm text-gray-900">
+                    この商品購入時にコースを自動登録する
+                  </label>
+                </div>
+
+                {formData.enableCourseMapping && (
+                  <div className="ml-6 space-y-4 p-4 bg-blue-50 rounded-lg">
+                    <div>
+                      <label htmlFor="courseId" className="block text-sm font-medium text-gray-700">
+                        対象コース *
+                      </label>
+                      <select
+                        id="courseId"
+                        name="courseId"
+                        value={formData.courseId}
+                        onChange={handleChange}
+                        required={formData.enableCourseMapping}
+                        className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      >
+                        <option value="">コースを選択してください</option>
+                        {courses.map((course) => (
+                          <option key={course.id} value={course.id}>
+                            {course.name} (¥{course.price.toLocaleString()} - {course.duration}日間)
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div className="flex items-center">
+                      <input
+                        type="checkbox"
+                        id="autoEnroll"
+                        name="autoEnroll"
+                        checked={formData.autoEnroll}
+                        onChange={handleChange}
+                        className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      />
+                      <label htmlFor="autoEnroll" className="ml-2 block text-sm text-gray-900">
+                        購入と同時に自動登録する
+                      </label>
+                    </div>
+
+                    {formData.courseId && (
+                      <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-md">
+                        <p className="text-sm text-green-800">
+                          <span className="font-medium">設定内容:</span>
+                          {(() => {
+                            const selectedCourse = courses.find(c => c.id === formData.courseId)
+                            return selectedCourse ? (
+                              <>
+                                <br />
+                                商品購入後、顧客を「{selectedCourse.name}」に
+                                {formData.autoEnroll ? '自動登録' : '手動登録待ち'}します。
+                              </>
+                            ) : null
+                          })()}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           <div className="flex items-center">
             <input

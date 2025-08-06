@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json()
-    const { name, description, price, stock, categoryId, imageUrl, sortOrder, isActive } = body
+    const { name, description, price, stock, categoryId, imageUrl, sortOrder, isActive, courseMapping } = body
     
     // バリデーション
     if (!name || !price) {
@@ -134,7 +134,8 @@ export async function POST(request: NextRequest) {
         categoryId: categoryId || null,
         imageUrl,
         sortOrder: parseInt(sortOrder || '0'),
-        isActive: isActive !== false
+        isActive: isActive !== false,
+        courseMapping: courseMapping || null
       }
     })
     
