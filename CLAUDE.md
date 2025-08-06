@@ -30,8 +30,113 @@ git push origin main
 - デプロイなしでの作業完了報告
 - 「後でデプロイします」という先送り
 - 本番環境の動作確認を怠ること
+- **全ページ確認を怠ること（最重要）**
 
 **本番環境URL**: https://crm-system-seven-steel.vercel.app/
+
+## ⚠️ 全ページ確認の義務化（2025/08/06追加）
+
+### 🚨 Claude開発者への必須指示（最重要）
+**「全ページ」「すべてのページ」に関わる作業では必ず完全なページリストを作成し、全ページを確実に修正・確認すること**
+
+#### 📋 作業前必須手順
+1. **Globツール使用**: 対象ページを網羅的に検索
+2. **完全リスト作成**: TodoWriteツールで具体的なページリストを作成
+3. **進捗管理**: ページ毎にタスクを分割・進捗管理
+
+#### 📂 顧客ページ完全リスト（7ページ）
+```
+/mypage/page.tsx                 - マイページダッシュボード
+/mypage/profile/page.tsx         - アカウント設定
+/mypage/shop/page.tsx           - ショップ
+/mypage/shop/cart/page.tsx      - カート
+/mypage/shop/checkout/page.tsx  - チェックアウト
+/mypage/shop/orders/page.tsx    - 注文履歴
+/mypage/shop/orders/[id]/page.tsx - 注文詳細
+/mypage/community/page.tsx      - コミュニティ
+```
+
+#### 📂 管理者ページ完全リスト（35ページ）
+```
+# メインページ（1ページ）
+/dashboard/page.tsx
+
+# 顧客管理（9ページ）
+/dashboard/customers/page.tsx
+/dashboard/customers/[id]/page.tsx
+/dashboard/customers/[id]/edit/page.tsx
+/dashboard/customers/[id]/send-email/page.tsx
+/dashboard/customers/new/page.tsx
+/dashboard/customers/bulk/page.tsx
+/dashboard/customers/upload/page.tsx
+/dashboard/customers/archived/page.tsx
+
+# コース管理（3ページ）
+/dashboard/courses/page.tsx
+/dashboard/courses/[id]/edit/page.tsx
+/dashboard/courses/new/page.tsx
+
+# タグ管理（3ページ）
+/dashboard/tags/page.tsx
+/dashboard/tags/[id]/edit/page.tsx
+/dashboard/tags/new/page.tsx
+
+# メール管理（6ページ）
+/dashboard/email-templates/page.tsx
+/dashboard/email-templates/[id]/edit/page.tsx
+/dashboard/email-templates/new/page.tsx
+/dashboard/bulk-email/page.tsx
+/dashboard/email-logs/page.tsx
+/dashboard/email-settings/page.tsx
+
+# 商品・注文管理（8ページ）
+/dashboard/products/page.tsx
+/dashboard/products/[id]/edit/page.tsx
+/dashboard/products/new/page.tsx
+/dashboard/categories/page.tsx
+/dashboard/shipping-rates/page.tsx
+/dashboard/orders/page.tsx
+/dashboard/orders/[id]/page.tsx
+
+# 管理者管理（3ページ）
+/dashboard/admins/page.tsx
+/dashboard/admins/[id]/edit/page.tsx
+/dashboard/admins/new/page.tsx
+
+# システム管理（3ページ）
+/dashboard/profile/page.tsx
+/dashboard/system-settings/page.tsx
+/dashboard/audit-logs/page.tsx
+```
+
+#### 🔍 必須確認コマンド
+```bash
+# 顧客ページ検索
+cd /Users/motoki/Desktop/claude\ code/crm-system
+find app/mypage -name "*.tsx" -type f
+
+# 管理者ページ検索
+find app/dashboard -name "*.tsx" -type f
+```
+
+#### 📋 作業完了時チェックリスト
+- [ ] Globツールで対象ページを完全検索
+- [ ] TodoWriteツールでページ毎のタスク作成
+- [ ] 全ページのファイル修正完了
+- [ ] TypeScriptエラー0件確認
+- [ ] 本番環境デプロイ完了
+- [ ] **全ページでの実機動作確認**
+
+#### ❌ 絶対禁止事項（追加）
+- **ページの見落とし・取りこぼし**
+- **「すべて」「全て」作業での不完全な対応**
+- **TodoWriteツールを使わない曖昧な進捗管理**
+- **実機確認なしでの作業完了報告**
+
+### 🎯 過去の見落とし事例（教訓）
+- 2025/08/06: 顧客ページヘッダー統一作業で`/mypage/profile/page.tsx`を見落とし
+- **原因**: 抽象的なタスク管理、具体的なページリスト未作成
+- **対策**: 上記の完全リスト作成・段階的確認の義務化
 
 ## 開発状況
 - **作成日**: 2025年7月20日
