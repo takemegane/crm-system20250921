@@ -91,10 +91,36 @@ export default function CommunityPage() {
     )
   }
 
-  // コースが無い場合はマイページにリダイレクト
+  // コースが無い場合はアクセス制限画面を表示
   if (enrollments.length === 0) {
-    router.push('/mypage')
-    return null
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="max-w-md w-full">
+          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
+            <div className="text-gray-400 text-6xl mb-4">🔒</div>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              コミュニティへのアクセス制限
+            </h2>
+            <p className="text-gray-600 mb-6">
+              コミュニティページは、コースを購入された方のみアクセスできます。
+              まずはショップでコースをご購入ください。
+            </p>
+            <div className="space-y-3">
+              <Link href="/mypage/shop">
+                <Button className="w-full">
+                  ショップでコースを見る
+                </Button>
+              </Link>
+              <Link href="/mypage">
+                <Button variant="outline" className="w-full">
+                  マイページに戻る
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
 
