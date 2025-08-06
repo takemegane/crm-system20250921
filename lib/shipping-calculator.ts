@@ -19,6 +19,7 @@ export interface ProductWithCategory {
   category?: {
     id: string
     name: string
+    categoryType?: string
     shippingRate?: {
       id: string
       shippingFee: number
@@ -91,15 +92,32 @@ export async function calculateShipping(
     name: p.name,
     categoryId: p.categoryId,
     hasCategory: !!p.category,
+    categoryType: p.category?.categoryType,
     hasShippingRate: !!p.category?.shippingRate
   })))
 
-  // カテゴリ別小計を計算
+  // デジタル商品をフィルタリング（送料計算から除外）
+  const physicalProducts = products.filter((p: ProductWithCategory) => 
+    !p.category || p.category.categoryType !== 'DIGITAL'
+  )
+  console.log('📦 Physical products only:', physicalProducts.length, 'out of', products.length)
+
+  // 現物商品のみで小計を再計算（送料計算用）
+  const physicalSubtotalAmount = cartItems.reduce((sum, item) => {
+    const product = physicalProducts.find((p: ProductWithCategory) => p.id === item.productId)
+    if (product) {
+      return sum + (item.product.price * item.quantity)
+    }
+    return sum
+  }, 0)
+  console.log('💰 Physical products subtotal for shipping:', physicalSubtotalAmount)
+
+  // 現物商品カテゴリ別小計を計算
   const categorySubtotals = new Map<string, number>()
   
   for (const cartItem of cartItems) {
-    const product = products.find((p: ProductWithCategory) => p.id === cartItem.productId)
-    if (!product) continue
+    const product = physicalProducts.find((p: ProductWithCategory) => p.id === cartItem.productId)
+    if (!product) continue // デジタル商品は除外
     
     const categoryId = product.categoryId || 'default'
     const itemSubtotal = product.price * cartItem.quantity
@@ -131,9 +149,9 @@ export async function calculateShipping(
     let shippingRate = null
     let isCategoryFree = false
     
-    // カテゴリの送料設定を取得
+    // カテゴリの送料設定を取得（現物商品のみ）
     if (categoryId !== 'default') {
-      const categoryProduct = products.find((p: ProductWithCategory) => (p.categoryId || 'default') === categoryId)
+      const categoryProduct = physicalProducts.find((p: ProductWithCategory) => (p.categoryId || 'default') === categoryId)
       if (categoryProduct?.category?.shippingRate && categoryProduct.category.shippingRate.isActive) {
         shippingRate = categoryProduct.category.shippingRate
         // カテゴリの無料閾値をチェック
@@ -180,9 +198,11 @@ export async function calculateShipping(
     const product = products.find((p: ProductWithCategory) => p.id === cartItem.productId)
     if (!product) continue
 
+    // デジタル商品の場合は送料0で追加
+    const isDigital = product.category?.categoryType === 'DIGITAL'
     const categoryId = product.categoryId || 'default'
-    const categoryShippingFee = categoryShippingFees.get(categoryId) || 0
-    const isFree = categoryFreeFlags.get(categoryId) || false
+    const categoryShippingFee = isDigital ? 0 : (categoryShippingFees.get(categoryId) || 0)
+    const isFree = isDigital ? true : (categoryFreeFlags.get(categoryId) || false)
 
     productShippingDetails.push({
       productId: product.id,

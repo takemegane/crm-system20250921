@@ -186,14 +186,18 @@ export async function POST(request: NextRequest) {
     
     console.log('✅ Basic validation passed')
     
-    // カートアイテムを取得
+    // カートアイテムを取得（カテゴリ情報も含める）
     console.log('🛒 Fetching cart items for customer:', session.user.id)
     const cartItems = await prisma.cartItem.findMany({
       where: {
         customerId: session.user.id
       },
       include: {
-        product: true
+        product: {
+          include: {
+            category: true
+          }
+        }
       }
     })
     
@@ -203,8 +207,15 @@ export async function POST(request: NextRequest) {
       quantity: item.quantity,
       price: item.product.price,
       stock: item.product.stock,
-      isActive: item.product.isActive
+      isActive: item.product.isActive,
+      categoryType: item.product.category?.categoryType || 'PHYSICAL'
     })))
+    
+    // デジタル商品のみかどうかをチェック
+    const allDigital = cartItems.every(item => 
+      item.product.category?.categoryType === 'DIGITAL'
+    )
+    console.log('📱 All products are digital:', allDigital)
     
     if (cartItems.length === 0) {
       console.log('❌ Cart is empty')
@@ -237,6 +248,10 @@ export async function POST(request: NextRequest) {
     const orderNumber = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
     console.log('🔢 Generated order number:', orderNumber)
     
+    // デジタル商品のみの場合は即座に完了ステータス
+    const initialStatus = allDigital ? 'COMPLETED' : 'PENDING'
+    console.log('📊 Initial order status:', initialStatus, allDigital ? '(all digital products)' : '(contains physical products)')
+    
     // トランザクションで注文作成と在庫更新
     console.log('🔄 Starting transaction...')
     const order = await prisma.$transaction(async (tx) => {
@@ -252,7 +267,7 @@ export async function POST(request: NextRequest) {
         recipientName,
         contactPhone, // Prismaスキーマに合わせてcontactPhoneのみ使用
         notes,
-        status: 'PENDING'
+        status: initialStatus
       }
       console.log('📝 Order data:', JSON.stringify(orderData, null, 2))
       

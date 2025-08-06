@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
     
     const body = await request.json()
     console.log('📝 Request body:', body)
-    const { name, description, sortOrder } = body
+    const { name, description, categoryType, sortOrder } = body
     
     // バリデーション
     if (!name?.trim()) {
@@ -136,6 +136,7 @@ export async function POST(request: NextRequest) {
     const categoryData = {
       name: name.trim(),
       description: description?.trim() || null,
+      categoryType: categoryType || 'PHYSICAL',
       sortOrder: sortOrder || 0,
     }
     console.log('📦 Category data:', categoryData)

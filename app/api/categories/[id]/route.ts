@@ -79,7 +79,7 @@ export async function PUT(
     }
     
     const body = await request.json()
-    const { name, description, sortOrder, isActive } = body
+    const { name, description, categoryType, sortOrder, isActive } = body
     
     // バリデーション
     if (!name?.trim()) {
@@ -118,6 +118,7 @@ export async function PUT(
       data: {
         name: name.trim(),
         description: description?.trim() || null,
+        categoryType: categoryType || 'PHYSICAL',
         sortOrder: sortOrder || 0,
         isActive: isActive !== undefined ? isActive : true,
       },

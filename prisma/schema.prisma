@@ -5,7 +5,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -177,6 +177,7 @@ model Category {
   id          String    @id @default(cuid())
   name        String    @unique // カテゴリ名
   description String?   // カテゴリ説明
+  categoryType String   @default("PHYSICAL") // PHYSICAL(現物商品) or DIGITAL(デジタル商品)
   isActive    Boolean   @default(true)
   sortOrder   Int       @default(0) // 並び順
   createdAt   DateTime  @default(now())

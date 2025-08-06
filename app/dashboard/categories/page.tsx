@@ -8,6 +8,7 @@ interface Category {
   id: string
   name: string
   description: string | null
+  categoryType: string
   isActive: boolean
   sortOrder: number
   createdAt: string
@@ -31,6 +32,7 @@ export default function CategoriesPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
+    categoryType: 'PHYSICAL',
     sortOrder: 0,
     isActive: true
   })
@@ -90,6 +92,7 @@ export default function CategoriesPage() {
     setFormData({
       name: category.name,
       description: category.description || '',
+      categoryType: category.categoryType || 'PHYSICAL',
       sortOrder: category.sortOrder,
       isActive: category.isActive
     })
@@ -123,6 +126,7 @@ export default function CategoriesPage() {
     setFormData({
       name: '',
       description: '',
+      categoryType: 'PHYSICAL',
       sortOrder: 0,
       isActive: true
     })
@@ -169,6 +173,9 @@ export default function CategoriesPage() {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[200px]">
                   説明
                 </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[100px]">
+                  種別
+                </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider min-w-[80px]">
                   並び順
                 </th>
@@ -196,6 +203,15 @@ export default function CategoriesPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {category.description || '-'}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    category.categoryType === 'DIGITAL' 
+                      ? 'bg-blue-100 text-blue-800' 
+                      : 'bg-gray-100 text-gray-800'
+                  }`}>
+                    {category.categoryType === 'DIGITAL' ? 'デジタル商品' : '現物商品'}
+                  </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   {category.sortOrder}
@@ -288,6 +304,24 @@ export default function CategoriesPage() {
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     rows={3}
                   />
+                </div>
+                <div className="mb-4">
+                  <label htmlFor="categoryType" className="block text-sm font-medium text-gray-700 mb-2">
+                    カテゴリ種別 *
+                  </label>
+                  <select
+                    id="categoryType"
+                    value={formData.categoryType}
+                    onChange={(e) => setFormData({ ...formData, categoryType: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    required
+                  >
+                    <option value="PHYSICAL">現物商品（送料設定あり）</option>
+                    <option value="DIGITAL">デジタル商品（送料なし・即座完了）</option>
+                  </select>
+                  <p className="mt-1 text-xs text-gray-500">
+                    現物商品：送料が適用され、通常の出荷プロセス｜デジタル商品：送料無料で購入後即座に完了
+                  </p>
                 </div>
                 <div className="mb-4">
                   <label htmlFor="sortOrder" className="block text-sm font-medium text-gray-700 mb-2">
