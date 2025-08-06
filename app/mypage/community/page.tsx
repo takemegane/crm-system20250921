@@ -124,7 +124,7 @@ export default function CommunityPage() {
                 <div className="h-10 w-10 rounded-xl overflow-hidden mr-3 shadow-lg">
                   <img
                     src={systemSettings.logoUrl}
-                    alt={systemSettings.systemName}
+                    alt={systemSettings?.systemName || 'CRMシステム'}
                     className="w-full h-full object-cover"
                   />
                 </div>
@@ -136,7 +136,7 @@ export default function CommunityPage() {
                   </span>
                 </div>
               )}
-              <h1 className="text-2xl font-bold text-gray-900">{systemSettings.systemName}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{systemSettings?.systemName || 'CRMシステム'}</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">

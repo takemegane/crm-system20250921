@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Button } from '@/components/ui/button'
+import { useSystemSettings } from '@/hooks/use-system-settings'
 
 interface Enrollment {
   id: string
@@ -33,7 +34,9 @@ export default function MyPage() {
   const [enrollments, setEnrollments] = useState<Enrollment[]>([])
   const [loading, setLoading] = useState(true)
   const [activeMenu, setActiveMenu] = useState('account')
-  const [systemSettings, setSystemSettings] = useState<SystemSettings>({ systemName: 'マイページ' })
+  
+  // TanStack Query を使用
+  const { data: systemSettings } = useSystemSettings()
 
   // 顧客のコース情報を取得
   const fetchEnrollments = useCallback(async () => {
@@ -50,21 +53,7 @@ export default function MyPage() {
     }
   }, [])
 
-  // システム設定を取得
-  useEffect(() => {
-    const fetchSystemSettings = async () => {
-      try {
-        const response = await fetch('/api/system-settings')
-        if (response.ok) {
-          const settings = await response.json()
-          setSystemSettings(settings)
-        }
-      } catch (error) {
-        console.error('Error fetching system settings:', error)
-      }
-    }
-    fetchSystemSettings()
-  }, [])
+  // システム設定はTanStack Queryで自動取得
 
   useEffect(() => {
     if (session === undefined) {
@@ -104,7 +93,7 @@ export default function MyPage() {
                 <div className="h-10 w-10 rounded-xl overflow-hidden mr-3 shadow-lg">
                   <Image
                     src={systemSettings.logoUrl}
-                    alt={systemSettings.systemName}
+                    alt={systemSettings?.systemName || 'CRMシステム'}
                     width={40}
                     height={40}
                     className="object-cover w-full h-full"
@@ -120,7 +109,7 @@ export default function MyPage() {
                   </span>
                 </div>
               )}
-              <h1 className="text-2xl font-bold text-gray-900">{systemSettings.systemName}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{systemSettings?.systemName || 'CRMシステム'}</h1>
             </div>
             <div className="flex items-center space-x-4">
               <span className="text-sm text-gray-600">

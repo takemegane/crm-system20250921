@@ -96,7 +96,7 @@ export default function ShopPage() {
                 <div className="h-10 w-10 rounded-xl overflow-hidden mr-3 shadow-lg">
                   <Image
                     src={systemSettings.logoUrl}
-                    alt={systemSettings?.systemName || 'ECショップ'}
+                    alt={systemSettings?.systemName || 'CRMシステム'}
                     width={40}
                     height={40}
                     className="object-cover w-full h-full"
@@ -112,7 +112,7 @@ export default function ShopPage() {
                   </span>
                 </div>
               )}
-              <h1 className="text-2xl font-bold text-gray-900">{systemSettings?.systemName || 'ECショップ'}</h1>
+              <h1 className="text-2xl font-bold text-gray-900">{systemSettings?.systemName || 'CRMシステム'}</h1>
             </div>
             <div className="flex items-center space-x-4">
               {session?.user ? (
