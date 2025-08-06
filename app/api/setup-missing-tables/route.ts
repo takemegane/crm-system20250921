@@ -67,6 +67,55 @@ export async function POST(request: NextRequest) {
         console.log('ℹ️ CartItem -> Product foreign key already exists or failed:', error)
       }
 
+      // Orderテーブルに欠けているカラムを追加
+      console.log('🔧 Adding missing columns to Order table...')
+      
+      try {
+        // subtotalAmountカラム追加
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "subtotalAmount" DECIMAL(10,2);
+        `
+        console.log('✅ subtotalAmount column added to Order table')
+      } catch (error) {
+        console.log('ℹ️ subtotalAmount column already exists or failed:', error)
+      }
+
+      try {
+        // shippingFeeカラム追加
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "shippingFee" DECIMAL(10,2);
+        `
+        console.log('✅ shippingFee column added to Order table')
+      } catch (error) {
+        console.log('ℹ️ shippingFee column already exists or failed:', error)
+      }
+
+      try {
+        // contactPhoneカラム追加（キャンセル機能で追加したカラム）
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "contactPhone" TEXT;
+        `
+        console.log('✅ contactPhone column added to Order table')
+      } catch (error) {
+        console.log('ℹ️ contactPhone column already exists or failed:', error)
+      }
+
+      try {
+        // キャンセル関連カラム追加
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "cancelledAt" TIMESTAMP(3);
+        `
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "cancelledBy" TEXT;
+        `
+        await prisma.$executeRaw`
+          ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "cancelReason" TEXT;
+        `
+        console.log('✅ Cancel-related columns added to Order table')
+      } catch (error) {
+        console.log('ℹ️ Cancel-related columns already exist or failed:', error)
+      }
+
       // その他の欠けている可能性のあるテーブルもチェック・作成
       const tables = [
         'Customer', 'Product', 'Order', 'OrderItem', 'Category', 'ShippingRate'
