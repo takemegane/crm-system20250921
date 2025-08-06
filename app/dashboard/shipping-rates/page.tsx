@@ -116,6 +116,8 @@ export default function ShippingRatesPage() {
       if (response.ok) {
         fetchShippingRates()
         closeModal()
+        // 成功ポップアップ表示
+        alert('✅ 送料設定が正常に保存されました！\n\n設定内容がシステムに反映されます。')
       } else {
         const errorData = await response.json()
         alert(errorData.error || 'エラーが発生しました')

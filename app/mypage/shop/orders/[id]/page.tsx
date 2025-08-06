@@ -103,6 +103,15 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
     }
   }, [session, router, params.id, fetchOrder])
 
+  // 購入完了パラメータチェック
+  const [showThankYou, setShowThankYou] = useState(false)
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    if (urlParams.get('completed') === 'true') {
+      setShowThankYou(true)
+    }
+  }, [])
+
   const handleCancelOrder = async () => {
     console.log('🔥🔥🔥 COMPLETELY NEW handleCancelOrder called, order:', order?.id)
     
@@ -289,20 +298,16 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* 完了メッセージ */}
-        {isCompleted && (
-          <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded mb-6">
-            <div className="flex">
-              <div className="flex-shrink-0">
-                <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
-                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                </svg>
-              </div>
-              <div className="ml-3">
-                <h3 className="text-sm font-medium">注文が完了しました！</h3>
-                <p className="mt-1 text-sm">ご注文ありがとうございます。注文確認メールをお送りしました。</p>
-              </div>
+        {/* 購入完了時の感謝メッセージ */}
+        {showThankYou && (
+          <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center mb-6">
+            <div className="text-2xl font-bold text-green-800 mb-2">
+              🎉 ありがとうございます！
             </div>
+            <h3 className="text-lg font-medium text-green-700 mb-2">注文が完了しました！</h3>
+            <p className="text-green-600">
+              ご注文を承りました。商品の準備が整い次第、発送させていただきます。
+            </p>
           </div>
         )}
 

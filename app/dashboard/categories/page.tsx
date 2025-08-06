@@ -73,6 +73,8 @@ export default function CategoriesPage() {
       if (response.ok) {
         fetchCategories()
         closeModal()
+        // 成功ポップアップ表示
+        alert('✅ カテゴリが正常に保存されました！\n\n設定内容がシステムに反映されます。')
       } else {
         const errorData = await response.json()
         alert(errorData.error || 'エラーが発生しました')

@@ -63,6 +63,17 @@ export default withAuth(
     // 既存セッション対応：userTypeがない場合は管理者として扱う
     const userType = token.userType || (token.role === 'OPERATOR' || token.role === 'ADMIN' || token.role === 'OWNER' ? 'admin' : 'customer')
     
+    // ログイン後のデフォルトリダイレクト処理（ルートパスアクセス時）
+    if (pathname === '/') {
+      if (userType === 'customer') {
+        console.log('🛍️ Customer accessing root - redirecting to mypage')
+        return NextResponse.redirect(new URL('/mypage', req.url))
+      } else if (userType === 'admin') {
+        console.log('👨‍💼 Admin accessing root - redirecting to dashboard')
+        return NextResponse.redirect(new URL('/dashboard', req.url))
+      }
+    }
+    
     // 管理者用ダッシュボードアクセス
     if (pathname.startsWith('/dashboard')) {
       if (userType === 'admin') {

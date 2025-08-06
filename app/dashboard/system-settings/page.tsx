@@ -136,6 +136,9 @@ export default function SystemSettingsPage() {
       // リアルタイム更新のため、グローバル設定を更新
       await refreshSettings()
       setSuccess('設定が保存されました')
+      
+      // ポップアップで成功メッセージ表示
+      alert('✅ システム設定が正常に保存されました！\n\n変更内容がシステム全体に反映されます。')
     } catch (error) {
       setError(error instanceof Error ? error.message : '保存に失敗しました')
     } finally {

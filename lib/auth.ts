@@ -120,6 +120,9 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
   debug: false, // デバッグ無効化でJSON manifest問題を解決
+  pages: {
+    signIn: '/login',
+  },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -136,8 +139,5 @@ export const authOptions: NextAuthOptions = {
       }
       return session
     },
-  },
-  pages: {
-    signIn: '/login',
   },
 }

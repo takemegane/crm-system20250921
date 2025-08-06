@@ -210,8 +210,11 @@ export default function CheckoutPage() {
 
       const order = await response.json()
       
+      // 購入完了ポップアップ表示
+      alert('🎉 購入が完了しました！\n\nありがとうございます！\n注文詳細画面に移動します。')
+      
       // 注文完了画面にリダイレクト
-      router.push(`/shop/orders/${order.id}?completed=true`)
+      router.push(`/mypage/shop/orders/${order.id}?completed=true`)
     } catch (error) {
       console.error('Error creating order:', error)
       setError(error instanceof Error ? error.message : '注文の作成に失敗しました')
