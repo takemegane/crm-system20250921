@@ -206,11 +206,17 @@ export default function CategoriesPage() {
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                    category.categoryType === 'DIGITAL' 
+                    category.categoryType === 'COURSE' 
+                      ? 'bg-purple-100 text-purple-800'
+                      : category.categoryType === 'DIGITAL' 
                       ? 'bg-blue-100 text-blue-800' 
                       : 'bg-gray-100 text-gray-800'
                   }`}>
-                    {category.categoryType === 'DIGITAL' ? 'デジタル商品' : '現物商品'}
+                    {category.categoryType === 'COURSE' 
+                      ? 'コース商品' 
+                      : category.categoryType === 'DIGITAL' 
+                      ? 'デジタル商品' 
+                      : '現物商品'}
                   </span>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -318,9 +324,10 @@ export default function CategoriesPage() {
                   >
                     <option value="PHYSICAL">現物商品（送料設定あり）</option>
                     <option value="DIGITAL">デジタル商品（送料なし・即座完了）</option>
+                    <option value="COURSE">🎓 コース商品（コース自動登録）</option>
                   </select>
                   <p className="mt-1 text-xs text-gray-500">
-                    現物商品：送料が適用され、通常の出荷プロセス｜デジタル商品：送料無料で購入後即座に完了
+                    現物商品：送料が適用され、通常の出荷プロセス｜デジタル商品：送料無料で購入後即座に完了｜コース商品：購入時に指定コースへ自動登録
                   </p>
                 </div>
                 <div className="mb-4">
