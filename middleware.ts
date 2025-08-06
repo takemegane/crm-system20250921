@@ -102,8 +102,19 @@ export default withAuth(
       }
     }
     
+    // 顧客向けAPIパスのチェック
+    const isCustomerAPI = pathname.startsWith('/api/auth') || 
+                          pathname.startsWith('/api/products') || 
+                          pathname.startsWith('/api/cart') || 
+                          pathname.startsWith('/api/orders') || 
+                          pathname.startsWith('/api/categories') || 
+                          pathname.startsWith('/api/customer-enrollments') ||
+                          pathname.includes('/customer-details') ||
+                          pathname.startsWith('/api/system-settings') ||
+                          pathname.startsWith('/api/calculate-shipping')
+    
     // 管理者専用APIアクセス
-    if (pathname.startsWith('/api/') && !pathname.startsWith('/api/auth') && !pathname.startsWith('/api/products') && !pathname.startsWith('/api/cart') && !pathname.startsWith('/api/orders') && !pathname.startsWith('/api/categories') && !pathname.startsWith('/api/customer-enrollments')) {
+    if (pathname.startsWith('/api/') && !isCustomerAPI) {
       if (userType === 'admin') {
         const response = NextResponse.next()
         return addCSRFToken(response)
