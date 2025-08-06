@@ -1437,6 +1437,104 @@ npm run build          # プロダクションビルド
 
 ## 開発履歴
 
+### 2025/08/06: Vercel本番環境データベーススキーマ不整合問題解決完了（v2.4.3）
+
+#### 🚨 **本番環境購入機能エラーの根本原因と解決**
+
+**📋 発生した問題:**
+顧客が本番環境（Vercel）で商品購入時に以下のエラーが連続発生：
+1. `Unknown argument 'recipientPhone'` - Prismaスキーマ未定義フィールドエラー
+2. `Null constraint violation on the fields: (recipientAddress)` - データベーススキーマ不整合エラー
+
+**🔍 根本原因分析:**
+
+| 項目 | ローカル環境 | 本番環境（Vercel） |
+|------|-------------|-------------------|
+| **データベース** | SQLite | PostgreSQL |
+| **スキーマ管理** | 開発用・柔軟 | 本番用・厳密 |
+| **過去の変更履歴** | リセット頻繁 | 蓄積される |
+
+**🚨 なぜローカルでは動作していたのに本番環境でエラーが発生したのか：**
+
+1. **データベース環境の根本的違い**
+   - ローカル: SQLite（スキーマ変更に寛容）
+   - 本番: PostgreSQL（NOT NULL制約・フィールド名を厳格チェック）
+
+2. **データベーススキーマの不整合**
+   ```javascript
+   // Prismaスキーマ定義（ローカルで動作）
+   shippingAddress String?    // ✅ 正しい定義
+   contactPhone    String?    // ✅ 正しい定義
+   
+   // 実際のPostgreSQLテーブル（本番環境）
+   recipientAddress TEXT NOT NULL  // ❌ 古いマイグレーション残存
+   recipientPhone   TEXT NOT NULL  // ❌ 古いマイグレーション残存
+   ```
+
+3. **過去のマイグレーション履歴蓄積**
+   - ローカル: 開発中に頻繁なデータベースリセット → 常に最新スキーマ
+   - 本番: 過去の手動マイグレーションで追加された古いカラムが残存
+
+**🛠️ 段階的解決プロセス:**
+
+**Phase 1: フィールド名エラー解決**
+```typescript
+// 修正前
+recipientPhone: contactPhone  // ❌ 存在しないフィールド
+// 修正後  
+contactPhone                  // ✅ Prismaスキーマ準拠
+```
+
+**Phase 2: データベース構造診断**
+- debug-order API作成・管理者アクセス対応
+- PostgreSQLテーブル構造の実態調査
+- スキーマ不整合の確定的証拠取得
+
+**Phase 3: データベーステーブル構造修正**
+```sql
+-- fix-order-table API実行内容
+ALTER TABLE "Order" DROP COLUMN IF EXISTS "recipientAddress";
+ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "shippingAddress" TEXT;
+```
+
+**✅ 最終解決結果:**
+- ✅ 顧客購入機能完全復旧
+- ✅ データベーススキーマ完全整合
+- ✅ 本番環境での安定動作確認済み
+
+**📚 学んだ重要な教訓:**
+
+1. **環境統一の重要性**
+   ```bash
+   # 推奨：ローカルでもPostgreSQLを使用
+   DATABASE_URL="postgresql://..."
+   ```
+
+2. **マイグレーション管理の徹底**
+   ```bash
+   # スキーマ変更時は必ずマイグレーション実行
+   npx prisma migrate dev
+   npx prisma db push  # 本番反映
+   ```
+
+3. **本番環境テストの定期化**
+   - デプロイ後の購入フロー確認必須
+   - データベーススキーマ整合性チェック
+
+**🔧 予防策として新規追加されたAPI:**
+- `/api/fix-order-table` - Order テーブル構造修正
+- `/api/debug-order` - 段階的注文診断（管理者・顧客対応）
+
+**📊 技術的詳細:**
+- 修正対象ファイル: `/app/api/orders/route.ts`
+- 新規作成API: 2個
+- 実行したデータベース修正: PostgreSQL ALTER TABLE文
+- 検証済み機能: 顧客購入フロー完全動作
+
+**重要**: この問題は開発環境（SQLite）と本番環境（PostgreSQL）の根本的違いから生じており、環境統一とマイグレーション管理の重要性を示す典型的な事例となりました。
+
+---
+
 ### 2025/08/02: UI改善と商品並び順機能実装完了（v2.3）
 
 #### カテゴリ管理画面UI改善
