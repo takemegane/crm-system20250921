@@ -41,9 +41,6 @@ export default function ShopPage() {
   const { data: systemSettings } = useSystemSettings()
   const addToCartMutation = useAddToCart()
 
-  // デバッグ用ログ（一時的）
-  console.log('🛒 Cart Debug - cartLoading:', cartLoading, 'cart:', cart)
-
   // キャッシュシステムを使用するため、手動のfetch関数は不要
 
   useEffect(() => {
@@ -126,16 +123,11 @@ export default function ShopPage() {
                   <Link href="/mypage/shop/cart">
                     <Button variant="outline" className="relative">
                       カート
-                      {(() => {
-                        const itemCount = cart?.itemCount ?? 0;
-                        const shouldShowBadge = !cartLoading && cart && itemCount > 0;
-                        console.log('🎯 Badge Logic:', { cartLoading, itemCount, shouldShowBadge });
-                        return shouldShowBadge && (
-                          <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                            {itemCount}
-                          </span>
-                        );
-                      })()}
+                      {!cartLoading && cart && cart.itemCount > 0 && (
+                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                          {cart.itemCount}
+                        </span>
+                      )}
                     </Button>
                   </Link>
                   <Link href="/mypage/shop/orders">
