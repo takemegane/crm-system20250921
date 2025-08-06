@@ -86,7 +86,7 @@ export async function calculateShipping(
   })
   
   console.log('📦 Products fetched:', products.length)
-  console.log('📦 Products details:', products.map((p: any) => ({
+  console.log('📦 Products details:', products.map((p: ProductWithCategory) => ({
     id: p.id,
     name: p.name,
     categoryId: p.categoryId,
@@ -98,7 +98,7 @@ export async function calculateShipping(
   const categorySubtotals = new Map<string, number>()
   
   for (const cartItem of cartItems) {
-    const product = products.find((p: any) => p.id === cartItem.productId)
+    const product = products.find((p: ProductWithCategory) => p.id === cartItem.productId)
     if (!product) continue
     
     const categoryId = product.categoryId || 'default'
@@ -133,7 +133,7 @@ export async function calculateShipping(
     
     // カテゴリの送料設定を取得
     if (categoryId !== 'default') {
-      const categoryProduct = products.find((p: any) => (p.categoryId || 'default') === categoryId)
+      const categoryProduct = products.find((p: ProductWithCategory) => (p.categoryId || 'default') === categoryId)
       if (categoryProduct?.category?.shippingRate && categoryProduct.category.shippingRate.isActive) {
         shippingRate = categoryProduct.category.shippingRate
         // カテゴリの無料閾値をチェック
@@ -177,7 +177,7 @@ export async function calculateShipping(
   }> = []
 
   for (const cartItem of cartItems) {
-    const product = products.find((p: any) => p.id === cartItem.productId)
+    const product = products.find((p: ProductWithCategory) => p.id === cartItem.productId)
     if (!product) continue
 
     const categoryId = product.categoryId || 'default'
