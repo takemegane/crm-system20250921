@@ -177,7 +177,7 @@ model Category {
   id          String    @id @default(cuid())
   name        String    @unique // カテゴリ名
   description String?   // カテゴリ説明
-  categoryType String   @default("PHYSICAL") // PHYSICAL(現物商品) or DIGITAL(デジタル商品)
+  categoryType String   @default("PHYSICAL") // PHYSICAL(現物商品) or DIGITAL(デジタル商品) or COURSE(コース商品)
   isActive    Boolean   @default(true)
   sortOrder   Int       @default(0) // 並び順
   createdAt   DateTime  @default(now())
@@ -198,6 +198,7 @@ model Product {
   categoryId    String?   // カテゴリID
   sortOrder     Int       @default(0) // 並び順（小さい値が先頭）
   isActive      Boolean   @default(true) // 販売中フラグ
+  courseMapping Json?     // コース紐付け情報（コース商品の場合のみ）
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   

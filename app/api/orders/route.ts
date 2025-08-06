@@ -211,11 +211,11 @@ export async function POST(request: NextRequest) {
       categoryType: item.product.category?.categoryType || 'PHYSICAL'
     })))
     
-    // デジタル商品のみかどうかをチェック
-    const allDigital = cartItems.every(item => 
-      item.product.category?.categoryType === 'DIGITAL'
+    // デジタル商品・コース商品のみかどうかをチェック
+    const allDigitalOrCourse = cartItems.every(item => 
+      item.product.category?.categoryType === 'DIGITAL' || item.product.category?.categoryType === 'COURSE'
     )
-    console.log('📱 All products are digital:', allDigital)
+    console.log('📱 All products are digital/course:', allDigitalOrCourse)
     
     if (cartItems.length === 0) {
       console.log('❌ Cart is empty')
@@ -248,9 +248,9 @@ export async function POST(request: NextRequest) {
     const orderNumber = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
     console.log('🔢 Generated order number:', orderNumber)
     
-    // デジタル商品のみの場合は即座に完了ステータス
-    const initialStatus = allDigital ? 'COMPLETED' : 'PENDING'
-    console.log('📊 Initial order status:', initialStatus, allDigital ? '(all digital products)' : '(contains physical products)')
+    // デジタル商品・コース商品のみの場合は即座に完了ステータス
+    const initialStatus = allDigitalOrCourse ? 'COMPLETED' : 'PENDING'
+    console.log('📊 Initial order status:', initialStatus, allDigitalOrCourse ? '(all digital/course products)' : '(contains physical products)')
     
     // トランザクションで注文作成と在庫更新
     console.log('🔄 Starting transaction...')
@@ -303,6 +303,50 @@ export async function POST(request: NextRequest) {
           }
         })
         console.log(`✅ Stock updated for: ${item.product.name}, decremented by: ${item.quantity}`)
+      }
+      
+      // コース商品の自動付与処理
+      console.log('🎓 Processing course enrollments...')
+      const courseEnrollments = []
+      for (const item of cartItems) {
+        if (item.product.category?.categoryType === 'COURSE' && item.product.courseMapping) {
+          const courseMapping = item.product.courseMapping as any
+          console.log(`🎓 Processing course enrollment: ${item.product.name}`)
+          console.log(`🎓 Course mapping data:`, courseMapping)
+          
+          if (courseMapping.courseId && courseMapping.autoEnroll) {
+            // 既存の登録をチェック
+            const existingEnrollment = await tx.enrollment.findFirst({
+              where: {
+                customerId: session.user.id,
+                courseId: courseMapping.courseId
+              }
+            })
+            
+            if (existingEnrollment) {
+              console.log(`ℹ️ Customer already enrolled in course: ${courseMapping.courseName}`)
+            } else {
+              // 新規コース登録
+              const enrollment = await tx.enrollment.create({
+                data: {
+                  customerId: session.user.id,
+                  courseId: courseMapping.courseId,
+                  status: 'ACTIVE'
+                }
+              })
+              console.log(`✅ Customer enrolled in course: ${courseMapping.courseName}`)
+              courseEnrollments.push({
+                courseId: courseMapping.courseId,
+                courseName: courseMapping.courseName,
+                enrollmentId: enrollment.id
+              })
+            }
+          }
+        }
+      }
+      
+      if (courseEnrollments.length > 0) {
+        console.log(`🎉 Successfully enrolled customer in ${courseEnrollments.length} courses`)
       }
       
       // カートクリア

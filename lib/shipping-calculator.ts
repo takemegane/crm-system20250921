@@ -96,11 +96,16 @@ export async function calculateShipping(
     hasShippingRate: !!p.category?.shippingRate
   })))
 
-  // デジタル商品をフィルタリング（送料計算から除外）
+  // デジタル商品・コース商品をフィルタリング（送料計算から除外）
   const physicalProducts = products.filter((p: ProductWithCategory) => 
-    !p.category || p.category.categoryType !== 'DIGITAL'
+    !p.category || (p.category.categoryType !== 'DIGITAL' && p.category.categoryType !== 'COURSE')
   )
   console.log('📦 Physical products only:', physicalProducts.length, 'out of', products.length)
+  console.log('📦 Non-physical product types excluded:', products
+    .filter((p: ProductWithCategory) => 
+      p.category && (p.category.categoryType === 'DIGITAL' || p.category.categoryType === 'COURSE'))
+    .map((p: ProductWithCategory) => ({ name: p.name, type: p.category?.categoryType }))
+  )
 
   // 現物商品のみで小計を再計算（送料計算用）
   const physicalSubtotalAmount = cartItems.reduce((sum, item) => {

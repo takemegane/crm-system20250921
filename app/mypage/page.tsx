@@ -196,12 +196,22 @@ export default function MyPage() {
                           <p className="text-sm text-gray-600 mt-1">{enrollment.course.description}</p>
                         )}
                         <div className="flex justify-between items-center mt-3">
-                          <span className="text-sm text-gray-500">
-                            受講開始: {new Date(enrollment.enrolledAt).toLocaleDateString('ja-JP')}
-                          </span>
-                          <span className="inline-flex px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
-                            受講中
-                          </span>
+                          <div>
+                            <span className="text-sm text-gray-500">
+                              受講開始: {new Date(enrollment.enrolledAt).toLocaleDateString('ja-JP')}
+                            </span>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <span className="inline-flex px-2 py-1 text-xs font-semibold bg-green-100 text-green-800 rounded-full">
+                              受講中
+                            </span>
+                            <Link
+                              href={`/mypage/courses/${enrollment.courseId}`}
+                              className="inline-flex px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                            >
+                              コース画面
+                            </Link>
+                          </div>
                         </div>
                       </div>
                     ))}

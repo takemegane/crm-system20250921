@@ -15,9 +15,16 @@ type Product = {
   imageUrl?: string
   categoryId?: string
   sortOrder: number
+  courseMapping?: {
+    courseId: string
+    courseName: string
+    autoEnroll: boolean
+    description?: string
+  }
   category?: {
     id: string
     name: string
+    categoryType?: string
   }
   isActive: boolean
   createdAt: string
@@ -276,6 +283,9 @@ export default function ProductsPage() {
                       カテゴリ
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      コース連携
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       並び順
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -319,7 +329,34 @@ export default function ProductsPage() {
                         {product.stock}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                        {product.category?.name || '-'}
+                        <div>
+                          <div>{product.category?.name || '-'}</div>
+                          {product.category?.categoryType && product.category.categoryType !== 'PHYSICAL' && (
+                            <div className="text-xs text-blue-600">
+                              {product.category.categoryType === 'DIGITAL' ? 'デジタル' : 
+                               product.category.categoryType === 'COURSE' ? 'コース' : 
+                               product.category.categoryType}
+                            </div>
+                          )}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm">
+                        {product.courseMapping ? (
+                          <div>
+                            <div className="font-medium text-blue-600">
+                              🎓 {product.courseMapping.courseName}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              {product.courseMapping.autoEnroll ? '自動登録' : '手動登録'}
+                            </div>
+                          </div>
+                        ) : product.category?.categoryType === 'COURSE' ? (
+                          <div className="text-xs text-orange-600">
+                            ⚠️ 設定が必要
+                          </div>
+                        ) : (
+                          <div className="text-gray-400">-</div>
+                        )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                         <input

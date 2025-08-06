@@ -29,7 +29,7 @@ async function main() {
       name: 'ベーシックコース',
       description: '初心者向けの基本コース',
       price: 10000,
-      duration: '3ヶ月',
+      duration: 90, // 3ヶ月（90日）
     },
   })
 
@@ -41,7 +41,7 @@ async function main() {
       name: 'アドバンスコース',
       description: '上級者向けの応用コース',
       price: 20000,
-      duration: '6ヶ月',
+      duration: 180, // 6ヶ月（180日）
     },
   })
 
