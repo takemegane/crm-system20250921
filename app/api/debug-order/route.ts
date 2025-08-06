@@ -50,17 +50,24 @@ export async function POST(request: NextRequest) {
       id: session.user?.id
     })
 
-    // Step 4: 顧客権限確認
-    if (session.user.userType !== 'customer') {
-      console.log('❌ Step 4 Failed: Not a customer')
+    // Step 4: ユーザー権限確認（顧客または管理者）
+    const isCustomer = session.user.userType === 'customer'
+    const isAdmin = session.user.userType === 'admin'
+    
+    if (!isCustomer && !isAdmin) {
+      console.log('❌ Step 4 Failed: Not a customer or admin')
       return NextResponse.json({ 
         error: 'Step 4 Failed', 
-        details: 'Not a customer',
+        details: 'Not a customer or admin',
         step: 4,
         userType: session.user.userType
       }, { status: 403 })
     }
-    console.log('✅ Step 4 Passed: Customer confirmed')
+    console.log('✅ Step 4 Passed: User access confirmed', {
+      userType: session.user.userType,
+      isCustomer,
+      isAdmin
+    })
 
     // Step 5: リクエストボディ解析
     let body
