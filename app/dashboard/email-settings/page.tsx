@@ -60,12 +60,16 @@ export default function EmailSettingsPage() {
           signature: data.signature || '',
           isActive: data.isActive || false
         })
+        setError('') // Clear any previous errors
       } else {
-        setError('設定の取得に失敗しました')
+        // APIは初回アクセス時に自動的にデフォルト設定を作成するため、
+        // 通常はエラーになることはない
+        console.error('Failed to fetch email settings:', response.status)
+        setError('設定の初期化に失敗しました。ページを再読み込みしてください。')
       }
     } catch (error) {
       console.error('Error fetching email settings:', error)
-      setError('設定の取得に失敗しました')
+      setError('ネットワークエラーが発生しました。接続を確認してください。')
     } finally {
       setLoading(false)
     }
