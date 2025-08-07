@@ -53,6 +53,8 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'VIEW_COURSES',
     'VIEW_TAGS',
     'VIEW_PRODUCTS',
+    'CREATE_PRODUCTS',
+    'EDIT_PRODUCTS',
     'VIEW_ORDERS',
     'EDIT_ORDERS',
     'VIEW_EMAIL_TEMPLATES',
