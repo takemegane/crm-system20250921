@@ -60,6 +60,7 @@ export default function ProductsPage() {
 
   const fetchProducts = useCallback(async (page = 1) => {
     setLoading(true)
+    setError('')
     try {
       const params = new URLSearchParams({
         page: page.toString(),
@@ -68,15 +69,25 @@ export default function ProductsPage() {
         ...(category && { category })
       })
 
+      console.log('📦 Fetching products:', `/api/products?${params}`)
       const response = await fetch(`/api/products?${params}`)
+      console.log('📦 Products response status:', response.status, response.statusText)
       
       if (!response.ok) {
-        throw new Error('商品の取得に失敗しました')
+        const errorText = await response.text()
+        console.error('📦 Products API error:', errorText)
+        throw new Error(`商品の取得に失敗しました (${response.status}): ${errorText}`)
       }
 
       const data = await response.json()
-      setProducts(data.products)
-      setPagination(data.pagination)
+      console.log('📦 Products data:', { 
+        productsCount: data.products?.length, 
+        pagination: data.pagination,
+        firstProduct: data.products?.[0] 
+      })
+      
+      setProducts(data.products || [])
+      setPagination(data.pagination || { page: 1, limit: 20, total: 0, totalPages: 0 })
     } catch (error) {
       console.error('Error fetching products:', error)
       setError(error instanceof Error ? error.message : '商品の取得に失敗しました')
@@ -99,16 +110,24 @@ export default function ProductsPage() {
 
   const fetchPaymentSettings = useCallback(async () => {
     try {
+      console.log('💳 Fetching payment settings...')
       const response = await fetch('/api/payment-settings')
+      console.log('💳 Payment settings response:', response.status, response.statusText)
+      
       if (response.ok) {
         const data = await response.json()
+        console.log('💳 Payment settings data:', data)
         setPaymentSettings({
           isActive: data.isActive || false,
           isTestMode: data.isTestMode || true
         })
+      } else {
+        console.log('💳 Payment settings not available or permission denied')
+        setPaymentSettings({ isActive: false, isTestMode: true })
       }
     } catch (error) {
       console.error('Error fetching payment settings:', error)
+      setPaymentSettings({ isActive: false, isTestMode: true })
     }
   }, [])
 
