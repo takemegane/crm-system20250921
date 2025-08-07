@@ -18,6 +18,7 @@ const navigation = [
   { name: 'カテゴリ管理', href: '/dashboard/categories', current: false },
   { name: '注文管理', href: '/dashboard/orders', current: false },
   { name: '送料設定', href: '/dashboard/shipping-rates', current: false },
+  { name: '決済設定', href: '/dashboard/payment-settings', current: false },
   { name: '一括メール配信', href: '/dashboard/bulk-email', current: false },
   { name: 'メール送信履歴', href: '/dashboard/email-logs', current: false },
   { name: 'メールテンプレート', href: '/dashboard/email-templates', current: false },
@@ -49,6 +50,9 @@ export default function Sidebar() {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_EMAIL_LOGS')
     }
     if (item.href === '/dashboard/email-settings') {
+      return session?.user?.role === 'OWNER'
+    }
+    if (item.href === '/dashboard/payment-settings') {
       return session?.user?.role === 'OWNER'
     }
     if (item.href === '/dashboard/system-settings') {

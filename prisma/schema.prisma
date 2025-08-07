@@ -179,21 +179,24 @@ model Category {
 }
 
 model Product {
-  id            String      @id @default(cuid())
-  name          String
-  description   String?
-  price         Float
-  stock         Int         @default(0)
-  imageUrl      String?
-  categoryId    String?
-  sortOrder     Int         @default(0)
-  isActive      Boolean     @default(true)
-  courseMapping Json?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  cartItems     CartItem[]
-  orderItems    OrderItem[]
-  category      Category?   @relation(fields: [categoryId], references: [id])
+  id              String      @id @default(cuid())
+  name            String
+  description     String?
+  price           Float
+  stock           Int         @default(0)
+  imageUrl        String?
+  categoryId      String?
+  sortOrder       Int         @default(0)
+  isActive        Boolean     @default(true)
+  courseMapping   Json?
+  stripeProductId String?     // Stripe商品ID
+  stripePriceId   String?     // Stripe価格ID
+  enablePayment   Boolean     @default(false) // オンライン決済有効フラグ
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+  cartItems       CartItem[]
+  orderItems      OrderItem[]
+  category        Category?   @relation(fields: [categoryId], references: [id])
 }
 
 model CartItem {
@@ -210,25 +213,29 @@ model CartItem {
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  customerId      String
-  orderNumber     String      @unique
-  subtotalAmount  Float       @default(0)
-  shippingFee     Float       @default(0)
-  totalAmount     Float
-  status          String      @default("PENDING")
-  shippingAddress String?
-  recipientName   String?
-  contactPhone    String?
-  notes           String?
-  cancelledAt     DateTime?
-  cancelledBy     String?
-  cancelReason    String?
-  orderedAt       DateTime    @default(now())
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
-  customer        Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
-  orderItems      OrderItem[]
+  id                    String      @id @default(cuid())
+  customerId            String
+  orderNumber           String      @unique
+  subtotalAmount        Float       @default(0)
+  shippingFee           Float       @default(0)
+  totalAmount           Float
+  status                String      @default("PENDING")
+  shippingAddress       String?
+  recipientName         String?
+  contactPhone          String?
+  notes                 String?
+  cancelledAt           DateTime?
+  cancelledBy           String?
+  cancelReason          String?
+  paymentMethod         String?     // "stripe" | "bank_transfer" | null
+  stripePaymentIntentId String?     // Stripe PaymentIntent ID
+  stripeSessionId       String?     // Stripe Checkout Session ID
+  paidAt                DateTime?   // 決済完了日時
+  orderedAt             DateTime    @default(now())
+  createdAt             DateTime    @default(now())
+  updatedAt             DateTime    @updatedAt
+  customer              Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderItems            OrderItem[]
 
   @@map("Order")
 }
@@ -256,4 +263,16 @@ model ShippingRate {
   createdAt             DateTime  @default(now())
   updatedAt             DateTime  @updatedAt
   category              Category? @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+}
+
+model PaymentSettings {
+  id                String   @id @default(cuid())
+  stripePublicKey   String?
+  stripeSecretKey   String?  // 暗号化して保存
+  stripeWebhookSecret String? // Webhook署名検証用
+  isTestMode        Boolean  @default(true)
+  isActive          Boolean  @default(false)
+  currency          String   @default("jpy")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 }
