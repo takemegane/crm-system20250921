@@ -49,15 +49,21 @@ export async function POST(
     })
 
     // アーカイブの監査ログを記録
-    await createAuditLog({
-      userId: session.user.id,
-      action: 'ARCHIVE',
-      entity: 'CUSTOMER',
-      entityId: params.id,
-      oldData: { isArchived: false },
-      newData: { isArchived: true, archivedAt: updatedCustomer.archivedAt },
-      request
-    })
+    try {
+      await createAuditLog({
+        userId: session.user.id,
+        action: 'ARCHIVE',
+        entity: 'CUSTOMER',
+        entityId: params.id,
+        oldData: { isArchived: false },
+        newData: { isArchived: true, archivedAt: updatedCustomer.archivedAt },
+        request
+      })
+      console.log('✅ Archive audit log created for customer:', params.id)
+    } catch (auditError) {
+      console.error('❌ Failed to create archive audit log:', auditError)
+      // 監査ログのエラーは処理を止めない
+    }
 
     return NextResponse.json(updatedCustomer)
   } catch (error) {

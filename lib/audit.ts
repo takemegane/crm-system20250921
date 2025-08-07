@@ -41,6 +41,12 @@ export async function createAuditLog({
       return
     }
 
+    // ユーザー情報を取得
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { name: true, email: true }
+    })
+
     const ipAddress = request?.headers.get('x-forwarded-for') || 
                      request?.headers.get('x-real-ip') || 
                      request?.ip || 
@@ -51,6 +57,7 @@ export async function createAuditLog({
     await prisma.auditLog.create({
       data: {
         userId,
+        userName: user?.name || user?.email || 'Unknown',
         action,
         entity,
         entityId,
@@ -62,6 +69,7 @@ export async function createAuditLog({
     })
   } catch (error) {
     console.error('Error creating audit log:', error)
+    console.error('Audit log data:', { userId, action, entity, entityId })
     // Don't throw error to avoid breaking the main operation
   }
 }

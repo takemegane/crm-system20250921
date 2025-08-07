@@ -243,14 +243,20 @@ export async function DELETE(
     })
 
     // 削除の監査ログを記録
-    await createAuditLog({
-      userId: session.user.id,
-      action: 'DELETE',
-      entity: 'CUSTOMER',
-      entityId: params.id,
-      oldData: customer,
-      request
-    })
+    try {
+      await createAuditLog({
+        userId: session.user.id,
+        action: 'DELETE',
+        entity: 'CUSTOMER',
+        entityId: params.id,
+        oldData: customer,
+        request
+      })
+      console.log('✅ Delete audit log created for customer:', params.id)
+    } catch (auditError) {
+      console.error('❌ Failed to create delete audit log:', auditError)
+      // 監査ログのエラーは処理を止めない
+    }
 
     return NextResponse.json({ message: 'Customer deleted successfully' })
   } catch (error) {

@@ -78,17 +78,21 @@ export async function POST(
 
     // Create audit log
     console.log('📝 Creating audit log...')
-    await createAuditLog({
-      userId: session.user.id,
-      action: 'RESTORE',
-      entity: 'CUSTOMER',
-      entityId: customerId,
-      oldData: { isArchived: true, archivedAt: customer.archivedAt },
-      newData: { isArchived: false, archivedAt: null },
-      request
-    })
-
-    console.log('✅ Audit log created')
+    try {
+      await createAuditLog({
+        userId: session.user.id,
+        action: 'RESTORE',
+        entity: 'CUSTOMER',
+        entityId: customerId,
+        oldData: { isArchived: true, archivedAt: customer.archivedAt },
+        newData: { isArchived: false, archivedAt: null },
+        request
+      })
+      console.log('✅ Audit log created')
+    } catch (auditError) {
+      console.error('❌ Failed to create restore audit log:', auditError)
+      // 監査ログのエラーは処理を止めない
+    }
     console.log('🎉 Customer unarchive completed successfully')
 
     return NextResponse.json(restoredCustomer)
