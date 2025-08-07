@@ -1,7 +1,19 @@
 import { getPrismaClient } from '@/lib/db'
 import { NextRequest } from 'next/server'
 
-export type AuditAction = 'LOGIN' | 'LOGOUT' | 'CREATE' | 'UPDATE' | 'DELETE' | 'VIEW' | 'SEND_EMAIL'
+export type AuditAction = 
+  | 'LOGIN' 
+  | 'LOGOUT' 
+  | 'CREATE' 
+  | 'UPDATE' 
+  | 'DELETE' 
+  | 'VIEW' 
+  | 'SEND_EMAIL'
+  | 'ARCHIVE'
+  | 'RESTORE'
+  | 'STATUS_CHANGE'
+  | 'CANCEL'
+  | 'SETTING_CHANGE'
 
 export interface AuditLogData {
   userId: string
@@ -152,4 +164,43 @@ export async function logCustomerCourseUpdate(
     newData: { courses: newCourses },
     request
   })
+}
+
+// アクションの日本語マッピング
+export const getActionLabel = (action: AuditAction): string => {
+  const actionLabels: Record<AuditAction, string> = {
+    'LOGIN': 'ログイン',
+    'LOGOUT': 'ログアウト',
+    'CREATE': '作成',
+    'UPDATE': '更新',
+    'DELETE': '削除',
+    'VIEW': '閲覧',
+    'SEND_EMAIL': 'メール送信',
+    'ARCHIVE': 'アーカイブ',
+    'RESTORE': '復元',
+    'STATUS_CHANGE': 'ステータス変更',
+    'CANCEL': 'キャンセル',
+    'SETTING_CHANGE': '設定変更'
+  }
+  return actionLabels[action] || action
+}
+
+// エンティティの日本語マッピング
+export const getEntityLabel = (entity?: string): string => {
+  if (!entity) return ''
+  
+  const entityLabels: Record<string, string> = {
+    'CUSTOMER': '顧客',
+    'COURSE': 'コース',
+    'TAG': 'タグ',
+    'PRODUCT': '商品',
+    'CATEGORY': 'カテゴリ',
+    'USER': '管理者',
+    'EMAIL_TEMPLATE': 'メールテンプレート',
+    'ORDER': '注文',
+    'SHIPPING_RATE': '送料設定',
+    'SYSTEM_SETTINGS': 'システム設定',
+    'Email': 'メール'
+  }
+  return entityLabels[entity] || entity
 }

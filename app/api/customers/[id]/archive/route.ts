@@ -1,15 +1,16 @@
-import { NextResponse } from 'next/server'
+import { NextResponse, NextRequest } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
+import { createAuditLog } from '@/lib/audit'
 
 // 静的生成を無効にして動的ルートとして扱う
 export const dynamic = 'force-dynamic'
 export const runtime = 'nodejs'
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: { id: string } }
 ) {
   try {
@@ -45,6 +46,17 @@ export async function POST(
         isArchived: true,
         archivedAt: new Date()
       }
+    })
+
+    // アーカイブの監査ログを記録
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'ARCHIVE',
+      entity: 'CUSTOMER',
+      entityId: params.id,
+      oldData: { isArchived: false },
+      newData: { isArchived: true, archivedAt: updatedCustomer.archivedAt },
+      request
     })
 
     return NextResponse.json(updatedCustomer)

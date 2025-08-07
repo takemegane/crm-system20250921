@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
-import { logCustomerUpdate } from '@/lib/audit'
+import { logCustomerUpdate, createAuditLog } from '@/lib/audit'
 
 // 静的生成を無効にして動的ルートとして扱う
 export const dynamic = 'force-dynamic'
@@ -229,8 +229,27 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // 削除前の顧客情報を取得
+    const customer = await prisma.customer.findUnique({
+      where: { id: params.id },
+    })
+
+    if (!customer) {
+      return NextResponse.json({ error: 'Customer not found' }, { status: 404 })
+    }
+
     await prisma.customer.delete({
       where: { id: params.id },
+    })
+
+    // 削除の監査ログを記録
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'DELETE',
+      entity: 'CUSTOMER',
+      entityId: params.id,
+      oldData: customer,
+      request
     })
 
     return NextResponse.json({ message: 'Customer deleted successfully' })

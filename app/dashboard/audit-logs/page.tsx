@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { hasPermission, UserRole } from '@/lib/permissions'
+import { getActionLabel, getEntityLabel } from '@/lib/audit'
 
 type AuditLog = {
   id: string
@@ -218,6 +219,11 @@ export default function AuditLogsPage() {
               <option value="UPDATE">更新</option>
               <option value="DELETE">削除</option>
               <option value="SEND_EMAIL">メール送信</option>
+              <option value="ARCHIVE">アーカイブ</option>
+              <option value="RESTORE">復元</option>
+              <option value="STATUS_CHANGE">ステータス変更</option>
+              <option value="CANCEL">キャンセル</option>
+              <option value="SETTING_CHANGE">設定変更</option>
             </select>
           </div>
 
@@ -336,7 +342,7 @@ export default function AuditLogsPage() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getActionBadgeColor(log.action)}`}>
-                          {log.action}
+                          {getActionLabel(log.action as any)}
                         </span>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
@@ -345,7 +351,7 @@ export default function AuditLogsPage() {
                             {log.entity === 'CUSTOMER' && log.customerName ? (
                               <div className="font-medium">{log.customerName}</div>
                             ) : (
-                              <div className="font-medium">{log.entity}</div>
+                              <div className="font-medium">{getEntityLabel(log.entity)}</div>
                             )}
                             {log.entityId && (
                               <div className="text-gray-500 text-xs">{log.entityId}</div>

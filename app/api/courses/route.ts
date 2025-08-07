@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
+import { createAuditLog } from '@/lib/audit'
 
 // 静的生成を無効にして動的ルートとして扱う
 export const dynamic = 'force-dynamic'
@@ -102,6 +103,16 @@ export async function POST(request: NextRequest) {
         price,
         duration: duration || null,
       },
+    })
+
+    // 作成の監査ログを記録
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'CREATE',
+      entity: 'COURSE',
+      entityId: course.id,
+      newData: course,
+      request
     })
 
     return NextResponse.json(course, { status: 201 })

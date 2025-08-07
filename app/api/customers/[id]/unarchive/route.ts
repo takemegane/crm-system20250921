@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getPrismaClient } from '@/lib/db'
 import { hasPermission, UserRole } from '@/lib/permissions'
+import { createAuditLog } from '@/lib/audit'
 
 // 静的生成を無効にして動的ルートとして扱う
 export const dynamic = 'force-dynamic'
@@ -77,15 +78,14 @@ export async function POST(
 
     // Create audit log
     console.log('📝 Creating audit log...')
-    await prisma.auditLog.create({
-      data: {
-        userId: session.user.id,
-        userName: session.user.name || session.user.email || 'Unknown',
-        action: 'RESTORE',
-        entity: 'CUSTOMER',
-        entityId: customerId,
-        newData: JSON.stringify({ isArchived: false, archivedAt: null })
-      }
+    await createAuditLog({
+      userId: session.user.id,
+      action: 'RESTORE',
+      entity: 'CUSTOMER',
+      entityId: customerId,
+      oldData: { isArchived: true, archivedAt: customer.archivedAt },
+      newData: { isArchived: false, archivedAt: null },
+      request
     })
 
     console.log('✅ Audit log created')
