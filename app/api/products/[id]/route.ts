@@ -76,7 +76,20 @@ export async function PUT(
     }
     
     const body = await request.json()
-    const { name, description, price, stock, categoryId, imageUrl, sortOrder, isActive, courseMapping } = body
+    const { 
+      name, 
+      description, 
+      price, 
+      stock, 
+      categoryId, 
+      imageUrl, 
+      sortOrder, 
+      isActive, 
+      courseMapping, 
+      enablePayment, 
+      stripeProductId, 
+      stripePriceId 
+    } = body
     
     // バリデーション
     if (!name || price === undefined) {
@@ -104,7 +117,10 @@ export async function PUT(
         imageUrl,
         sortOrder: parseInt(sortOrder || '0'),
         isActive: isActive !== false,
-        courseMapping: courseMapping || null
+        courseMapping: courseMapping || null,
+        enablePayment: enablePayment || false,
+        stripeProductId: stripeProductId || null,
+        stripePriceId: stripePriceId || null
       }
     })
     

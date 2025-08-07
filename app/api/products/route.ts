@@ -55,8 +55,29 @@ export async function GET(request: NextRequest) {
     const [products, total] = await Promise.all([
       prisma.product.findMany({
         where,
-        include: {
-          category: true
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          price: true,
+          stock: true,
+          imageUrl: true,
+          categoryId: true,
+          sortOrder: true,
+          isActive: true,
+          enablePayment: true,
+          stripeProductId: true,
+          stripePriceId: true,
+          courseMapping: true,
+          createdAt: true,
+          updatedAt: true,
+          category: {
+            select: {
+              id: true,
+              name: true,
+              categoryType: true
+            }
+          }
         },
         orderBy: [
           { sortOrder: 'asc' },
@@ -108,7 +129,20 @@ export async function POST(request: NextRequest) {
     }
     
     const body = await request.json()
-    const { name, description, price, stock, categoryId, imageUrl, sortOrder, isActive, courseMapping } = body
+    const { 
+      name, 
+      description, 
+      price, 
+      stock, 
+      categoryId, 
+      imageUrl, 
+      sortOrder, 
+      isActive, 
+      courseMapping, 
+      enablePayment, 
+      stripeProductId, 
+      stripePriceId 
+    } = body
     
     // バリデーション
     if (!name || !price) {
@@ -135,7 +169,10 @@ export async function POST(request: NextRequest) {
         imageUrl,
         sortOrder: parseInt(sortOrder || '0'),
         isActive: isActive !== false,
-        courseMapping: courseMapping || null
+        courseMapping: courseMapping || null,
+        enablePayment: enablePayment || false,
+        stripeProductId: stripeProductId || null,
+        stripePriceId: stripePriceId || null
       }
     })
     
