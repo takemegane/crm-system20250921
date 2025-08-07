@@ -148,6 +148,8 @@ function getMenuIcon(href: string) {
       return <span className="text-lg">📋</span>
     case '/dashboard/shipping-rates':
       return <span className="text-lg">🚚</span>
+    case '/dashboard/payment-settings':
+      return <span className="text-lg">💳</span>
     case '/dashboard/tags':
       return <span className="text-lg">🏷️</span>
     case '/dashboard/bulk-email':
