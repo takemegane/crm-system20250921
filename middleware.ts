@@ -175,6 +175,8 @@ export const config = {
     '/api/orders/:path*',
     '/api/categories/:path*',
     '/api/customer-enrollments/:path*',
-    '/api/calculate-shipping/:path*'
+    '/api/calculate-shipping/:path*',
+    '/api/debug-products/:path*',
+    '/api/payment-settings/:path*'
   ]
 }
