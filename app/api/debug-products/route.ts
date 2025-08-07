@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
     debugInfo.step = 5
     debugInfo.checks.push('Payment fields existence check')
     const paymentFields = ['enablePayment', 'stripeProductId', 'stripePriceId']
-    const missingFields = []
+    const missingFields: string[] = []
     
     for (const field of paymentFields) {
       const fieldExists = (debugInfo.tableStructure as any[]).some(
