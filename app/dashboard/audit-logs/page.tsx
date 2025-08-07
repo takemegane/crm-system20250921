@@ -506,30 +506,6 @@ export default function AuditLogsPage() {
                 )
               })()}
 
-              {(selectedLog.oldData || selectedLog.newData) && (
-                <div>
-                  <h3 className="font-medium text-gray-700">詳細データ</h3>
-                  <div className="mt-2 space-y-2">
-                    {selectedLog.oldData && (
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-600">変更前:</h4>
-                        <pre className="mt-1 text-xs bg-gray-50 p-3 rounded overflow-x-auto">
-                          {JSON.stringify(JSON.parse(selectedLog.oldData), null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                    {selectedLog.newData && (
-                      <div>
-                        <h4 className="text-sm font-medium text-gray-600">変更後:</h4>
-                        <pre className="mt-1 text-xs bg-gray-50 p-3 rounded overflow-x-auto">
-                          {JSON.stringify(JSON.parse(selectedLog.newData), null, 2)}
-                        </pre>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
               {(selectedLog.ipAddress || selectedLog.userAgent) && (
                 <div>
                   <h3 className="font-medium text-gray-700">アクセス情報</h3>
