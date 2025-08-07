@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { hasPermission, UserRole } from '@/lib/permissions'
 import { formatAge, formatGender } from '@/lib/age-utils'
+import { useArchiveCustomer, useUnarchiveCustomer, useDeleteCustomer } from '@/hooks/use-customers'
 
 type Customer = {
   id: string
@@ -155,88 +156,62 @@ export default function CustomerDetailPage() {
     }
   }
 
+  const archiveCustomer = useArchiveCustomer()
+  
   const handleArchiveCustomer = async () => {
     if (!confirm('この顧客をアーカイブしますか？アーカイブした顧客は一覧から非表示になります。')) {
       return
     }
 
     try {
-      const response = await fetch(`/api/customers/${params.id}/archive`, {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        // Clear any existing error messages
-        setError('')
-        alert('顧客を正常にアーカイブしました')
-        router.push('/dashboard/customers')
-        router.refresh()
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '顧客のアーカイブに失敗しました')
-      }
+      await archiveCustomer.mutateAsync(params.id as string)
+      setError('')
+      alert('顧客を正常にアーカイブしました')
+      router.push('/dashboard/customers')
     } catch (error) {
       console.error('Error archiving customer:', error)
       setError('顧客のアーカイブに失敗しました')
     }
   }
 
+  const unarchiveCustomer = useUnarchiveCustomer()
+  
   const handleRestoreCustomer = async () => {
     if (!confirm('この顧客を復元しますか？復元した顧客は通常の顧客一覧に表示されます。')) {
       return
     }
 
     try {
-      const response = await fetch(`/api/customers/${params.id}/unarchive`, {
-        method: 'POST',
-      })
-
-      if (response.ok) {
-        // Clear any existing error messages
-        setError('')
-        
-        // Refresh the customer data to reflect the restore
-        const customerRes = await fetch(`/api/customers/${params.id}`)
-        if (customerRes.ok) {
-          const customerData = await customerRes.json()
-          setCustomer(customerData)
-          // Show success message
-          alert('顧客を正常に復元しました')
-        } else {
-          console.error('Failed to refresh customer data after restore')
-          // Even if refresh fails, the restore was successful
-          alert('顧客の復元は成功しましたが、データの更新に問題が発生しました。ページを再読み込みしてください。')
-        }
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '顧客の復元に失敗しました')
+      const restoredCustomer = await unarchiveCustomer.mutateAsync(params.id as string)
+      setError('')
+      if (customer && restoredCustomer) {
+        setCustomer({
+          ...customer,
+          ...(restoredCustomer as any),
+          enrollments: customer.enrollments,
+          customerTags: customer.customerTags
+        })
       }
+      alert('顧客を正常に復元しました')
+      router.push('/dashboard/customers')
     } catch (error) {
       console.error('Error restoring customer:', error)
       setError('顧客の復元に失敗しました')
     }
   }
 
+  const deleteCustomer = useDeleteCustomer()
+  
   const handleDeleteCustomer = async () => {
     if (!confirm('この顧客を完全に削除しますか？この操作は取り消せません。')) {
       return
     }
 
     try {
-      const response = await fetch(`/api/customers/${params.id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        // Clear any existing error messages
-        setError('')
-        alert('顧客を正常に削除しました')
-        router.push('/dashboard/customers')
-        router.refresh()
-      } else {
-        const errorData = await response.json()
-        setError(errorData.error || '顧客の削除に失敗しました')
-      }
+      await deleteCustomer.mutateAsync(params.id as string)
+      setError('')
+      alert('顧客を正常に削除しました')
+      router.push('/dashboard/customers')
     } catch (error) {
       console.error('Error deleting customer:', error)
       setError('顧客の削除に失敗しました')
