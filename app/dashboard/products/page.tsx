@@ -28,6 +28,9 @@ type Product = {
     categoryType?: string
   }
   isActive: boolean
+  enablePayment: boolean
+  stripeProductId?: string
+  stripePriceId?: string
   createdAt: string
   updatedAt: string
 }
@@ -43,6 +46,7 @@ export default function ProductsPage() {
   const { data: session } = useSession()
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<{id: string, name: string}[]>([])
+  const [paymentSettings, setPaymentSettings] = useState<{isActive: boolean, isTestMode: boolean} | null>(null)
   const [pagination, setPagination] = useState<Pagination>({
     page: 1,
     limit: 20,
@@ -93,12 +97,28 @@ export default function ProductsPage() {
     }
   }, [])
 
+  const fetchPaymentSettings = useCallback(async () => {
+    try {
+      const response = await fetch('/api/payment-settings')
+      if (response.ok) {
+        const data = await response.json()
+        setPaymentSettings({
+          isActive: data.isActive || false,
+          isTestMode: data.isTestMode || true
+        })
+      }
+    } catch (error) {
+      console.error('Error fetching payment settings:', error)
+    }
+  }, [])
+
   useEffect(() => {
     if (session?.user) {
       fetchProducts()
       fetchCategories()
+      fetchPaymentSettings()
     }
-  }, [fetchProducts, fetchCategories, session?.user])
+  }, [fetchProducts, fetchCategories, fetchPaymentSettings, session?.user])
 
   const handleDeleteProduct = async (productId: string) => {
     console.log('削除ボタンがクリックされました:', productId)
@@ -193,6 +213,38 @@ export default function ProductsPage() {
     }).format(price)
   }
 
+  const getPaymentStatusBadge = (product: Product) => {
+    if (!product.enablePayment) {
+      return (
+        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-100 text-gray-600">
+          現金のみ
+        </span>
+      )
+    }
+
+    if (!paymentSettings?.isActive) {
+      return (
+        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-yellow-100 text-yellow-700">
+          設定待ち
+        </span>
+      )
+    }
+
+    if (paymentSettings.isTestMode) {
+      return (
+        <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-blue-100 text-blue-700">
+          💳 テスト決済
+        </span>
+      )
+    }
+
+    return (
+      <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-green-100 text-green-700">
+        💳 決済対応
+      </span>
+    )
+  }
+
   const canDeleteProducts = session?.user?.role && hasPermission(session.user.role as UserRole, 'DELETE_PRODUCTS')
 
   return (
@@ -204,9 +256,29 @@ export default function ProductsPage() {
             ECサイトで販売する商品を管理できます
           </p>
         </div>
-        <Link href="/dashboard/products/new">
-          <Button>新規商品追加</Button>
-        </Link>
+        <div className="flex items-center space-x-3">
+          {paymentSettings && (
+            <div className="text-sm">
+              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                paymentSettings.isActive
+                  ? paymentSettings.isTestMode 
+                    ? 'bg-blue-100 text-blue-700'
+                    : 'bg-green-100 text-green-700'
+                  : 'bg-gray-100 text-gray-600'
+              }`}>
+                {paymentSettings.isActive 
+                  ? paymentSettings.isTestMode 
+                    ? '💳 テスト決済対応' 
+                    : '💳 決済対応' 
+                  : '💳 決済未設定'
+                }
+              </span>
+            </div>
+          )}
+          <Link href="/dashboard/products/new">
+            <Button>新規商品追加</Button>
+          </Link>
+        </div>
       </div>
 
       {/* Search and Filter */}
@@ -292,6 +364,9 @@ export default function ProductsPage() {
                       並び順
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      決済
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       ステータス
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -369,6 +444,9 @@ export default function ProductsPage() {
                           className="w-16 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-primary-500 focus:border-primary-500"
                           min="0"
                         />
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        {getPaymentStatusBadge(product)}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${

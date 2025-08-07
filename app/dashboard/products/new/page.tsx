@@ -34,7 +34,11 @@ export default function NewProductPage() {
     // コース自動登録設定
     enableCourseMapping: false,
     courseId: '',
-    autoEnroll: true
+    autoEnroll: true,
+    // 決済設定
+    enablePayment: false,
+    stripeProductId: '',
+    stripePriceId: ''
   })
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
@@ -105,7 +109,10 @@ export default function NewProductPage() {
           imageUrl: formData.imageUrl || null,
           sortOrder: parseInt(formData.sortOrder || '0'),
           isActive: formData.isActive,
-          courseMapping: courseMapping
+          courseMapping: courseMapping,
+          enablePayment: formData.enablePayment,
+          stripeProductId: formData.stripeProductId || null,
+          stripePriceId: formData.stripePriceId || null
         })
       })
 
@@ -457,6 +464,87 @@ export default function NewProductPage() {
             <label htmlFor="isActive" className="ml-2 block text-sm text-gray-900">
               販売開始する
             </label>
+          </div>
+
+          {/* 決済設定セクション */}
+          <div className="border-t pt-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">オンライン決済設定</h3>
+            
+            <div className="space-y-4">
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="enablePayment"
+                  name="enablePayment"
+                  checked={formData.enablePayment}
+                  onChange={handleChange}
+                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                />
+                <label htmlFor="enablePayment" className="ml-2 block text-sm text-gray-700">
+                  オンライン決済を有効にする
+                </label>
+              </div>
+
+              {formData.enablePayment && (
+                <div className="ml-6 space-y-4 p-4 bg-blue-50 rounded-md">
+                  <div>
+                    <label htmlFor="stripeProductId" className="block text-sm font-medium text-gray-700">
+                      Stripe商品ID（オプション）
+                    </label>
+                    <input
+                      type="text"
+                      id="stripeProductId"
+                      name="stripeProductId"
+                      value={formData.stripeProductId}
+                      onChange={handleChange}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="prod_..."
+                    />
+                    <p className="mt-1 text-sm text-gray-500">
+                      Stripeダッシュボードで作成された商品IDを入力（空欄の場合は自動作成）
+                    </p>
+                  </div>
+
+                  <div>
+                    <label htmlFor="stripePriceId" className="block text-sm font-medium text-gray-700">
+                      Stripe価格ID（オプション）
+                    </label>
+                    <input
+                      type="text"
+                      id="stripePriceId"
+                      name="stripePriceId"
+                      value={formData.stripePriceId}
+                      onChange={handleChange}
+                      className="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-primary-500 focus:border-primary-500"
+                      placeholder="price_..."
+                    />
+                    <p className="mt-1 text-sm text-gray-500">
+                      Stripeの価格IDを入力（空欄の場合は自動作成）
+                    </p>
+                  </div>
+
+                  <div className="bg-yellow-50 border border-yellow-200 rounded-md p-3">
+                    <div className="flex">
+                      <div className="ml-3">
+                        <h4 className="text-sm font-medium text-yellow-800">
+                          Stripe設定が必要です
+                        </h4>
+                        <div className="mt-2 text-sm text-yellow-700">
+                          <p>オンライン決済を利用するには、事前にStripe設定を完了してください。</p>
+                          <a 
+                            href="/dashboard/payment-settings" 
+                            target="_blank"
+                            className="font-medium underline hover:text-yellow-900"
+                          >
+                            決済設定へ →
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="flex justify-end space-x-4">
