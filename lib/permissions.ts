@@ -54,6 +54,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'VIEW_TAGS',
     'VIEW_PRODUCTS',
     'VIEW_ORDERS',
+    'EDIT_ORDERS',
     'VIEW_EMAIL_TEMPLATES',
     'CREATE_EMAIL_TEMPLATES',
     'EDIT_EMAIL_TEMPLATES',
