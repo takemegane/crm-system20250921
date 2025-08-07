@@ -146,3 +146,53 @@ export function useDeleteCustomer() {
     }
   })
 }
+
+export function useArchiveCustomer() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient(`/api/customers/${id}/archive`, {
+        method: 'POST',
+      })
+    },
+    onSuccess: (data, variables) => {
+      // 特定顧客とリストのキャッシュを無効化
+      queryClient.invalidateQueries({ queryKey: ['customer', variables] })
+      queryClient.invalidateQueries({ queryKey: ['customers'] })
+      // アーカイブ済み顧客リストも無効化
+      queryClient.invalidateQueries({ queryKey: ['archived-customers'] })
+    },
+    onError: (error) => {
+      console.error('Failed to archive customer:', error)
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.clear()
+      }
+    }
+  })
+}
+
+export function useUnarchiveCustomer() {
+  const queryClient = useQueryClient()
+  
+  return useMutation({
+    mutationFn: async (id: string) => {
+      return apiClient(`/api/customers/${id}/unarchive`, {
+        method: 'POST',
+      })
+    },
+    onSuccess: (data, variables) => {
+      // 特定顧客とリストのキャッシュを無効化
+      queryClient.invalidateQueries({ queryKey: ['customer', variables] })
+      queryClient.invalidateQueries({ queryKey: ['customers'] })
+      // アーカイブ済み顧客リストも無効化
+      queryClient.invalidateQueries({ queryKey: ['archived-customers'] })
+    },
+    onError: (error) => {
+      console.error('Failed to unarchive customer:', error)
+      if (error instanceof ApiError && error.status === 401) {
+        queryClient.clear()
+      }
+    }
+  })
+}

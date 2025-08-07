@@ -51,6 +51,8 @@ export default function AuditLogsPage() {
     startDate: '',
     endDate: ''
   })
+  const [selectedLog, setSelectedLog] = useState<AuditLog | null>(null)
+  const [showDetailModal, setShowDetailModal] = useState(false)
 
   const fetchAuditLogs = useCallback(async (page = 1) => {
     setLoading(true)
@@ -359,19 +361,18 @@ export default function AuditLogsPage() {
                           </div>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
-                        {(() => {
-                          const details = getChangeDetails(log)
-                          return details && (
-                            <div className="space-y-1">
-                              {details.map((detail, index) => (
-                                <div key={index} className="text-xs">
-                                  <span className="font-medium">{detail.field}:</span> {detail.change}
-                                </div>
-                              ))}
-                            </div>
-                          )
-                        })()}
+                      <td className="px-6 py-4 text-sm text-gray-500">
+                        {(log.oldData || log.newData) && (
+                          <button
+                            onClick={() => {
+                              setSelectedLog(log)
+                              setShowDetailModal(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-800 underline"
+                          >
+                            詳細を表示
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -439,6 +440,131 @@ export default function AuditLogsPage() {
           </>
         )}
       </div>
+
+      {/* 詳細モーダル */}
+      {showDetailModal && selectedLog && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-3xl w-full max-h-[80vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">監査ログ詳細</h2>
+              <button
+                onClick={() => {
+                  setShowDetailModal(false)
+                  setSelectedLog(null)
+                }}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-medium text-gray-700">基本情報</h3>
+                <div className="mt-2 space-y-2 text-sm">
+                  <div className="flex">
+                    <span className="font-medium w-32">日時:</span>
+                    <span>{formatDate(selectedLog.createdAt)}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="font-medium w-32">ユーザー:</span>
+                    <span>{selectedLog.user.name || selectedLog.user.email} ({selectedLog.user.role})</span>
+                  </div>
+                  <div className="flex">
+                    <span className="font-medium w-32">アクション:</span>
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getActionBadgeColor(selectedLog.action)}`}>
+                      {getActionLabel(selectedLog.action as any)}
+                    </span>
+                  </div>
+                  <div className="flex">
+                    <span className="font-medium w-32">対象:</span>
+                    <span>
+                      {selectedLog.entity && getEntityLabel(selectedLog.entity)}
+                      {selectedLog.entity === 'CUSTOMER' && selectedLog.customerName && ` - ${selectedLog.customerName}`}
+                      {selectedLog.entityId && ` (ID: ${selectedLog.entityId})`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {(() => {
+                const details = getChangeDetails(selectedLog)
+                return details && (
+                  <div>
+                    <h3 className="font-medium text-gray-700">変更内容</h3>
+                    <div className="mt-2 space-y-2 text-sm bg-gray-50 p-3 rounded">
+                      {details.map((detail, index) => (
+                        <div key={index} className="flex">
+                          <span className="font-medium w-32">{detail.field}:</span>
+                          <span className="text-gray-600">{detail.change}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )
+              })()}
+
+              {(selectedLog.oldData || selectedLog.newData) && (
+                <div>
+                  <h3 className="font-medium text-gray-700">詳細データ</h3>
+                  <div className="mt-2 space-y-2">
+                    {selectedLog.oldData && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-600">変更前:</h4>
+                        <pre className="mt-1 text-xs bg-gray-50 p-3 rounded overflow-x-auto">
+                          {JSON.stringify(JSON.parse(selectedLog.oldData), null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                    {selectedLog.newData && (
+                      <div>
+                        <h4 className="text-sm font-medium text-gray-600">変更後:</h4>
+                        <pre className="mt-1 text-xs bg-gray-50 p-3 rounded overflow-x-auto">
+                          {JSON.stringify(JSON.parse(selectedLog.newData), null, 2)}
+                        </pre>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {(selectedLog.ipAddress || selectedLog.userAgent) && (
+                <div>
+                  <h3 className="font-medium text-gray-700">アクセス情報</h3>
+                  <div className="mt-2 space-y-2 text-sm">
+                    {selectedLog.ipAddress && (
+                      <div className="flex">
+                        <span className="font-medium w-32">IPアドレス:</span>
+                        <span className="text-gray-600">{selectedLog.ipAddress}</span>
+                      </div>
+                    )}
+                    {selectedLog.userAgent && (
+                      <div className="flex">
+                        <span className="font-medium w-32">ユーザーエージェント:</span>
+                        <span className="text-gray-600 text-xs break-all">{selectedLog.userAgent}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <Button
+                onClick={() => {
+                  setShowDetailModal(false)
+                  setSelectedLog(null)
+                }}
+                variant="outline"
+              >
+                閉じる
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
