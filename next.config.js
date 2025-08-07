@@ -53,8 +53,8 @@ const nextConfig = {
           }
         ]
       },
-      // CSP設定を再有効化（セキュリティ強化）
-      ...(true ? [
+      // CSP設定（開発環境では無効、本番環境で有効）
+      ...(process.env.NODE_ENV === 'production' ? [
         {
           source: '/(.*)',
           headers: [
@@ -62,7 +62,7 @@ const nextConfig = {
               key: 'Content-Security-Policy',
               value: [
                 "default-src 'self'",
-                "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob: data:",
+                "script-src 'self' 'unsafe-inline' 'unsafe-eval' 'wasm-unsafe-eval' blob: data:",
                 "style-src 'self' 'unsafe-inline'",
                 "img-src 'self' data: blob: https:",
                 "font-src 'self' data:",
