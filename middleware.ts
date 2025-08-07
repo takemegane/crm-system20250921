@@ -24,7 +24,9 @@ export default withAuth(
         '/api/system-settings',
         '/api/shipping-rates',
         '/api/categories',
-        '/api/profile'
+        '/api/profile',
+        '/api/debug-products',
+        '/api/migrate-payment-fields'
       ]
       
       // 顧客向けAPIパターン（認証済みユーザーのみアクセス可能で十分に保護済み）
@@ -177,6 +179,7 @@ export const config = {
     '/api/customer-enrollments/:path*',
     '/api/calculate-shipping/:path*',
     '/api/debug-products/:path*',
+    '/api/migrate-payment-fields/:path*',
     '/api/payment-settings/:path*'
   ]
 }
