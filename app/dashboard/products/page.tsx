@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { api } from '@/lib/api-client'
+import { hasPermission, UserRole } from '@/lib/permissions'
 
 type Product = {
   id: string
@@ -191,6 +192,8 @@ export default function ProductsPage() {
       currency: 'JPY'
     }).format(price)
   }
+
+  const canDeleteProducts = session?.user?.role && hasPermission(session.user.role as UserRole, 'DELETE_PRODUCTS')
 
   return (
     <div className="space-y-6">
@@ -387,14 +390,16 @@ export default function ProductsPage() {
                         >
                           {product.isActive ? '停止' : '有効化'}
                         </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="text-red-600 hover:text-red-900"
-                        >
-                          削除
-                        </Button>
+                        {canDeleteProducts && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handleDeleteProduct(product.id)}
+                            className="text-red-600 hover:text-red-900"
+                          >
+                            削除
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
