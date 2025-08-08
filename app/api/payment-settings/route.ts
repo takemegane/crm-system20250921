@@ -10,6 +10,8 @@ export const runtime = 'nodejs'
 
 export async function GET(request: NextRequest) {
   try {
+    console.log('💳 Payment Settings API called')
+    
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
@@ -116,6 +118,8 @@ export async function GET(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
+    console.log('💳 Payment Settings PUT API called')
+    
     // データベース接続確認
     if (!process.env.DATABASE_URL) {
       return NextResponse.json({ error: 'Database not available during build' }, { status: 503 })
