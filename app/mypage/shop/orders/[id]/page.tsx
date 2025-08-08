@@ -1,11 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useSession, signOut } from 'next-auth/react'
+import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { useSystemSettings } from '@/hooks/use-system-settings'
 
 type OrderItem = {
   id: string
@@ -63,12 +62,6 @@ const ORDER_STATUS_COLORS = {
   COMPLETED: 'bg-purple-100 text-purple-800'
 } as const
 
-type SystemSettings = {
-  systemName: string
-  primaryColor?: string
-  secondaryColor?: string
-  logoUrl?: string
-}
 
 export default function OrderDetailPage({ params }: { params: { id: string } }) {
   const { data: session } = useSession()
@@ -78,9 +71,6 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [cancelling, setCancelling] = useState(false)
-  
-  // キャッシュされたデータを使用
-  const { data: systemSettings } = useSystemSettings()
 
   const isCompleted = searchParams.get('completed') === 'true'
 
@@ -230,65 +220,14 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                {systemSettings?.logoUrl ? (
-                  <div className="h-10 w-10 rounded-xl overflow-hidden mr-3 shadow-lg">
-                    <img
-                      src={systemSettings.logoUrl}
-                      alt={systemSettings?.systemName || 'CRMシステム'}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ) : (
-                  <div className="h-10 w-10 rounded-xl flex items-center justify-center mr-3 shadow-lg"
-                       style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)' }}>
-                    <span className="text-white font-bold text-lg">
-                      {systemSettings?.systemName?.charAt(0) || 'S'}
-                    </span>
-                  </div>
-                )}
-                <h1 className="text-2xl font-bold text-gray-900">{systemSettings?.systemName || 'CRMシステム'}</h1>
-              </div>
-              <div className="flex items-center space-x-4">
-                <span className="text-sm text-gray-600">
-                  こんにちは、{session?.user?.name}さん
-                </span>
-                <Link href="/mypage/shop">
-                  <Button variant="outline">ショップ</Button>
-                </Link>
-                <Link href="/mypage/shop/orders">
-                  <Button variant="outline">注文履歴</Button>
-                </Link>
-                <Link href="/mypage/profile">
-                  <Button variant="outline">アカウント</Button>
-                </Link>
-                <Link href="/mypage">
-                  <Button variant="outline">🏠 マイページ</Button>
-                </Link>
-                <Button 
-                  variant="outline" 
-                  onClick={() => signOut({ callbackUrl: '/login' })}
-                >
-                  ログアウト
-                </Button>
-              </div>
-            </div>
-          </div>
-        </header>
-
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
-            {error}
-          </div>
-          <div className="text-center">
-            <Link href="/mypage/shop/orders">
-              <Button>注文履歴に戻る</Button>
-            </Link>
-          </div>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
+          {error}
+        </div>
+        <div className="text-center">
+          <Link href="/mypage/shop/orders">
+            <Button>注文履歴に戻る</Button>
+          </Link>
         </div>
       </div>
     )
@@ -303,58 +242,7 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              {systemSettings?.logoUrl ? (
-                <div className="h-10 w-10 rounded-xl overflow-hidden mr-3 shadow-lg">
-                  <img
-                    src={systemSettings.logoUrl}
-                    alt={systemSettings?.systemName || 'CRMシステム'}
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="h-10 w-10 rounded-xl flex items-center justify-center mr-3 shadow-lg"
-                     style={{ background: 'linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%)' }}>
-                  <span className="text-white font-bold text-lg">
-                    {systemSettings?.systemName?.charAt(0) || 'S'}
-                  </span>
-                </div>
-              )}
-              <h1 className="text-2xl font-bold text-gray-900">{systemSettings?.systemName || 'CRMシステム'}</h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-600">
-                こんにちは、{session?.user?.name}さん
-              </span>
-              <Link href="/mypage/shop">
-                <Button variant="outline">ショップ</Button>
-              </Link>
-              <Link href="/mypage/shop/orders">
-                <Button variant="outline">注文履歴</Button>
-              </Link>
-              <Link href="/mypage/profile">
-                <Button variant="outline">アカウント</Button>
-              </Link>
-              <Link href="/mypage">
-                <Button variant="outline">🏠 マイページ</Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                onClick={() => signOut({ callbackUrl: '/login' })}
-              >
-                ログアウト
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* 購入完了時の感謝メッセージ */}
         {showThankYou && (
           <div className="bg-green-50 border border-green-200 rounded-lg p-6 text-center mb-6">
@@ -531,7 +419,6 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
             </div>
           </div>
         </div>
-      </div>
     </div>
   )
 }
