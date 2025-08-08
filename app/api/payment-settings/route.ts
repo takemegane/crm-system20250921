@@ -152,7 +152,7 @@ export async function PUT(request: NextRequest) {
     // Stripe設定チェック（isActiveがtrueに設定されるときのみ）
     if (isActive === true && !stripePublicKey) {
       return NextResponse.json(
-        { error: 'Stripe Public Key is required when payment is active' },
+        { error: '決済を有効にするためにはStripe Public Keyが必要です' },
         { status: 400 }
       )
     }
