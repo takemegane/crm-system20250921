@@ -293,9 +293,19 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Error generating sales report:', error)
+    console.error('📊 Error generating sales report:', error)
+    console.error('📊 Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      timestamp: new Date().toISOString()
+    })
+    
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        error: 'Internal server error',
+        details: error instanceof Error ? error.message : String(error),
+        timestamp: new Date().toISOString()
+      },
       { status: 500 }
     )
   }

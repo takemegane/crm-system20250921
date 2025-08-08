@@ -66,20 +66,36 @@ export default function SalesReport({ className }: SalesReportProps) {
     setError('')
     
     try {
+      console.log('📊 Fetching sales report:', { type, dateRange })
+      
       const params = new URLSearchParams({ type })
       if (dateRange.startDate) params.append('startDate', dateRange.startDate)
       if (dateRange.endDate) params.append('endDate', dateRange.endDate)
       
-      const response = await fetch(`/api/sales-report?${params.toString()}`)
+      const url = `/api/sales-report?${params.toString()}`
+      console.log('📊 API URL:', url)
+      
+      const response = await fetch(url)
+      console.log('📊 API Response status:', response.status)
+      
       if (!response.ok) {
-        throw new Error('レポートの取得に失敗しました')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('📊 API Error:', errorData)
+        throw new Error(errorData.error || `HTTP ${response.status}: レポートの取得に失敗しました`)
       }
       
       const result = await response.json()
+      console.log('📊 API Response data:', result)
+      
+      if (!result || typeof result !== 'object') {
+        throw new Error('不正なレスポンス形式です')
+      }
+      
       setData(result.data)
     } catch (error) {
-      console.error('Error fetching sales report:', error)
-      setError(error instanceof Error ? error.message : 'レポートの取得に失敗しました')
+      console.error('📊 Error fetching sales report:', error)
+      const errorMessage = error instanceof Error ? error.message : 'レポートの取得に失敗しました'
+      setError(`${errorMessage}\n\nブラウザのコンソールで詳細なエラー情報を確認できます。`)
     } finally {
       setLoading(false)
     }
