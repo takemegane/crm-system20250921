@@ -46,20 +46,20 @@ export async function GET(request: NextRequest) {
         }
       }),
 
-      // 総注文数（キャンセル除く）
+      // 総注文数（完了済みのみ）
       prisma.order.count({
         where: {
           status: {
-            not: 'CANCELLED'
+            in: ['COMPLETED', 'SHIPPED', 'DELIVERED']
           }
         }
       }),
 
-      // 総売上（キャンセル除く）
+      // 総売上（完了済みのみ）
       prisma.order.aggregate({
         where: {
           status: {
-            not: 'CANCELLED'
+            in: ['COMPLETED', 'SHIPPED', 'DELIVERED']
           }
         },
         _sum: {
