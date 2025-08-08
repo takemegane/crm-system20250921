@@ -21,7 +21,7 @@ export async function GET() {
 
     const debugResults = {
       timestamp: new Date().toISOString(),
-      tests: []
+      tests: [] as any[]
     }
 
     // 1. PaymentSettings テーブルテスト
