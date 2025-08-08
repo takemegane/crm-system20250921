@@ -45,6 +45,7 @@ export default function CheckoutPage() {
   const { invalidateAcrossTabs } = useCrossTabSync()
   const [submitting, setSubmitting] = useState(false)
   const [error, setError] = useState('')
+  const [orderCompleted, setOrderCompleted] = useState(false) // 注文完了フラグ
   const [formData, setFormData] = useState({
     shippingAddress: '',
     recipientName: '',
@@ -109,12 +110,12 @@ export default function CheckoutPage() {
     fetchPaymentSettings()
   }, [])
 
-  // カートが空の場合はカート画面にリダイレクト
+  // カートが空の場合はカート画面にリダイレクト（注文完了時は除く）
   useEffect(() => {
-    if (cart && cart.items.length === 0) {
+    if (cart && cart.items.length === 0 && !orderCompleted) {
       router.push('/mypage/shop/cart')
     }
-  }, [cart, router])
+  }, [cart, router, orderCompleted])
 
   // 顧客プロフィール情報でフォームを初期化
   useEffect(() => {
@@ -218,6 +219,16 @@ export default function CheckoutPage() {
       }
 
       const order = await response.json()
+      console.log('✅ Order created successfully:', order)
+      
+      // レスポンスの構造をチェック
+      if (!order || !order.id) {
+        console.error('❌ Invalid order response:', order)
+        throw new Error('注文の作成に成功しましたが、注文IDが取得できませんでした')
+      }
+      
+      // 注文完了フラグを設定（カートリダイレクトを防ぐ）
+      setOrderCompleted(true)
       
       // カートキャッシュを無効化（現在のタブ + 全タブ同期）
       console.log('🛒 注文作成成功 - カートキャッシュを無効化')
@@ -228,6 +239,7 @@ export default function CheckoutPage() {
       alert('🎉 購入が完了しました！\n\nありがとうございます！\n注文詳細画面に移動します。')
       
       // 注文完了画面にリダイレクト
+      console.log('🔄 Redirecting to order details:', `/mypage/shop/orders/${order.id}?completed=true`)
       router.push(`/mypage/shop/orders/${order.id}?completed=true`)
     } catch (error) {
       console.error('Error creating order:', error)
