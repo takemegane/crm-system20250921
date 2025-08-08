@@ -89,30 +89,88 @@ export default function ShopPage() {
         <div className="px-6 py-4">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">🛍️ ショップ</h2>
           
-          {/* 横並びメニュー */}
-          <div className="flex items-center justify-between gap-4">
-            {/* 左側: 検索とカテゴリ */}
-            <div className="flex items-center gap-6">
+          {/* レスポンシブメニュー */}
+          <div className="space-y-4 sm:space-y-0">
+            {/* PC版: 横並びレイアウト */}
+            <div className="hidden sm:flex items-center justify-between gap-4">
+              {/* 左側: 検索とカテゴリ */}
+              <div className="flex items-center gap-6">
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                    商品検索
+                  </label>
+                  <input
+                    type="text"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-64"
+                    placeholder="商品名を入力..."
+                  />
+                </div>
+                <div className="flex items-center space-x-2">
+                  <label className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                    カテゴリ
+                  </label>
+                  <select
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="">すべて</option>
+                    {categoriesData?.categories?.map((cat: { id: string, name: string }) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    )) || []}
+                  </select>
+                </div>
+              </div>
+              
+              {/* 右側: 注文履歴とカート */}
               <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-600 whitespace-nowrap">
+                <Link href="/mypage/shop/orders">
+                  <Button variant="outline" size="sm" className="text-sm">
+                    📋 注文履歴
+                  </Button>
+                </Link>
+                <Link href="/mypage/shop/cart">
+                  <Button variant="outline" size="sm" className="relative text-sm">
+                    🛒 カート
+                    {!cartLoading && cart && cart.itemCount > 0 && (
+                      <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-medium">
+                        {cart.itemCount}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+              </div>
+            </div>
+
+            {/* スマホ版: 縦積みレイアウト */}
+            <div className="sm:hidden space-y-4">
+              {/* 検索バー（全幅） */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-600">
                   商品検索
                 </label>
                 <input
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 w-64"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-base"
                   placeholder="商品名を入力..."
                 />
               </div>
-              <div className="flex items-center space-x-2">
-                <label className="text-sm font-medium text-gray-600 whitespace-nowrap">
+              
+              {/* カテゴリ（全幅） */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-600">
                   カテゴリ
                 </label>
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-4 py-3 border border-gray-300 rounded-md focus:ring-blue-500 focus:border-blue-500 text-base"
                 >
                   <option value="">すべて</option>
                   {categoriesData?.categories?.map((cat: { id: string, name: string }) => (
@@ -122,27 +180,25 @@ export default function ShopPage() {
                   )) || []}
                 </select>
               </div>
-            </div>
-            
-            {/* 右側: 注文履歴とカート */}
-            <div className="flex items-center space-x-2">
-              <Link href="/mypage/shop/orders">
-                <Button variant="outline" size="sm" className="text-sm">
-                  <span className="hidden sm:inline">📋 注文履歴</span>
-                  <span className="sm:hidden">📋 履歴</span>
-                </Button>
-              </Link>
-              <Link href="/mypage/shop/cart">
-                <Button variant="outline" size="sm" className="relative text-sm">
-                  <span className="hidden sm:inline">🛒 カート</span>
-                  <span className="sm:hidden">🛒</span>
-                  {!cartLoading && cart && cart.itemCount > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                      {cart.itemCount}
-                    </span>
-                  )}
-                </Button>
-              </Link>
+              
+              {/* 注文履歴とカート（中央揃え） */}
+              <div className="flex justify-center space-x-4 pt-2">
+                <Link href="/mypage/shop/orders">
+                  <Button variant="outline" className="min-h-[48px] px-6">
+                    📋 注文履歴
+                  </Button>
+                </Link>
+                <Link href="/mypage/shop/cart">
+                  <Button variant="outline" className="relative min-h-[48px] px-6">
+                    🛒 カート
+                    {!cartLoading && cart && cart.itemCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-sm rounded-full h-6 w-6 flex items-center justify-center font-bold shadow-lg">
+                        {cart.itemCount}
+                      </span>
+                    )}
+                  </Button>
+                </Link>
+              </div>
             </div>
           </div>
         </div>
@@ -201,6 +257,7 @@ export default function ShopPage() {
                     onClick={() => handleAddToCart(product.id)}
                     disabled={product.stock === 0 || addingToCart === product.id || addToCartMutation.isPending}
                     size="sm"
+                    className="min-h-[44px] sm:min-h-auto px-4 sm:px-3 text-sm"
                   >
                     {addingToCart === product.id || addToCartMutation.isPending ? (
                       '追加中...'

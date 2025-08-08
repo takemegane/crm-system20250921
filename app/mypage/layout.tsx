@@ -82,18 +82,19 @@ export default function MyPageLayout({ children }: MyPageLayoutProps) {
                 {session?.user?.name}さん
               </span>
               <Link href="/mypage">
-                <Button variant="outline" size="sm" className="text-sm">
-                  🏠 マイページ
+                <Button variant="outline" size="sm" className="text-sm min-h-[44px] sm:min-h-auto">
+                  <span className="hidden sm:inline">🏠 マイページ</span>
+                  <span className="sm:hidden">🏠</span>
                 </Button>
               </Link>
               <Button 
                 variant="outline" 
                 size="sm"
                 onClick={() => signOut({ callbackUrl: '/login' })}
-                className="text-sm"
+                className="text-sm min-h-[44px] sm:min-h-auto"
               >
                 <span className="hidden sm:inline">ログアウト</span>
-                <span className="sm:hidden">ログ</span>
+                <span className="sm:hidden">🚪</span>
               </Button>
             </div>
           </div>
