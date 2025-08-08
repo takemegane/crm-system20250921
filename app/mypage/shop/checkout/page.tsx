@@ -617,6 +617,12 @@ export default function CheckoutPage() {
               >
                 {submitting ? '注文処理中...' : '注文を確定する'}
               </Button>
+              
+              <div className="mt-4 text-center">
+                <Link href="/mypage/shop/cart" className="text-sm text-blue-600 hover:text-blue-500">
+                  ← カートに戻る
+                </Link>
+              </div>
             </form>
           </div>
 

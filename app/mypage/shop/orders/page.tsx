@@ -155,7 +155,13 @@ export default function OrdersPage() {
 
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {error ? (
+      <div className="mb-6">
+        <Link href="/mypage/shop" className="text-sm text-blue-600 hover:text-blue-500">
+          ← ショッピングを続ける
+        </Link>
+      </div>
+      
+      {error ? (
           <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded mb-6">
             {error}
           </div>
