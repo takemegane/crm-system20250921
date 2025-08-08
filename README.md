@@ -124,3 +124,4 @@ npm run db:generate  # クライアント生成
 ## ライセンス
 
 このプロジェクトはプライベート用途です。# Auto-deploy test - 2025年 8月 8日 金曜日 10時23分06秒 JST
+# Second auto-deploy test - 2025年 8月 8日 金曜日 10時44分08秒 JST
