@@ -67,18 +67,18 @@ export async function GET(request: NextRequest) {
 
     // 基本統計の取得
     const [totalOrders, totalRevenue, cancelledOrders, avgOrderValue] = await Promise.all([
-      // 総注文数
+      // 総注文数（完了済みのみ）
       prisma.order.count({
         where: {
           createdAt: { gte: startDate, lte: endDate },
-          status: { not: 'CANCELLED' }
+          status: { in: ['COMPLETED', 'SHIPPED', 'DELIVERED'] }
         }
       }),
-      // 総売上
+      // 総売上（完了済みのみ）
       prisma.order.aggregate({
         where: {
           createdAt: { gte: startDate, lte: endDate },
-          status: { not: 'CANCELLED' }
+          status: { in: ['COMPLETED', 'SHIPPED', 'DELIVERED'] }
         },
         _sum: { totalAmount: true }
       }),
@@ -89,11 +89,11 @@ export async function GET(request: NextRequest) {
           status: 'CANCELLED'
         }
       }),
-      // 平均注文金額
+      // 平均注文金額（完了済みのみ）
       prisma.order.aggregate({
         where: {
           createdAt: { gte: startDate, lte: endDate },
-          status: { not: 'CANCELLED' }
+          status: { in: ['COMPLETED', 'SHIPPED', 'DELIVERED'] }
         },
         _avg: { totalAmount: true }
       })
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
     const allOrders = await prisma.order.findMany({
       where: {
         createdAt: { gte: startDate, lte: endDate },
-        status: { not: 'CANCELLED' }
+        status: { in: ['COMPLETED', 'SHIPPED', 'DELIVERED'] }
       },
       select: {
         createdAt: true,
@@ -154,7 +154,7 @@ export async function GET(request: NextRequest) {
       where: {
         order: {
           createdAt: { gte: startDate, lte: endDate },
-          status: { not: 'CANCELLED' }
+          status: { in: ['COMPLETED', 'SHIPPED', 'DELIVERED'] }
         }
       },
       select: {
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
           gte: previousPeriodStart,
           lt: startDate 
         },
-        status: { not: 'CANCELLED' }
+        status: { in: ['COMPLETED', 'SHIPPED', 'DELIVERED'] }
       },
       _sum: { totalAmount: true }
     })

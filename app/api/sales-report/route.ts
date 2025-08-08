@@ -56,10 +56,10 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 注文ステータスフィルタ（キャンセルされていない注文のみ）
+    // 注文ステータスフィルタ（完了済みの注文のみ）
     const statusFilter = {
       status: {
-        not: 'CANCELLED'
+        in: ['COMPLETED', 'SHIPPED', 'DELIVERED']
       }
     }
 
