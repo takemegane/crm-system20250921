@@ -223,6 +223,7 @@ model Order {
   orderNumber           String      @unique
   subtotalAmount        Float       @default(0)
   shippingFee           Float       @default(0)
+  codFee                Float       @default(0)  // 代引き手数料
   totalAmount           Float
   status                String      @default("PENDING")
   shippingAddress       String?
@@ -232,7 +233,7 @@ model Order {
   cancelledAt           DateTime?
   cancelledBy           String?
   cancelReason          String?
-  paymentMethod         String?     // "stripe" | "bank_transfer" | null
+  paymentMethod         String?     // "stripe" | "bank_transfer" | "cash_on_delivery"
   stripePaymentIntentId String?     // Stripe PaymentIntent ID
   stripeSessionId       String?     // Stripe Checkout Session ID
   paidAt                DateTime?   // 決済完了日時

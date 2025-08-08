@@ -25,12 +25,14 @@ interface Order {
   orderNumber: string
   subtotalAmount: number
   shippingFee: number
+  codFee?: number
   totalAmount: number
   status: string
   shippingAddress: string | null
   recipientName: string | null
   contactPhone: string | null
   notes: string | null
+  paymentMethod?: string | null
   orderedAt: string
   cancelledAt?: string | null
   cancelledBy?: string | null
@@ -45,6 +47,12 @@ const ORDER_STATUS = {
   BACKORDERED: '入荷待ち',
   CANCELLED: 'キャンセル',
   COMPLETED: '完了'
+} as const
+
+const PAYMENT_METHOD_LABELS = {
+  'stripe': 'クレジットカード',
+  'bank_transfer': '銀行振込',
+  'cash_on_delivery': '代引き'
 } as const
 
 const ORDER_STATUS_COLORS = {
@@ -390,6 +398,18 @@ export default function OrdersPage() {
                     <div className="flex justify-between">
                       <span className="text-gray-600">送料:</span>
                       <span>{formatPrice(selectedOrder.shippingFee || 0)}</span>
+                    </div>
+                    {selectedOrder.codFee && selectedOrder.codFee > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">代引き手数料:</span>
+                        <span>{formatPrice(selectedOrder.codFee)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">支払い方法:</span>
+                      <span>{selectedOrder.paymentMethod ? 
+                        PAYMENT_METHOD_LABELS[selectedOrder.paymentMethod as keyof typeof PAYMENT_METHOD_LABELS] || selectedOrder.paymentMethod
+                        : '未設定'}</span>
                     </div>
                     <div className="flex justify-between border-t pt-2">
                       <span className="text-gray-600 font-semibold">合計金額:</span>

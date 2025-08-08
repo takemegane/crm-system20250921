@@ -81,12 +81,14 @@ export async function GET(request: NextRequest) {
           orderNumber: true,
           subtotalAmount: true,
           shippingFee: true,
+          codFee: true,
           totalAmount: true,
           status: true,
           shippingAddress: true,
           recipientName: true,
           contactPhone: true,
           notes: true,
+          paymentMethod: true,
           orderedAt: true,
           cancelledAt: true,
           cancelledBy: true,
@@ -165,12 +167,13 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     console.log('📝 Request body received:', JSON.stringify(body, null, 2))
     
-    const { shippingAddress, recipientName, contactPhone, notes } = body
+    const { shippingAddress, recipientName, contactPhone, notes, paymentMethod } = body
     console.log('🔍 Extracted fields:')
     console.log('  - shippingAddress:', shippingAddress)
     console.log('  - recipientName:', recipientName)
     console.log('  - contactPhone:', contactPhone)
     console.log('  - notes:', notes)
+    console.log('  - paymentMethod:', paymentMethod)
     
     // バリデーション
     console.log('🔍 Starting validation...')
@@ -241,8 +244,22 @@ export async function POST(request: NextRequest) {
     // 統一送料計算関数を使用（Prismaクライアントを渡す）
     console.log('💰 Calculating shipping...')
     const shippingCalculation = await calculateShipping(cartItems, prisma)
-    const { subtotalAmount, shippingFee, totalAmount } = shippingCalculation
-    console.log('💰 Shipping calculation result:', { subtotalAmount, shippingFee, totalAmount })
+    const { subtotalAmount, shippingFee } = shippingCalculation
+    
+    // 代引き手数料の計算
+    let codFee = 0
+    if (paymentMethod === 'cash_on_delivery') {
+      // PaymentSettingsから代引き手数料を取得
+      const paymentSettings = await prisma.paymentSettings.findFirst({
+        select: { cashOnDeliveryFee: true }
+      })
+      codFee = paymentSettings?.cashOnDeliveryFee || 330 // デフォルト330円
+      console.log('💰 COD fee calculated:', codFee)
+    }
+    
+    // 合計金額の計算（商品小計 + 送料 + 代引き手数料）
+    const totalAmount = subtotalAmount + shippingFee + codFee
+    console.log('💰 Final calculation result:', { subtotalAmount, shippingFee, codFee, totalAmount })
     
     // 注文番号生成
     const orderNumber = `ORDER-${Date.now()}-${Math.random().toString(36).substr(2, 9).toUpperCase()}`
@@ -262,11 +279,13 @@ export async function POST(request: NextRequest) {
         orderNumber,
         subtotalAmount,
         shippingFee,
+        codFee,
         totalAmount,
         shippingAddress, // Prismaスキーマに合わせてshippingAddress使用
         recipientName,
         contactPhone, // Prismaスキーマに合わせてcontactPhoneのみ使用
         notes,
+        paymentMethod: paymentMethod || 'bank_transfer', // デフォルトは銀行振込
         status: initialStatus
       }
       console.log('📝 Order data:', JSON.stringify(orderData, null, 2))

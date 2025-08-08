@@ -157,7 +157,8 @@ export async function GET(request: NextRequest) {
                              ['PENDING', 'PROCESSING'].includes(log.status) ? '保留中' : '失敗'
         
         const paymentMethodName = log.paymentMethod === 'stripe' ? 'クレジットカード' :
-                                 log.paymentMethod === 'bank_transfer' ? '銀行振込' : '未設定'
+                                 log.paymentMethod === 'bank_transfer' ? '銀行振込' :
+                                 log.paymentMethod === 'cash_on_delivery' ? '代引き' : '未設定'
         
         return [
           log.orderNumber || '',

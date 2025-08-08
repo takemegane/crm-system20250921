@@ -25,12 +25,14 @@ type Order = {
   orderNumber: string
   subtotalAmount: number
   shippingFee: number
+  codFee?: number
   totalAmount: number
   status: string
   shippingAddress: string | null
   recipientName: string | null
   contactPhone: string | null
   notes: string | null
+  paymentMethod?: string | null
   orderedAt: string
   cancelledAt?: string | null
   cancelledBy?: string | null
@@ -44,6 +46,12 @@ const ORDER_STATUS = {
   BACKORDERED: '入荷待ち',
   CANCELLED: 'キャンセル',
   COMPLETED: '完了'
+} as const
+
+const PAYMENT_METHOD_LABELS = {
+  'stripe': 'クレジットカード',
+  'bank_transfer': '銀行振込',
+  'cash_on_delivery': '代引き'
 } as const
 
 const ORDER_STATUS_COLORS = {
@@ -441,6 +449,18 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
               <div className="flex justify-between text-sm">
                 <span>送料:</span>
                 <span>{formatPrice(order.shippingFee || 0)}</span>
+              </div>
+              {order.codFee && order.codFee > 0 && (
+                <div className="flex justify-between text-sm">
+                  <span>代引き手数料:</span>
+                  <span>{formatPrice(order.codFee)}</span>
+                </div>
+              )}
+              <div className="flex justify-between text-sm">
+                <span>支払い方法:</span>
+                <span>{order.paymentMethod ? 
+                  PAYMENT_METHOD_LABELS[order.paymentMethod as keyof typeof PAYMENT_METHOD_LABELS] || order.paymentMethod
+                  : '未設定'}</span>
               </div>
               <div className="flex justify-between text-sm font-semibold border-t pt-2">
                 <span>合計:</span>
