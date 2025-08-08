@@ -402,7 +402,11 @@ export default function OrdersPage() {
                     </div>
                     {selectedOrder.codFee && selectedOrder.codFee > 0 && (
                       <div className="flex justify-between">
-                        <span className="text-gray-600">代引き手数料:</span>
+                        <span className="text-gray-600">
+                          {selectedOrder.paymentMethod === 'cash_on_delivery' || selectedOrder.paymentMethod === 'cod' ? '代引き手数料:' :
+                           selectedOrder.paymentMethod === 'bank_transfer' ? '銀行振込手数料:' :
+                           selectedOrder.paymentMethod === 'stripe' ? 'クレジットカード手数料:' : '決済手数料:'}
+                        </span>
                         <span>{formatPrice(selectedOrder.codFee)}</span>
                       </div>
                     )}

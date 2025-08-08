@@ -453,7 +453,11 @@ export default function OrderDetailPage({ params }: { params: { id: string } }) 
               </div>
               {order.codFee && order.codFee > 0 && (
                 <div className="flex justify-between text-sm">
-                  <span>代引き手数料:</span>
+                  <span>
+                    {order.paymentMethod === 'cash_on_delivery' || order.paymentMethod === 'cod' ? '代引き手数料:' :
+                     order.paymentMethod === 'bank_transfer' ? '銀行振込手数料:' :
+                     order.paymentMethod === 'stripe' ? 'クレジットカード手数料:' : '決済手数料:'}
+                  </span>
                   <span>{formatPrice(order.codFee)}</span>
                 </div>
               )}

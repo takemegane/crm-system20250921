@@ -246,17 +246,49 @@ export async function POST(request: NextRequest) {
     const shippingCalculation = await calculateShipping(cartItems, prisma)
     const { subtotalAmount, shippingFee } = shippingCalculation
     
-    // 代引き手数料の計算
-    let codFee = 0
+    // 決済手数料の計算
+    let processingFee = 0
     const normalizedPaymentMethod = paymentMethod === 'cod' ? 'cash_on_delivery' : paymentMethod
+    
+    // PaymentSettingsから各支払い方法の手数料を取得
+    const paymentSettings = await prisma.paymentSettings.findFirst({
+      select: { 
+        cashOnDeliveryFee: true,
+        bankTransferFee: true,
+        creditCardFeeType: true,
+        creditCardFeeRate: true,
+        creditCardFeeFixed: true,
+        cashOnDeliveryFeeBearer: true,
+        bankTransferFeeBearer: true,
+        creditCardFeeBearer: true
+      }
+    })
+    
     if (normalizedPaymentMethod === 'cash_on_delivery') {
-      // PaymentSettingsから代引き手数料を取得
-      const paymentSettings = await prisma.paymentSettings.findFirst({
-        select: { cashOnDeliveryFee: true }
-      })
-      codFee = paymentSettings?.cashOnDeliveryFee || 330 // デフォルト330円
-      console.log('💰 COD fee calculated:', codFee)
+      // 代引き手数料
+      if (paymentSettings?.cashOnDeliveryFeeBearer === 'customer') {
+        processingFee = paymentSettings?.cashOnDeliveryFee || 500
+        console.log('💰 COD fee calculated:', processingFee)
+      }
+    } else if (normalizedPaymentMethod === 'bank_transfer') {
+      // 銀行振込手数料
+      if (paymentSettings?.bankTransferFeeBearer === 'customer') {
+        processingFee = paymentSettings?.bankTransferFee || 0
+        console.log('💰 Bank transfer fee calculated:', processingFee)
+      }
+    } else if (normalizedPaymentMethod === 'stripe') {
+      // クレジットカード手数料
+      if (paymentSettings?.creditCardFeeBearer === 'customer') {
+        if (paymentSettings?.creditCardFeeType === 'percentage') {
+          processingFee = Math.round(subtotalAmount * (paymentSettings?.creditCardFeeRate || 3.6) / 100)
+        } else {
+          processingFee = paymentSettings?.creditCardFeeFixed || 0
+        }
+        console.log('💰 Credit card fee calculated:', processingFee)
+      }
     }
+    
+    const codFee = processingFee // codFeeフィールドに決済手数料を保存
     
     // 合計金額の計算（商品小計 + 送料 + 代引き手数料）
     const totalAmount = subtotalAmount + shippingFee + codFee
