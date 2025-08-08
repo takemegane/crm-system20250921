@@ -13,6 +13,9 @@ export async function POST(request: NextRequest) {
     }
 
     const prisma = getPrismaClient()
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
     
     console.log('Starting CustomLink migration...')
     

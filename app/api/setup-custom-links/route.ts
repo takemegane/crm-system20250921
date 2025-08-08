@@ -13,6 +13,9 @@ export async function GET(request: NextRequest) {
     }
 
     const prisma = getPrismaClient()
+    if (!prisma) {
+      return NextResponse.json({ error: 'Prisma client not initialized' }, { status: 503 })
+    }
     
     // CustomLinkテーブルが存在するか確認
     try {
