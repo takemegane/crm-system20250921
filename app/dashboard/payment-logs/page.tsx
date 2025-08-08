@@ -209,6 +209,10 @@ export default function PaymentLogsPage() {
         return 'クレジットカード'
       case 'bank_transfer':
         return '銀行振込'
+      case 'cash_on_delivery':
+        return '代引き'
+      case 'cod':
+        return '代引き'
       default:
         return '未設定'
     }
