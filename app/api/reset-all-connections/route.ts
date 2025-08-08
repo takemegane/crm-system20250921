@@ -57,6 +57,9 @@ export async function POST() {
     // 4. EmailSettingsテーブルを再作成
     try {
       const prisma = getPrismaClient()
+      if (!prisma) {
+        throw new Error('Prisma client not available for EmailSettings recreation')
+      }
       
       console.log('🗑️ Dropping EmailSettings table...')
       await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS "EmailSettings";`)
@@ -99,7 +102,9 @@ export async function POST() {
     // 5. 最終的な接続リセット
     try {
       const prisma = getPrismaClient()
-      await prisma.$disconnect()
+      if (prisma) {
+        await prisma.$disconnect()
+      }
       await resetPrismaClient()
       results.push({ step: 'FINAL_RESET', status: 'success' })
       console.log('✅ Final connection reset completed')
