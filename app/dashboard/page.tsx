@@ -8,6 +8,7 @@ import SalesReport from '@/components/dashboard/SalesReport'
 import QuickStats from '@/components/dashboard/QuickStats'
 import RecentOrders from '@/components/dashboard/RecentOrders'
 import CustomerStats from '@/components/dashboard/CustomerStats'
+import { hasPermission, UserRole } from '@/lib/permissions'
 
 type DashboardWidget = {
   id: string
@@ -16,6 +17,17 @@ type DashboardWidget = {
   enabled: boolean
   order: number
   size: 'small' | 'medium' | 'large'
+}
+
+type CustomLink = {
+  id: string
+  name: string
+  url: string
+  icon?: string
+  sortOrder: number
+  isActive: boolean
+  isExternal: boolean
+  openInNewTab: boolean
 }
 
 function WidgetSkeleton() {
@@ -37,12 +49,19 @@ export default function DashboardPage() {
   const { data: session } = useSession()
   const [widgets, setWidgets] = useState<DashboardWidget[]>([])
   const [menuLinks, setMenuLinks] = useState<any[]>([])
+  const [customLinks, setCustomLinks] = useState<CustomLink[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
     fetchDashboardSettings()
   }, [])
+
+  useEffect(() => {
+    if (session) {
+      fetchCustomLinks()
+    }
+  }, [session])
 
   const fetchDashboardSettings = async () => {
     try {
@@ -106,6 +125,21 @@ export default function DashboardPage() {
       setError('ダッシュボード設定の取得に失敗しました')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchCustomLinks = async () => {
+    if (session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_CUSTOM_LINKS')) {
+      try {
+        const response = await fetch('/api/custom-links')
+        if (response.ok) {
+          const result = await response.json()
+          const activeLinks = (result.data || []).filter((link: CustomLink) => link.isActive)
+          setCustomLinks(activeLinks)
+        }
+      } catch (error) {
+        console.error('Error fetching custom links:', error)
+      }
     }
   }
 
@@ -216,6 +250,65 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          {/* カスタムリンク */}
+          {session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_CUSTOM_LINKS') && (
+            <div className="border-t pt-8">
+              <div className="flex items-center justify-between mb-6">
+                <h2 className="text-xl font-semibold text-gray-900">🔗 カスタムリンク</h2>
+                {hasPermission(session.user.role as UserRole, 'MANAGE_CUSTOM_LINKS') && (
+                  <Link href="/dashboard/custom-links">
+                    <Button variant="outline" size="sm">
+                      📝 カスタムリンク管理
+                    </Button>
+                  </Link>
+                )}
+              </div>
+              
+              {customLinks.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {customLinks.map((link) => (
+                    <a
+                      key={link.id}
+                      href={link.url}
+                      target={link.openInNewTab ? '_blank' : '_self'}
+                      rel={link.isExternal ? 'noopener noreferrer' : undefined}
+                      className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-3">
+                          <div className="text-2xl">🔗</div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">{link.name}</h3>
+                            <p className="text-sm text-gray-500">{link.isExternal ? '外部リンク' : '内部リンク'}</p>
+                          </div>
+                        </div>
+                        {link.isExternal && (
+                          <div className="text-gray-400">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">
+                  <div className="text-4xl mb-4">🔗</div>
+                  <p>カスタムリンクが設定されていません。</p>
+                  {hasPermission(session.user.role as UserRole, 'MANAGE_CUSTOM_LINKS') && (
+                    <Link href="/dashboard/custom-links">
+                      <Button className="mt-4">
+                        🔗 最初のカスタムリンクを追加
+                      </Button>
+                    </Link>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
         </>
       )}
     </div>

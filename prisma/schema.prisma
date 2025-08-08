@@ -301,3 +301,16 @@ model PaymentSettings {
   createdAt           DateTime @default(now())
   updatedAt           DateTime @updatedAt
 }
+
+model CustomLink {
+  id          String   @id @default(cuid())
+  name        String   // リンク名
+  url         String   // リンクURL
+  icon        String?  // アイコン（絵文字）
+  sortOrder   Int      @default(0) // 表示順序
+  isActive    Boolean  @default(true)
+  isExternal  Boolean  @default(true) // 外部リンクかどうか
+  openInNewTab Boolean @default(true) // 新しいタブで開くか
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

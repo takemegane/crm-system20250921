@@ -46,6 +46,10 @@ export type Permission =
   | 'MANAGE_PERMISSIONS'
   | 'VIEW_AUDIT_LOGS'
   | 'EDIT_PROFILE'
+  | 'VIEW_SYSTEM_SETTINGS'
+  | 'MANAGE_SYSTEM_SETTINGS'
+  | 'VIEW_CUSTOM_LINKS'
+  | 'MANAGE_CUSTOM_LINKS'
 
 export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
   OPERATOR: [
@@ -66,6 +70,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'SEND_INDIVIDUAL_EMAIL',
     'SEND_BULK_EMAIL',
     'VIEW_EMAIL_LOGS',
+    'VIEW_CUSTOM_LINKS',
     'EDIT_PROFILE'
   ],
   ADMIN: [
@@ -107,6 +112,9 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'VIEW_ADMINS',
     'CREATE_ADMINS',
     'VIEW_AUDIT_LOGS',
+    'VIEW_SYSTEM_SETTINGS',
+    'VIEW_CUSTOM_LINKS',
+    'MANAGE_CUSTOM_LINKS',
     'EDIT_PROFILE'
   ],
   OWNER: [
@@ -154,6 +162,10 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'DELETE_ADMINS',
     'MANAGE_PERMISSIONS',
     'VIEW_AUDIT_LOGS',
+    'VIEW_SYSTEM_SETTINGS',
+    'MANAGE_SYSTEM_SETTINGS',
+    'VIEW_CUSTOM_LINKS',
+    'MANAGE_CUSTOM_LINKS',
     'EDIT_PROFILE'
   ]
 }

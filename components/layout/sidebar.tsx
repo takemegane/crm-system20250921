@@ -8,26 +8,61 @@ import { canAccessAdminFeatures, UserRole, hasPermission } from '@/lib/permissio
 import { useSystemSettings } from '@/contexts/SystemSettingsContext'
 import Image from 'next/image'
 
-const navigation = [
-  { name: 'ダッシュボード', href: '/dashboard', current: false },
-  { name: '顧客管理', href: '/dashboard/customers', current: false },
-  { name: 'アーカイブ済み顧客', href: '/dashboard/customers/archived', current: false },
-  { name: 'コース管理', href: '/dashboard/courses', current: false },
-  { name: 'タグ管理', href: '/dashboard/tags', current: false },
-  { name: '商品管理', href: '/dashboard/products', current: false },
-  { name: 'カテゴリ管理', href: '/dashboard/categories', current: false },
-  { name: '注文管理', href: '/dashboard/orders', current: false },
-  { name: '売上レポート', href: '/dashboard/sales-reports', current: false },
-  { name: '決済ログ', href: '/dashboard/payment-logs', current: false },
-  { name: '送料設定', href: '/dashboard/shipping-rates', current: false },
-  { name: '決済設定', href: '/dashboard/payment-settings', current: false },
-  { name: '一括メール配信', href: '/dashboard/bulk-email', current: false },
-  { name: 'メール送信履歴', href: '/dashboard/email-logs', current: false },
-  { name: 'メールテンプレート', href: '/dashboard/email-templates', current: false },
-  { name: 'メール設定', href: '/dashboard/email-settings', current: false },
-  { name: 'システム設定', href: '/dashboard/system-settings', current: false },
-  { name: '管理者管理', href: '/dashboard/admins', current: false },
-  { name: '操作履歴', href: '/dashboard/audit-logs', current: false },
+interface NavigationSection {
+  title: string
+  items: Array<{
+    name: string
+    href: string
+    current: boolean
+  }>
+}
+
+const navigationSections: NavigationSection[] = [
+  {
+    title: '',
+    items: [
+      { name: 'ダッシュボード', href: '/dashboard', current: false },
+    ]
+  },
+  {
+    title: '顧客メニュー',
+    items: [
+      { name: '顧客管理', href: '/dashboard/customers', current: false },
+      { name: 'アーカイブ済み顧客', href: '/dashboard/customers/archived', current: false },
+      { name: 'コース管理', href: '/dashboard/courses', current: false },
+      { name: 'タグ管理', href: '/dashboard/tags', current: false },
+    ]
+  },
+  {
+    title: '商品メニュー',
+    items: [
+      { name: '商品管理', href: '/dashboard/products', current: false },
+      { name: 'カテゴリ管理', href: '/dashboard/categories', current: false },
+      { name: '注文管理', href: '/dashboard/orders', current: false },
+      { name: '売上レポート', href: '/dashboard/sales-reports', current: false },
+      { name: '決済ログ', href: '/dashboard/payment-logs', current: false },
+      { name: '送料設定', href: '/dashboard/shipping-rates', current: false },
+      { name: '決済設定', href: '/dashboard/payment-settings', current: false },
+    ]
+  },
+  {
+    title: 'メールメニュー',
+    items: [
+      { name: '一括メール配信', href: '/dashboard/bulk-email', current: false },
+      { name: 'メール送信履歴', href: '/dashboard/email-logs', current: false },
+      { name: 'メールテンプレート', href: '/dashboard/email-templates', current: false },
+      { name: 'メール設定', href: '/dashboard/email-settings', current: false },
+    ]
+  },
+  {
+    title: 'システムメニュー',
+    items: [
+      { name: 'システム設定', href: '/dashboard/system-settings', current: false },
+      { name: 'カスタムリンク管理', href: '/dashboard/custom-links', current: false },
+      { name: '管理者管理', href: '/dashboard/admins', current: false },
+      { name: '操作履歴', href: '/dashboard/audit-logs', current: false },
+    ]
+  }
 ]
 
 export default function Sidebar() {
@@ -35,51 +70,54 @@ export default function Sidebar() {
   const { data: session } = useSession()
   const { settings } = useSystemSettings()
 
-  const filteredNavigation = navigation.filter(item => {
-    if (item.href === '/dashboard/customers/archived') {
+  const shouldShowItem = (href: string) => {
+    if (href === '/dashboard/customers/archived') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'RESTORE_CUSTOMERS')
     }
-    if (item.href === '/dashboard/admins') {
+    if (href === '/dashboard/admins') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_ADMINS')
     }
-    if (item.href === '/dashboard/email-templates') {
+    if (href === '/dashboard/email-templates') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_EMAIL_TEMPLATES')
     }
-    if (item.href === '/dashboard/bulk-email') {
+    if (href === '/dashboard/bulk-email') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'SEND_BULK_EMAIL')
     }
-    if (item.href === '/dashboard/email-logs') {
+    if (href === '/dashboard/email-logs') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_EMAIL_LOGS')
     }
-    if (item.href === '/dashboard/email-settings') {
+    if (href === '/dashboard/email-settings') {
       return session?.user?.role === 'OWNER'
     }
-    if (item.href === '/dashboard/payment-settings') {
+    if (href === '/dashboard/payment-settings') {
       return session?.user?.role === 'OWNER'
     }
-    if (item.href === '/dashboard/system-settings') {
+    if (href === '/dashboard/system-settings') {
       return session?.user?.role === 'OWNER'
     }
-    if (item.href === '/dashboard/audit-logs') {
+    if (href === '/dashboard/custom-links') {
+      return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_CUSTOM_LINKS')
+    }
+    if (href === '/dashboard/audit-logs') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_AUDIT_LOGS')
     }
-    if (item.href === '/dashboard/categories') {
+    if (href === '/dashboard/categories') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_PRODUCTS')
     }
-    if (item.href === '/dashboard/orders') {
+    if (href === '/dashboard/orders') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_CUSTOMERS')
     }
-    if (item.href === '/dashboard/shipping-rates') {
+    if (href === '/dashboard/shipping-rates') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_PRODUCTS')
     }
-    if (item.href === '/dashboard/sales-reports') {
+    if (href === '/dashboard/sales-reports') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_REPORTS')
     }
-    if (item.href === '/dashboard/payment-logs') {
+    if (href === '/dashboard/payment-logs') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_PAYMENT_LOGS')
     }
     return true
-  })
+  }
 
   return (
     <div className="flex-1 flex flex-col min-h-0 sidebar-modern">
@@ -114,22 +152,41 @@ export default function Sidebar() {
         </div>
 
         <nav className="flex-1 px-2">
-          {filteredNavigation.map((item) => {
-            const isCurrent = pathname === item.href
+          {navigationSections.map((section) => {
+            const visibleItems = section.items.filter(item => shouldShowItem(item.href))
+            
+            if (visibleItems.length === 0) {
+              return null
+            }
+
             return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={cn(
-                  'sidebar-item',
-                  isCurrent ? 'active' : ''
+              <div key={section.title || 'main'}>
+                {section.title && (
+                  <div className="px-3 py-2 mt-6 mb-2">
+                    <h3 className="text-xs font-semibold text-gray-300 uppercase tracking-wider">
+                      {section.title}
+                    </h3>
+                  </div>
                 )}
-              >
-                <span className="flex-shrink-0 mr-3">
-                  {getMenuIcon(item.href)}
-                </span>
-                {item.name}
-              </Link>
+                {visibleItems.map((item) => {
+                  const isCurrent = pathname === item.href
+                  return (
+                    <Link
+                      key={item.name}
+                      href={item.href}
+                      className={cn(
+                        'sidebar-item',
+                        isCurrent ? 'active' : ''
+                      )}
+                    >
+                      <span className="flex-shrink-0 mr-3">
+                        {getMenuIcon(item.href)}
+                      </span>
+                      {item.name}
+                    </Link>
+                  )
+                })}
+              </div>
             )
           })}
         </nav>
@@ -170,6 +227,8 @@ function getMenuIcon(href: string) {
       return <span className="text-lg">📧</span>
     case '/dashboard/system-settings':
       return <span className="text-lg">⚙️</span>
+    case '/dashboard/custom-links':
+      return <span className="text-lg">🔗</span>
     case '/dashboard/admins':
       return <span className="text-lg">👨‍💼</span>
     case '/dashboard/audit-logs':
