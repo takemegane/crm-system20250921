@@ -55,8 +55,8 @@ export async function POST(request: NextRequest) {
     const apiSecret = process.env.CLOUDINARY_API_SECRET
     
     console.log('🔍 Cloudinary environment check:')
-    console.log('  - CLOUD_NAME:', cloudName ? '✅ Set' : '❌ Missing')
-    console.log('  - API_KEY:', apiKey ? '✅ Set' : '❌ Missing')
+    console.log('  - CLOUD_NAME:', cloudName ? `✅ Set (${cloudName.substring(0, 5)}...)` : '❌ Missing')
+    console.log('  - API_KEY:', apiKey ? `✅ Set (${apiKey.substring(0, 5)}...)` : '❌ Missing')
     console.log('  - API_SECRET:', apiSecret ? '✅ Set' : '❌ Missing')
     
     if (!cloudName || !apiKey || !apiSecret) {
@@ -70,6 +70,12 @@ export async function POST(request: NextRequest) {
         }
       }, { status: 500 })
     }
+
+    // 追加：環境変数の値をマスクして表示（デバッグ用）
+    console.log('🔍 Environment variables masked values:')
+    console.log('  - CLOUD_NAME length:', cloudName.length)
+    console.log('  - API_KEY length:', apiKey.length)
+    console.log('  - API_SECRET length:', apiSecret.length)
 
     console.log('✅ Cloudinary configuration found')
     
