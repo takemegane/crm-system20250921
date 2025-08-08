@@ -120,37 +120,51 @@ export default function SalesReport({ className }: SalesReportProps) {
     setReportType(type)
   }
 
-  const renderSummary = (summaryData: SummaryData) => (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-        <h4 className="text-sm font-medium text-blue-900">総売上</h4>
-        <p className="text-2xl font-bold text-blue-700">{formatCurrency(summaryData.totalSales)}</p>
-        <p className="text-xs text-blue-600">送料込み: {formatCurrency(summaryData.totalSales + summaryData.totalShipping)}</p>
+  const renderSummary = (summaryData: SummaryData) => {
+    console.log('📊 renderSummary called with:', summaryData)
+    
+    if (Array.isArray(summaryData)) {
+      console.error('📊 summaryData is an array, but should be an object:', summaryData)
+      return <div className="text-red-600">データ形式エラー: 概要データがオブジェクトではありません</div>
+    }
+    
+    if (!summaryData || typeof summaryData !== 'object') {
+      console.error('📊 summaryData is not a valid object:', summaryData)
+      return <div className="text-red-600">データ形式エラー: 概要データが無効です</div>
+    }
+    
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+          <h4 className="text-sm font-medium text-blue-900">総売上</h4>
+          <p className="text-2xl font-bold text-blue-700">{formatCurrency(summaryData.totalSales || 0)}</p>
+          <p className="text-xs text-blue-600">送料込み: {formatCurrency((summaryData.totalSales || 0) + (summaryData.totalShipping || 0))}</p>
+        </div>
+        
+        <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+          <h4 className="text-sm font-medium text-green-900">総注文数</h4>
+          <p className="text-2xl font-bold text-green-700">{(summaryData.totalOrders || 0).toLocaleString()}</p>
+          <p className="text-xs text-green-600">平均注文額: {formatCurrency(summaryData.avgOrderValue || 0)}</p>
+        </div>
+        
+        <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
+          <h4 className="text-sm font-medium text-orange-900">今月売上</h4>
+          <p className="text-2xl font-bold text-orange-700">{formatCurrency(summaryData.thisMonthSales || 0)}</p>
+          <p className="text-xs text-orange-600">注文数: {summaryData.thisMonthOrders || 0}</p>
+        </div>
+        
+        <div className={`p-4 rounded-lg border ${(summaryData.salesGrowth || 0) >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
+          <h4 className={`text-sm font-medium ${(summaryData.salesGrowth || 0) >= 0 ? 'text-green-900' : 'text-red-900'}`}>前月比成長率</h4>
+          <p className={`text-2xl font-bold ${(summaryData.salesGrowth || 0) >= 0 ? 'text-green-700' : 'text-red-700'}`}>
+            {(summaryData.salesGrowth || 0) > 0 ? '+' : ''}{(summaryData.salesGrowth || 0).toFixed(1)}%
+          </p>
+          <p className={`text-xs ${(summaryData.salesGrowth || 0) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+            先月: {formatCurrency(summaryData.lastMonthSales || 0)}
+          </p>
+        </div>
       </div>
-      
-      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-        <h4 className="text-sm font-medium text-green-900">総注文数</h4>
-        <p className="text-2xl font-bold text-green-700">{summaryData.totalOrders.toLocaleString()}</p>
-        <p className="text-xs text-green-600">平均注文額: {formatCurrency(summaryData.avgOrderValue)}</p>
-      </div>
-      
-      <div className="bg-orange-50 p-4 rounded-lg border border-orange-200">
-        <h4 className="text-sm font-medium text-orange-900">今月売上</h4>
-        <p className="text-2xl font-bold text-orange-700">{formatCurrency(summaryData.thisMonthSales)}</p>
-        <p className="text-xs text-orange-600">注文数: {summaryData.thisMonthOrders}</p>
-      </div>
-      
-      <div className={`p-4 rounded-lg border ${summaryData.salesGrowth >= 0 ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`}>
-        <h4 className={`text-sm font-medium ${summaryData.salesGrowth >= 0 ? 'text-green-900' : 'text-red-900'}`}>前月比成長率</h4>
-        <p className={`text-2xl font-bold ${summaryData.salesGrowth >= 0 ? 'text-green-700' : 'text-red-700'}`}>
-          {summaryData.salesGrowth > 0 ? '+' : ''}{summaryData.salesGrowth.toFixed(1)}%
-        </p>
-        <p className={`text-xs ${summaryData.salesGrowth >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-          先月: {formatCurrency(summaryData.lastMonthSales)}
-        </p>
-      </div>
-    </div>
-  )
+    )
+  }
 
   const renderDaily = (dailyData: DailyData[]) => {
     console.log('📊 renderDaily called with:', dailyData)
