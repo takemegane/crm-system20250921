@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getPrismaClient } from '@/lib/db'
+import { hasPermission, UserRole } from '@/lib/permissions'
 
 // 静的生成を無効にして動的ルートとして扱う
 export const dynamic = 'force-dynamic'
@@ -11,9 +12,9 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     
-    // 管理者権限のみアクセス可能
-    if (!session || session.user.userType !== 'admin') {
-      return NextResponse.json({ error: 'Admin access required' }, { status: 403 })
+    // 決済ログ閲覧権限チェック
+    if (!session || !hasPermission(session.user.role as UserRole, 'VIEW_PAYMENT_LOGS')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     console.log('💳 Payment Logs API called')

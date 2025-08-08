@@ -92,6 +92,23 @@ export default function SystemSettingsPage() {
     }
   ])
 
+  // メニューリンク設定
+  const [menuLinks, setMenuLinks] = useState([
+    { id: 'customers', title: '👥 顧客管理', url: '/dashboard/customers', enabled: true, order: 1 },
+    { id: 'courses', title: '📚 コース管理', url: '/dashboard/courses', enabled: true, order: 2 },
+    { id: 'products', title: '🛍️ 商品管理', url: '/dashboard/products', enabled: true, order: 3 },
+    { id: 'orders', title: '📦 注文管理', url: '/dashboard/orders', enabled: true, order: 4 },
+    { id: 'tags', title: '🏷️ タグ管理', url: '/dashboard/tags', enabled: false, order: 5 },
+    { id: 'categories', title: '📂 カテゴリ管理', url: '/dashboard/categories', enabled: false, order: 6 },
+    { id: 'shipping-rates', title: '🚚 送料設定', url: '/dashboard/shipping-rates', enabled: false, order: 7 },
+    { id: 'email-templates', title: '📧 メール管理', url: '/dashboard/email-templates', enabled: false, order: 8 },
+    { id: 'payment-settings', title: '💳 決済設定', url: '/dashboard/payment-settings', enabled: false, order: 9 },
+    { id: 'payment-logs', title: '💰 決済ログ', url: '/dashboard/payment-logs', enabled: false, order: 10 },
+    { id: 'sales-reports', title: '📊 売上分析', url: '/dashboard/sales-reports', enabled: false, order: 11 },
+    { id: 'admins', title: '👨‍💼 管理者', url: '/dashboard/admins', enabled: false, order: 12 },
+    { id: 'audit-logs', title: '📋 操作履歴', url: '/dashboard/audit-logs', enabled: false, order: 13 }
+  ])
+
   // アップロード状態
   const [uploading, setUploading] = useState(false)
 
@@ -121,6 +138,11 @@ export default function SystemSettingsPage() {
       // ダッシュボードウィジェット設定を読み込み
       if (data.dashboardWidgets && Array.isArray(data.dashboardWidgets) && data.dashboardWidgets.length > 0) {
         setWidgets(data.dashboardWidgets)
+      }
+      
+      // メニューリンク設定を読み込み
+      if (data.menuLinks && Array.isArray(data.menuLinks) && data.menuLinks.length > 0) {
+        setMenuLinks(data.menuLinks)
       }
     } catch (error) {
       setError('設定の取得に失敗しました')
@@ -176,7 +198,8 @@ export default function SystemSettingsPage() {
         },
         body: JSON.stringify({
           ...formData,
-          dashboardWidgets: widgets
+          dashboardWidgets: widgets,
+          menuLinks: menuLinks
         })
       })
 
@@ -245,6 +268,38 @@ export default function SystemSettingsPage() {
         ? { ...widget, size }
         : widget
     ))
+  }
+
+  // メニューリンク操作関数
+  const handleMenuLinkToggle = (linkId: string) => {
+    setMenuLinks(prev => prev.map(link => 
+      link.id === linkId 
+        ? { ...link, enabled: !link.enabled }
+        : link
+    ))
+  }
+
+  const handleMenuLinkOrderChange = (linkId: string, direction: 'up' | 'down') => {
+    setMenuLinks(prev => {
+      const currentIndex = prev.findIndex(l => l.id === linkId)
+      if (currentIndex === -1) return prev
+
+      const newLinks = [...prev]
+      const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+      
+      if (targetIndex < 0 || targetIndex >= newLinks.length) return prev
+
+      // スワップ
+      const temp = newLinks[currentIndex]
+      newLinks[currentIndex] = newLinks[targetIndex]
+      newLinks[targetIndex] = temp
+
+      // オーダーを再計算
+      return newLinks.map((link, index) => ({
+        ...link,
+        order: index + 1
+      }))
+    })
   }
 
   useEffect(() => {
@@ -583,6 +638,74 @@ export default function SystemSettingsPage() {
             <p className="text-sm text-blue-800">
               <strong>💡 ヒント：</strong> ウィジェットは上から順番にダッシュボードに表示されます。
               サイズは画面領域に影響し、大きいウィジェットほど多くの情報を表示できます。
+            </p>
+          </div>
+        </div>
+
+        {/* メニューリンク設定セクション */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-6">🔗 ダッシュボードメニューリンク設定</h2>
+          
+          <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-orange-800">
+              <strong>🎯 メニューリンクのカスタマイズ：</strong><br />
+              ダッシュボードに表示したい管理メニューを選択し、順序を調整できます。
+              有効にしたメニューがダッシュボードにリンクボタンとして表示されます。
+            </p>
+          </div>
+
+          <div className="space-y-3">
+            <div className="text-sm font-medium text-gray-700 mb-4">利用可能なメニューリンク</div>
+            
+            {menuLinks.map((link, index) => (
+              <div key={link.id} className={`border rounded-lg p-3 ${link.enabled ? 'border-orange-300 bg-orange-50' : 'border-gray-300 bg-gray-50'}`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={link.enabled}
+                      onChange={() => handleMenuLinkToggle(link.id)}
+                      className="h-4 w-4 text-orange-600 focus:ring-orange-500 border-gray-300 rounded"
+                    />
+                    <div>
+                      <h4 className="font-medium text-gray-900">{link.title}</h4>
+                      <p className="text-xs text-gray-600">{link.url}</p>
+                    </div>
+                  </div>
+                  
+                  {link.enabled && (
+                    <div className="flex items-center space-x-2">
+                      {/* 順序変更ボタン */}
+                      <div className="flex space-x-1">
+                        <button
+                          type="button"
+                          onClick={() => handleMenuLinkOrderChange(link.id, 'up')}
+                          disabled={index === 0}
+                          className={`p-1 rounded text-xs ${index === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleMenuLinkOrderChange(link.id, 'down')}
+                          disabled={index === menuLinks.length - 1}
+                          className={`p-1 rounded text-xs ${index === menuLinks.length - 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}
+                        >
+                          ↓
+                        </button>
+                      </div>
+                      <div className="text-xs text-orange-700">順序: {link.order}</div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 p-3 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm text-orange-800">
+              <strong>💡 ヒント：</strong> 有効にしたメニューリンクは、ダッシュボードのクイックアクセスセクションに表示されます。
+              よく使う機能を上位に配置することで、効率的な作業ができます。
             </p>
           </div>
         </div>

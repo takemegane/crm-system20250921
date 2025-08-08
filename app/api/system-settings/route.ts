@@ -95,7 +95,7 @@ export async function PUT(request: NextRequest) {
     const body = await request.json()
     console.log('📝 Request body received:', JSON.stringify(body, null, 2))
     
-    const { systemName, logoUrl, faviconUrl, primaryColor, secondaryColor, backgroundColor, description, communityLinkText, communityLinkUrl, shippingFee, freeShippingThreshold } = body
+    const { systemName, logoUrl, faviconUrl, primaryColor, secondaryColor, backgroundColor, description, communityLinkText, communityLinkUrl, shippingFee, freeShippingThreshold, dashboardWidgets, menuLinks } = body
     
     console.log('🔍 Extracted fields:')
     console.log('  - systemName:', systemName)
@@ -104,21 +104,18 @@ export async function PUT(request: NextRequest) {
     console.log('  - primaryColor:', primaryColor)
     console.log('  - secondaryColor:', secondaryColor)
     console.log('  - backgroundColor:', backgroundColor)
+    console.log('  - dashboardWidgets:', dashboardWidgets ? 'present' : 'null')
+    console.log('  - menuLinks:', menuLinks ? 'present' : 'null')
 
-    // 現在のアクティブな設定を無効化
-    console.log('🔄 Deactivating current settings...')
-    await prisma.systemSettings.updateMany({
+    // 現在のアクティブな設定を取得または作成
+    console.log('🔍 Finding current active settings...')
+    let existingSettings = await prisma.systemSettings.findFirst({
       where: {
         isActive: true
-      },
-      data: {
-        isActive: false
       }
     })
-    console.log('✅ Current settings deactivated')
+    console.log('🔍 Existing settings found:', !!existingSettings)
 
-    // 新しい設定を作成
-    console.log('🔄 Creating new settings...')
     const settingsData = {
       systemName: systemName || "CRM管理システム",
       logoUrl,
@@ -129,15 +126,30 @@ export async function PUT(request: NextRequest) {
       description,
       communityLinkText,
       communityLinkUrl,
+      dashboardWidgets: dashboardWidgets || [],
+      menuLinks: menuLinks || [],
       isActive: true
     }
     
-    console.log('📝 Settings data to create:', JSON.stringify(settingsData, null, 2))
+    console.log('📝 Settings data to save:', JSON.stringify(settingsData, null, 2))
     
-    const settings = await prisma.systemSettings.create({
-      data: settingsData
-    })
-    console.log('✅ New settings created with ID:', settings.id)
+    let settings
+    if (existingSettings) {
+      // 既存の設定を更新
+      console.log('🔄 Updating existing settings...')
+      settings = await prisma.systemSettings.update({
+        where: { id: existingSettings.id },
+        data: settingsData
+      })
+      console.log('✅ Settings updated with ID:', settings.id)
+    } else {
+      // 新しい設定を作成
+      console.log('🔄 Creating new settings...')
+      settings = await prisma.systemSettings.create({
+        data: settingsData
+      })
+      console.log('✅ New settings created with ID:', settings.id)
+    }
 
     console.log('✅ System settings updated successfully:', settings.id)
     return NextResponse.json(settings)

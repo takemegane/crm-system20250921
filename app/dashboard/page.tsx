@@ -36,6 +36,7 @@ function WidgetSkeleton() {
 export default function DashboardPage() {
   const { data: session } = useSession()
   const [widgets, setWidgets] = useState<DashboardWidget[]>([])
+  const [menuLinks, setMenuLinks] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
@@ -81,6 +82,22 @@ export default function DashboardPage() {
               order: 3,
               size: 'medium'
             }
+          ])
+        }
+
+        // メニューリンク設定を読み込み
+        if (settings.menuLinks && Array.isArray(settings.menuLinks)) {
+          // 有効なメニューリンクのみ、並び順でソート
+          const enabledLinks = settings.menuLinks
+            .filter((link: any) => link.enabled)
+            .sort((a: any, b: any) => a.order - b.order)
+          setMenuLinks(enabledLinks)
+        } else {
+          // デフォルトメニューリンク
+          setMenuLinks([
+            { id: 'customers', title: '👥 顧客管理', url: '/dashboard/customers', enabled: true, order: 1 },
+            { id: 'products', title: '🛍️ 商品管理', url: '/dashboard/products', enabled: true, order: 2 },
+            { id: 'orders', title: '📦 注文管理', url: '/dashboard/orders', enabled: true, order: 3 }
           ])
         }
       }
@@ -166,9 +183,29 @@ export default function DashboardPage() {
             </div>
           )}
 
-          {/* デフォルトのクイックアクセス */}
+          {/* カスタマイズ可能なクイックアクセス */}
           <div className="border-t pt-8">
             <h2 className="text-xl font-semibold text-gray-900 mb-6">クイックアクセス</h2>
+            
+            {menuLinks.length > 0 ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
+                {menuLinks.map((link) => (
+                  <Link key={link.id} href={link.url}>
+                    <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md hover:border-blue-300 transition-all cursor-pointer">
+                      <div className="flex items-center space-x-3">
+                        <div className="text-2xl">{link.title.split(' ')[0]}</div>
+                        <div>
+                          <h3 className="font-semibold text-gray-900">{link.title.slice(2)}</h3>
+                          <p className="text-sm text-gray-500">管理画面に移動</p>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : null}
+            
+            {/* デフォルトのメニュー項目 */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div className="bg-white overflow-hidden shadow rounded-lg">
           <div className="p-5">

@@ -163,6 +163,7 @@ model SystemSettings {
   
   // ダッシュボード設定
   dashboardWidgets  Json?    @default("[]") // 表示するウィジェット設定
+  menuLinks         Json?    @default("[]") // ダッシュボードメニューリンク設定
   
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
