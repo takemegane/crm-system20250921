@@ -152,94 +152,130 @@ export default function SalesReport({ className }: SalesReportProps) {
     </div>
   )
 
-  const renderDaily = (dailyData: DailyData[]) => (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-700 border-b pb-2">
-        <div>日付</div>
-        <div>売上</div>
-        <div>注文数</div>
-        <div>送料</div>
-      </div>
-      {dailyData.map((item) => (
-        <div key={item.date} className="grid grid-cols-4 gap-4 text-sm py-2 hover:bg-gray-50 rounded">
-          <div>{formatDate(item.date)}</div>
-          <div className="font-medium">{formatCurrency(item.totalSales)}</div>
-          <div>{item.orderCount}</div>
-          <div>{formatCurrency(item.totalShipping)}</div>
+  const renderDaily = (dailyData: DailyData[]) => {
+    console.log('📊 renderDaily called with:', dailyData)
+    
+    if (!Array.isArray(dailyData)) {
+      console.error('📊 dailyData is not an array:', dailyData)
+      return <div className="text-red-600">データ形式エラー: 日別データが配列ではありません</div>
+    }
+    
+    return (
+      <div className="space-y-2">
+        <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-700 border-b pb-2">
+          <div>日付</div>
+          <div>売上</div>
+          <div>注文数</div>
+          <div>送料</div>
         </div>
-      ))}
-    </div>
-  )
-
-  const renderMonthly = (monthlyData: MonthlyData[]) => (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-700 border-b pb-2">
-        <div>月</div>
-        <div>売上</div>
-        <div>注文数</div>
-        <div>送料</div>
-      </div>
-      {monthlyData.map((item) => (
-        <div key={item.month} className="grid grid-cols-4 gap-4 text-sm py-2 hover:bg-gray-50 rounded">
-          <div>{item.month}</div>
-          <div className="font-medium">{formatCurrency(item.totalSales)}</div>
-          <div>{item.orderCount}</div>
-          <div>{formatCurrency(item.totalShipping)}</div>
-        </div>
-      ))}
-    </div>
-  )
-
-  const renderProduct = (productData: ProductData[]) => (
-    <div className="space-y-2">
-      <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-700 border-b pb-2">
-        <div>商品名</div>
-        <div>売上</div>
-        <div>販売数</div>
-        <div>注文回数</div>
-      </div>
-      {productData.map((item, index) => (
-        <div key={item.productName} className="grid grid-cols-4 gap-4 text-sm py-2 hover:bg-gray-50 rounded">
-          <div className="truncate" title={item.productName}>
-            <span className="text-xs text-gray-500">#{index + 1}</span> {item.productName}
+        {dailyData.map((item) => (
+          <div key={item.date} className="grid grid-cols-4 gap-4 text-sm py-2 hover:bg-gray-50 rounded">
+            <div>{formatDate(item.date)}</div>
+            <div className="font-medium">{formatCurrency(item.totalSales)}</div>
+            <div>{item.orderCount}</div>
+            <div>{formatCurrency(item.totalShipping)}</div>
           </div>
-          <div className="font-medium">{formatCurrency(item.totalSales)}</div>
-          <div>{item.totalQuantity}</div>
-          <div>{item.orderCount}</div>
-        </div>
-      ))}
-    </div>
-  )
-
-  const renderCustomer = (customerData: CustomerData[]) => (
-    <div className="space-y-2">
-      <div className="grid grid-cols-5 gap-4 text-sm font-medium text-gray-700 border-b pb-2">
-        <div>順位</div>
-        <div>顧客名</div>
-        <div>メールアドレス</div>
-        <div>売上</div>
-        <div>注文数</div>
+        ))}
       </div>
-      {customerData.map((item) => (
-        <div key={item.customerId} className="grid grid-cols-5 gap-4 text-sm py-2 hover:bg-gray-50 rounded">
-          <div className="flex items-center">
-            <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-              item.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
-              item.rank === 2 ? 'bg-gray-100 text-gray-700' :
-              item.rank === 3 ? 'bg-orange-100 text-orange-700' :
-              'bg-blue-100 text-blue-700'
-            }`}>
-              {item.rank}
-            </span>
-          </div>
-          <div className="truncate">{item.customerName}</div>
-          <div className="truncate text-gray-600">{item.customerEmail}</div>
-          <div className="font-medium">{formatCurrency(item.totalSales)}</div>
-          <div>{item.orderCount}</div>
+    )
+  }
+
+  const renderMonthly = (monthlyData: MonthlyData[]) => {
+    console.log('📊 renderMonthly called with:', monthlyData)
+    
+    if (!Array.isArray(monthlyData)) {
+      console.error('📊 monthlyData is not an array:', monthlyData)
+      return <div className="text-red-600">データ形式エラー: 月別データが配列ではありません</div>
+    }
+    
+    return (
+      <div className="space-y-2">
+        <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-700 border-b pb-2">
+          <div>月</div>
+          <div>売上</div>
+          <div>注文数</div>
+          <div>送料</div>
         </div>
-      ))}
-    </div>
-  )
+        {monthlyData.map((item) => (
+          <div key={item.month} className="grid grid-cols-4 gap-4 text-sm py-2 hover:bg-gray-50 rounded">
+            <div>{item.month}</div>
+            <div className="font-medium">{formatCurrency(item.totalSales)}</div>
+            <div>{item.orderCount}</div>
+            <div>{formatCurrency(item.totalShipping)}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  const renderProduct = (productData: ProductData[]) => {
+    console.log('📊 renderProduct called with:', productData)
+    
+    if (!Array.isArray(productData)) {
+      console.error('📊 productData is not an array:', productData)
+      return <div className="text-red-600">データ形式エラー: 商品別データが配列ではありません</div>
+    }
+    
+    return (
+      <div className="space-y-2">
+        <div className="grid grid-cols-4 gap-4 text-sm font-medium text-gray-700 border-b pb-2">
+          <div>商品名</div>
+          <div>売上</div>
+          <div>販売数</div>
+          <div>注文回数</div>
+        </div>
+        {productData.map((item, index) => (
+          <div key={item.productName} className="grid grid-cols-4 gap-4 text-sm py-2 hover:bg-gray-50 rounded">
+            <div className="truncate" title={item.productName}>
+              <span className="text-xs text-gray-500">#{index + 1}</span> {item.productName}
+            </div>
+            <div className="font-medium">{formatCurrency(item.totalSales)}</div>
+            <div>{item.totalQuantity}</div>
+            <div>{item.orderCount}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
+
+  const renderCustomer = (customerData: CustomerData[]) => {
+    console.log('📊 renderCustomer called with:', customerData)
+    
+    if (!Array.isArray(customerData)) {
+      console.error('📊 customerData is not an array:', customerData)
+      return <div className="text-red-600">データ形式エラー: 顧客別データが配列ではありません</div>
+    }
+    
+    return (
+      <div className="space-y-2">
+        <div className="grid grid-cols-5 gap-4 text-sm font-medium text-gray-700 border-b pb-2">
+          <div>順位</div>
+          <div>顧客名</div>
+          <div>メールアドレス</div>
+          <div>売上</div>
+          <div>注文数</div>
+        </div>
+        {customerData.map((item) => (
+          <div key={item.customerId} className="grid grid-cols-5 gap-4 text-sm py-2 hover:bg-gray-50 rounded">
+            <div className="flex items-center">
+              <span className={`inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
+                item.rank === 1 ? 'bg-yellow-100 text-yellow-800' :
+                item.rank === 2 ? 'bg-gray-100 text-gray-700' :
+                item.rank === 3 ? 'bg-orange-100 text-orange-700' :
+                'bg-blue-100 text-blue-700'
+              }`}>
+                {item.rank}
+              </span>
+            </div>
+            <div className="truncate">{item.customerName}</div>
+            <div className="truncate text-gray-600">{item.customerEmail}</div>
+            <div className="font-medium">{formatCurrency(item.totalSales)}</div>
+            <div>{item.orderCount}</div>
+          </div>
+        ))}
+      </div>
+    )
+  }
 
   return (
     <div className={`bg-white rounded-lg shadow-sm p-6 ${className}`}>
