@@ -29,12 +29,32 @@ export async function GET() {
 
     // システム設定の取得は認証不要（公開情報として使用）
     console.log('🔍 Fetching system settings...')
-    let settings = await prisma.systemSettings.findFirst({
-      where: {
+    let settings
+    try {
+      settings = await prisma.systemSettings.findFirst({
+        where: {
+          isActive: true
+        }
+      })
+      console.log('✅ Settings query completed:', !!settings)
+    } catch (dbError) {
+      console.error('❌ Database query failed:', dbError)
+      // デフォルト値を返す
+      return NextResponse.json({
+        systemName: "CRM管理システム",
+        primaryColor: "#3B82F6",
+        secondaryColor: "#1F2937",
+        backgroundColor: "#F8FAFC",
+        logoUrl: null,
+        faviconUrl: null,
+        description: null,
+        communityLinkText: null,
+        communityLinkUrl: null,
+        dashboardWidgets: [],
+        menuLinks: [],
         isActive: true
-      }
-    })
-    console.log('✅ Settings query completed:', !!settings)
+      })
+    }
 
     // 設定が存在しない場合はデフォルト値を作成
     if (!settings) {
