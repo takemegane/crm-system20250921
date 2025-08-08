@@ -38,6 +38,7 @@ export type Permission =
   | 'MANAGE_EMAIL_SETTINGS'
   | 'MANAGE_PAYMENT_SETTINGS'
   | 'VIEW_PAYMENT_LOGS'
+  | 'VIEW_REPORTS'
   | 'VIEW_ADMINS'
   | 'CREATE_ADMINS'
   | 'EDIT_ADMINS'
@@ -102,6 +103,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'SEND_BULK_EMAIL',
     'VIEW_EMAIL_LOGS',
     'VIEW_PAYMENT_LOGS',
+    'VIEW_REPORTS',
     'VIEW_ADMINS',
     'CREATE_ADMINS',
     'VIEW_AUDIT_LOGS',
@@ -145,6 +147,7 @@ export const ROLE_PERMISSIONS: Record<UserRole, Permission[]> = {
     'MANAGE_EMAIL_SETTINGS',
     'MANAGE_PAYMENT_SETTINGS',
     'VIEW_PAYMENT_LOGS',
+    'VIEW_REPORTS',
     'VIEW_ADMINS',
     'CREATE_ADMINS',
     'EDIT_ADMINS',

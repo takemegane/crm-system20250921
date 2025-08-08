@@ -19,9 +19,19 @@ type SystemSettings = {
   description?: string
   communityLinkText?: string
   communityLinkUrl?: string
+  dashboardWidgets?: any[]
   isActive: boolean
   createdAt: string
   updatedAt: string
+}
+
+type DashboardWidget = {
+  id: string
+  title: string
+  type: 'sales-report' | 'quick-stats' | 'recent-orders' | 'customer-stats'
+  enabled: boolean
+  order: number
+  size: 'small' | 'medium' | 'large'
 }
 
 export default function SystemSettingsPage() {
@@ -45,6 +55,42 @@ export default function SystemSettingsPage() {
     communityLinkText: '',
     communityLinkUrl: ''
   })
+
+  // ダッシュボードウィジェット設定
+  const [widgets, setWidgets] = useState<DashboardWidget[]>([
+    {
+      id: 'sales-report',
+      title: '売上レポート',
+      type: 'sales-report',
+      enabled: true,
+      order: 1,
+      size: 'large'
+    },
+    {
+      id: 'quick-stats',
+      title: 'クイック統計',
+      type: 'quick-stats',
+      enabled: true,
+      order: 2,
+      size: 'medium'
+    },
+    {
+      id: 'recent-orders',
+      title: '最近の注文',
+      type: 'recent-orders',
+      enabled: true,
+      order: 3,
+      size: 'medium'
+    },
+    {
+      id: 'customer-stats',
+      title: '顧客統計',
+      type: 'customer-stats',
+      enabled: false,
+      order: 4,
+      size: 'small'
+    }
+  ])
 
   // アップロード状態
   const [uploading, setUploading] = useState(false)
@@ -71,6 +117,11 @@ export default function SystemSettingsPage() {
         communityLinkText: data.communityLinkText || '',
         communityLinkUrl: data.communityLinkUrl || ''
       })
+      
+      // ダッシュボードウィジェット設定を読み込み
+      if (data.dashboardWidgets && Array.isArray(data.dashboardWidgets) && data.dashboardWidgets.length > 0) {
+        setWidgets(data.dashboardWidgets)
+      }
     } catch (error) {
       setError('設定の取得に失敗しました')
       console.error('Error fetching settings:', error)
@@ -123,7 +174,10 @@ export default function SystemSettingsPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          dashboardWidgets: widgets
+        })
       })
 
       if (!response.ok) {
@@ -151,6 +205,46 @@ export default function SystemSettingsPage() {
       ...prev,
       [field]: value
     }))
+  }
+
+  // ダッシュボードウィジェット操作関数
+  const handleWidgetToggle = (widgetId: string) => {
+    setWidgets(prev => prev.map(widget => 
+      widget.id === widgetId 
+        ? { ...widget, enabled: !widget.enabled }
+        : widget
+    ))
+  }
+
+  const handleWidgetOrderChange = (widgetId: string, direction: 'up' | 'down') => {
+    setWidgets(prev => {
+      const currentIndex = prev.findIndex(w => w.id === widgetId)
+      if (currentIndex === -1) return prev
+
+      const newWidgets = [...prev]
+      const targetIndex = direction === 'up' ? currentIndex - 1 : currentIndex + 1
+      
+      if (targetIndex < 0 || targetIndex >= newWidgets.length) return prev
+
+      // スワップ
+      const temp = newWidgets[currentIndex]
+      newWidgets[currentIndex] = newWidgets[targetIndex]
+      newWidgets[targetIndex] = temp
+
+      // オーダーを再計算
+      return newWidgets.map((widget, index) => ({
+        ...widget,
+        order: index + 1
+      }))
+    })
+  }
+
+  const handleWidgetSizeChange = (widgetId: string, size: 'small' | 'medium' | 'large') => {
+    setWidgets(prev => prev.map(widget => 
+      widget.id === widgetId 
+        ? { ...widget, size }
+        : widget
+    ))
   }
 
   useEffect(() => {
@@ -398,6 +492,98 @@ export default function SystemSettingsPage() {
                 全コース共通のコミュニティページがある場合に設定してください（任意）
               </p>
             </div>
+          </div>
+        </div>
+
+        {/* ダッシュボード設定セクション */}
+        <div className="bg-white shadow rounded-lg p-6">
+          <h2 className="text-lg font-medium text-gray-900 mb-6">📊 ダッシュボード設定</h2>
+          
+          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+            <p className="text-sm text-green-800">
+              <strong>🎯 ダッシュボードのカスタマイズ：</strong><br />
+              表示したいウィジェットを選択し、順序とサイズを調整できます。
+              設定は管理者画面のダッシュボードに即座に反映されます。
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            <div className="text-sm font-medium text-gray-700 mb-4">利用可能なウィジェット</div>
+            
+            {widgets.map((widget, index) => (
+              <div key={widget.id} className={`border rounded-lg p-4 ${widget.enabled ? 'border-green-300 bg-green-50' : 'border-gray-300 bg-gray-50'}`}>
+                <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="checkbox"
+                      checked={widget.enabled}
+                      onChange={() => handleWidgetToggle(widget.id)}
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <div>
+                      <h4 className="font-medium text-gray-900">{widget.title}</h4>
+                      <p className="text-sm text-gray-600">
+                        {widget.type === 'sales-report' && '売上データの詳細レポートを表示します'}
+                        {widget.type === 'quick-stats' && '主要な統計数値をクイック表示します'}
+                        {widget.type === 'recent-orders' && '最新の注文一覧を表示します'}
+                        {widget.type === 'customer-stats' && '顧客関連の統計情報を表示します'}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  {widget.enabled && (
+                    <div className="flex items-center space-x-2">
+                      {/* 順序変更ボタン */}
+                      <div className="flex space-x-1">
+                        <button
+                          type="button"
+                          onClick={() => handleWidgetOrderChange(widget.id, 'up')}
+                          disabled={index === 0}
+                          className={`p-1 rounded ${index === 0 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}
+                        >
+                          ↑
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleWidgetOrderChange(widget.id, 'down')}
+                          disabled={index === widgets.length - 1}
+                          className={`p-1 rounded ${index === widgets.length - 1 ? 'text-gray-400 cursor-not-allowed' : 'text-gray-600 hover:text-gray-900'}`}
+                        >
+                          ↓
+                        </button>
+                      </div>
+                      
+                      {/* サイズ選択 */}
+                      <select
+                        value={widget.size}
+                        onChange={(e) => handleWidgetSizeChange(widget.id, e.target.value as 'small' | 'medium' | 'large')}
+                        className="text-sm border border-gray-300 rounded px-2 py-1"
+                      >
+                        <option value="small">小</option>
+                        <option value="medium">中</option>
+                        <option value="large">大</option>
+                      </select>
+                    </div>
+                  )}
+                </div>
+                
+                {widget.enabled && (
+                  <div className="text-xs text-green-700">
+                    順序: {widget.order} | サイズ: {
+                      widget.size === 'small' ? '小' :
+                      widget.size === 'medium' ? '中' : '大'
+                    }
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <p className="text-sm text-blue-800">
+              <strong>💡 ヒント：</strong> ウィジェットは上から順番にダッシュボードに表示されます。
+              サイズは画面領域に影響し、大きいウィジェットほど多くの情報を表示できます。
+            </p>
           </div>
         </div>
 

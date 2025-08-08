@@ -17,6 +17,8 @@ const navigation = [
   { name: '商品管理', href: '/dashboard/products', current: false },
   { name: 'カテゴリ管理', href: '/dashboard/categories', current: false },
   { name: '注文管理', href: '/dashboard/orders', current: false },
+  { name: '売上レポート', href: '/dashboard/sales-reports', current: false },
+  { name: '決済ログ', href: '/dashboard/payment-logs', current: false },
   { name: '送料設定', href: '/dashboard/shipping-rates', current: false },
   { name: '決済設定', href: '/dashboard/payment-settings', current: false },
   { name: '一括メール配信', href: '/dashboard/bulk-email', current: false },
@@ -69,6 +71,12 @@ export default function Sidebar() {
     }
     if (item.href === '/dashboard/shipping-rates') {
       return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_PRODUCTS')
+    }
+    if (item.href === '/dashboard/sales-reports') {
+      return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_REPORTS')
+    }
+    if (item.href === '/dashboard/payment-logs') {
+      return session?.user?.role && hasPermission(session.user.role as UserRole, 'VIEW_PAYMENT_LOGS')
     }
     return true
   })
@@ -166,6 +174,10 @@ function getMenuIcon(href: string) {
       return <span className="text-lg">👨‍💼</span>
     case '/dashboard/audit-logs':
       return <span className="text-lg">🔍</span>
+    case '/dashboard/sales-reports':
+      return <span className="text-lg">📈</span>
+    case '/dashboard/payment-logs':
+      return <span className="text-lg">💰</span>
     default:
       return <span className="text-lg">•</span>
   }

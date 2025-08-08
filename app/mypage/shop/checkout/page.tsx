@@ -49,7 +49,8 @@ export default function CheckoutPage() {
     shippingAddress: '',
     recipientName: '',
     contactPhone: '',
-    notes: ''
+    notes: '',
+    paymentMethod: 'bank_transfer' // デフォルトは銀行振込
   })
   
   // キャッシュされたデータを使用
@@ -64,6 +65,49 @@ export default function CheckoutPage() {
     isShippingFree: boolean
     totalAmount: number
   } | null>(null)
+  
+  const [paymentSettings, setPaymentSettings] = useState<{
+    enableCreditCard: boolean
+    enableBankTransfer: boolean
+    enableCashOnDelivery: boolean
+    creditCardFeeType: string
+    creditCardFeeRate: number
+    creditCardFeeFixed: number
+    bankTransferFee: number
+    cashOnDeliveryFee: number
+    creditCardFeeBearer: string
+    bankTransferFeeBearer: string
+    cashOnDeliveryFeeBearer: string
+    isActive: boolean
+    currency: string
+  } | null>(null)
+
+  // 決済設定を取得
+  useEffect(() => {
+    const fetchPaymentSettings = async () => {
+      try {
+        const response = await fetch('/api/payment-settings/public')
+        if (response.ok) {
+          const settings = await response.json()
+          setPaymentSettings(settings)
+          
+          // デフォルトの支払い方法を設定（有効な方法の中で最初のもの）
+          const availableMethods: string[] = []
+          if (settings.enableBankTransfer) availableMethods.push('bank_transfer')
+          if (settings.enableCashOnDelivery) availableMethods.push('cod')
+          if (settings.enableCreditCard && settings.isActive) availableMethods.push('stripe')
+          
+          if (availableMethods.length > 0 && !availableMethods.includes(formData.paymentMethod)) {
+            setFormData(prev => ({ ...prev, paymentMethod: availableMethods[0] }))
+          }
+        }
+      } catch (error) {
+        console.error('決済設定の取得に失敗しました:', error)
+      }
+    }
+    
+    fetchPaymentSettings()
+  }, [])
 
   // カートが空の場合はカート画面にリダイレクト
   useEffect(() => {
@@ -224,6 +268,33 @@ export default function CheckoutPage() {
       style: 'currency',
       currency: 'JPY'
     }).format(price)
+  }
+
+  // 支払い方法に基づく手数料計算
+  const calculatePaymentFee = () => {
+    if (!paymentSettings || !shippingInfo) return 0
+
+    switch (formData.paymentMethod) {
+      case 'cod':
+        return paymentSettings.cashOnDeliveryFeeBearer === 'customer' ? paymentSettings.cashOnDeliveryFee : 0
+      case 'bank_transfer':
+        return paymentSettings.bankTransferFeeBearer === 'customer' ? paymentSettings.bankTransferFee : 0
+      case 'stripe':
+        if (paymentSettings.creditCardFeeBearer === 'customer') {
+          return paymentSettings.creditCardFeeType === 'percentage'
+            ? Math.ceil(shippingInfo.totalAmount * paymentSettings.creditCardFeeRate / 100)
+            : paymentSettings.creditCardFeeFixed
+        }
+        return 0
+      default:
+        return 0
+    }
+  }
+
+  // 最終合計金額の計算
+  const calculateFinalTotal = () => {
+    if (!shippingInfo) return cart?.total || 0
+    return shippingInfo.totalAmount + calculatePaymentFee()
   }
 
   if (cartLoading) {
@@ -401,13 +472,191 @@ export default function CheckoutPage() {
                 />
               </div>
 
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <h3 className="text-sm font-medium text-blue-900 mb-2">お支払い方法</h3>
-                <p className="text-sm text-blue-700">
-                  現在は代金引換のみとなっております。<br />
-                  商品受け取り時に配送業者にお支払いください。
-                </p>
+              {/* 決済方法選択 */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-4">
+                  お支払い方法 *
+                </label>
+                
+                <div className="space-y-3">
+                  {/* 銀行振込 */}
+                  {paymentSettings?.enableBankTransfer && (
+                    <label className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="bank_transfer"
+                        checked={formData.paymentMethod === 'bank_transfer'}
+                        onChange={handleChange}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">🏦</span>
+                          <div className="text-sm font-medium text-gray-900">
+                            銀行振込
+                          </div>
+                          {paymentSettings.bankTransferFee > 0 && paymentSettings.bankTransferFeeBearer === 'customer' && (
+                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">
+                              手数料 {formatPrice(paymentSettings.bankTransferFee)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          注文確定後に振込先をメールでお送りします。<br />
+                          ご入金確認後に商品を発送いたします。
+                          {paymentSettings.bankTransferFee > 0 && paymentSettings.bankTransferFeeBearer === 'customer' && (
+                            <><br />※ 振込手数料はお客様負担となります。</>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  )}
+                  
+                  {/* 代金引換 */}
+                  {paymentSettings?.enableCashOnDelivery && (
+                    <label className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="cod"
+                        checked={formData.paymentMethod === 'cod'}
+                        onChange={handleChange}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">📦</span>
+                          <div className="text-sm font-medium text-gray-900">
+                            代金引換
+                          </div>
+                          {paymentSettings.cashOnDeliveryFee > 0 && paymentSettings.cashOnDeliveryFeeBearer === 'customer' && (
+                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800">
+                              手数料 {formatPrice(paymentSettings.cashOnDeliveryFee)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          商品受け取り時に配送業者にお支払いください。
+                          {paymentSettings.cashOnDeliveryFee > 0 && paymentSettings.cashOnDeliveryFeeBearer === 'customer' && (
+                            <><br />代金引換手数料が別途かかります。</>
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  )}
+
+                  {/* クレジットカード決済 */}
+                  {paymentSettings?.enableCreditCard && (
+                    <label className={`flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${!paymentSettings.isActive ? 'opacity-60' : ''}`}>
+                      <input
+                        type="radio"
+                        name="paymentMethod"
+                        value="stripe"
+                        checked={formData.paymentMethod === 'stripe'}
+                        onChange={handleChange}
+                        disabled={!paymentSettings.isActive}
+                        className="mt-1"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center space-x-2">
+                          <span className="text-2xl">💳</span>
+                          <div className="text-sm font-medium text-gray-900">
+                            クレジットカード決済
+                          </div>
+                          {!paymentSettings.isActive ? (
+                            <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
+                              準備中
+                            </span>
+                          ) : (
+                            paymentSettings.creditCardFeeBearer === 'customer' && (
+                              <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">
+                                {paymentSettings.creditCardFeeType === 'percentage' 
+                                  ? `手数料 ${paymentSettings.creditCardFeeRate}%`
+                                  : `手数料 ${formatPrice(paymentSettings.creditCardFeeFixed)}`
+                                }
+                              </span>
+                            )
+                          )}
+                        </div>
+                        <div className="text-sm text-gray-600 mt-1">
+                          Visa、Mastercard、JCB、American Express<br />
+                          {!paymentSettings.isActive ? (
+                            '※ 現在準備中です。近日中にご利用いただけます。'
+                          ) : (
+                            '安全で迅速な決済が可能です。'
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  )}
+                  
+                  {/* 利用可能な支払い方法がない場合 */}
+                  {paymentSettings && !paymentSettings.enableBankTransfer && !paymentSettings.enableCashOnDelivery && !paymentSettings.enableCreditCard && (
+                    <div className="text-center py-8 text-gray-500">
+                      <p>現在、利用可能な支払い方法がありません。</p>
+                      <p className="text-sm mt-1">管理者にお問い合わせください。</p>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              {/* 代金引換手数料の警告 */}
+              {formData.paymentMethod === 'cod' && paymentSettings && (paymentSettings.cashOnDeliveryFee || 0) > 0 && paymentSettings.cashOnDeliveryFeeBearer === 'customer' && (
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <span className="text-yellow-600">⚠️</span>
+                    <div>
+                      <h4 className="text-sm font-medium text-yellow-800">代金引換手数料について</h4>
+                      <p className="text-sm text-yellow-700 mt-1">
+                        代金引換でのお支払いには、別途手数料{formatPrice(paymentSettings.cashOnDeliveryFee || 0)}がかかります。<br />
+                        最終的なお支払い金額は {formatPrice(calculateFinalTotal())} となります。
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 銀行振込の案内 */}
+              {formData.paymentMethod === 'bank_transfer' && (
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <span className="text-blue-600">ℹ️</span>
+                    <div>
+                      <h4 className="text-sm font-medium text-blue-800">銀行振込について</h4>
+                      <p className="text-sm text-blue-700 mt-1">
+                        注文確定後、振込先口座情報をメールでお送りします。<br />
+                        ご入金確認後、1-2営業日以内に商品を発送いたします。
+                        {paymentSettings && (paymentSettings.bankTransferFee || 0) > 0 && paymentSettings.bankTransferFeeBearer === 'customer' && (
+                          <><br />※ 振込手数料{formatPrice(paymentSettings.bankTransferFee || 0)}はお客様負担となります。</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* クレジットカード決済の案内 */}
+              {formData.paymentMethod === 'stripe' && paymentSettings?.isActive && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <div className="flex items-start space-x-2">
+                    <span className="text-green-600">💳</span>
+                    <div>
+                      <h4 className="text-sm font-medium text-green-800">クレジットカード決済について</h4>
+                      <p className="text-sm text-green-700 mt-1">
+                        安全なSSL暗号化通信でカード情報を保護します。<br />
+                        決済完了後、即座に商品を発送準備いたします。
+                        {paymentSettings.creditCardFeeBearer === 'customer' && (
+                          <><br />※ 決済手数料（{paymentSettings.creditCardFeeType === 'percentage' 
+                            ? `${paymentSettings.creditCardFeeRate}%`
+                            : formatPrice(paymentSettings.creditCardFeeFixed)
+                          }）はお客様負担となります。</>
+                        )}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <Button
                 type="submit"
@@ -471,15 +720,36 @@ export default function CheckoutPage() {
                   )}
                 </span>
               </div>
+              {/* 各支払い方法の手数料表示 */}
+              {formData.paymentMethod === 'cod' && paymentSettings && (paymentSettings.cashOnDeliveryFee || 0) > 0 && paymentSettings.cashOnDeliveryFeeBearer === 'customer' && (
+                <div className="flex justify-between text-sm">
+                  <span>代金引換手数料</span>
+                  <span>{formatPrice(paymentSettings.cashOnDeliveryFee || 0)}</span>
+                </div>
+              )}
+              
+              {formData.paymentMethod === 'bank_transfer' && paymentSettings && (paymentSettings.bankTransferFee || 0) > 0 && paymentSettings.bankTransferFeeBearer === 'customer' && (
+                <div className="flex justify-between text-sm">
+                  <span>銀行振込手数料</span>
+                  <span>{formatPrice(paymentSettings.bankTransferFee || 0)}</span>
+                </div>
+              )}
+              
+              {formData.paymentMethod === 'stripe' && paymentSettings?.creditCardFeeBearer === 'customer' && shippingInfo && (
+                <div className="flex justify-between text-sm">
+                  <span>決済手数料</span>
+                  <span>
+                    {paymentSettings.creditCardFeeType === 'percentage' 
+                      ? formatPrice(Math.ceil(shippingInfo.totalAmount * paymentSettings.creditCardFeeRate / 100))
+                      : formatPrice(paymentSettings.creditCardFeeFixed)
+                    }
+                  </span>
+                </div>
+              )}
               <div className="border-t pt-2">
                 <div className="flex justify-between font-semibold text-lg">
                   <span>合計</span>
-                  <span>
-                    {shippingInfo 
-                      ? formatPrice(shippingInfo.totalAmount)
-                      : formatPrice(cart?.total || 0)
-                    }
-                  </span>
+                  <span>{formatPrice(calculateFinalTotal())}</span>
                 </div>
               </div>
             </div>

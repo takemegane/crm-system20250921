@@ -160,6 +160,10 @@ model SystemSettings {
   description       String?
   communityLinkText String?
   communityLinkUrl  String?
+  
+  // ダッシュボード設定
+  dashboardWidgets  Json?    @default("[]") // 表示するウィジェット設定
+  
   isActive          Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
@@ -266,13 +270,32 @@ model ShippingRate {
 }
 
 model PaymentSettings {
-  id                String   @id @default(cuid())
-  stripePublicKey   String?
-  stripeSecretKey   String?  // 暗号化して保存
-  stripeWebhookSecret String? // Webhook署名検証用
-  isTestMode        Boolean  @default(true)
-  isActive          Boolean  @default(false)
-  currency          String   @default("jpy")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  id                  String   @id @default(cuid())
+  stripePublicKey     String?
+  stripeSecretKey     String?  // 暗号化して保存
+  stripeWebhookSecret String?  // Webhook署名検証用
+  isTestMode          Boolean  @default(true)
+  isActive            Boolean  @default(false)
+  currency            String   @default("jpy")
+  
+  // 支払い方法表示制御
+  enableCreditCard    Boolean  @default(false)  // クレジットカード決済
+  enableBankTransfer  Boolean  @default(true)   // 銀行振込
+  enableCashOnDelivery Boolean @default(true)   // 代引き
+  
+  // 手数料設定
+  creditCardFeeType   String   @default("percentage") // "percentage" | "fixed"
+  creditCardFeeRate   Float    @default(3.6)          // パーセンテージ手数料（%）
+  creditCardFeeFixed  Float    @default(0)            // 固定手数料（円）
+  
+  bankTransferFee     Float    @default(0)            // 銀行振込手数料（円）
+  cashOnDeliveryFee   Float    @default(330)          // 代引き手数料（円）
+  
+  // 手数料の負担者設定
+  creditCardFeeBearer String   @default("merchant")   // "merchant" | "customer"
+  bankTransferFeeBearer String @default("customer")   // "merchant" | "customer" 
+  cashOnDeliveryFeeBearer String @default("customer") // "merchant" | "customer"
+  
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
 }

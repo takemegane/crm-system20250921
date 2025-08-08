@@ -26,7 +26,8 @@ export default withAuth(
         '/api/categories',
         '/api/profile',
         '/api/debug-products',
-        '/api/migrate-payment-fields'
+        '/api/migrate-payment-fields',
+        '/api/payment-settings'
       ]
       
       // 顧客向けAPIパターン（認証済みユーザーのみアクセス可能で十分に保護済み）
@@ -104,7 +105,7 @@ export default withAuth(
       }
     }
     
-    // 顧客向けAPIパスのチェック
+    // 顧客向けAPIパスのチェック（認証不要の公開APIを含む）
     const isCustomerAPI = pathname.startsWith('/api/auth') || 
                           pathname.startsWith('/api/products') || 
                           pathname.startsWith('/api/cart') || 
@@ -113,7 +114,8 @@ export default withAuth(
                           pathname.startsWith('/api/customer-enrollments') ||
                           pathname.includes('/customer-details') ||
                           pathname.startsWith('/api/system-settings') ||
-                          pathname.startsWith('/api/calculate-shipping')
+                          pathname.startsWith('/api/calculate-shipping') ||
+                          pathname.startsWith('/api/payment-settings/public')
     
     // 管理者専用APIアクセス
     if (pathname.startsWith('/api/') && !isCustomerAPI) {
@@ -137,8 +139,10 @@ export default withAuth(
           token: token ? { role: token.role, userType: token.userType, sub: token.sub } : null
         })
         
-        // 認証が必要なパスの場合
-        if (pathname.startsWith('/dashboard') || pathname.startsWith('/shop') || pathname.startsWith('/mypage') || pathname.startsWith('/api/')) {
+        // 認証が必要なパスの場合（公開APIは除外）
+        const isPublicAPI = pathname.startsWith('/api/payment-settings/public')
+        
+        if ((pathname.startsWith('/dashboard') || pathname.startsWith('/shop') || pathname.startsWith('/mypage') || pathname.startsWith('/api/')) && !isPublicAPI) {
           if (!token) {
             console.log('Authorization result: false (no token)')
             return false
