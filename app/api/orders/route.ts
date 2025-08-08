@@ -248,7 +248,8 @@ export async function POST(request: NextRequest) {
     
     // 代引き手数料の計算
     let codFee = 0
-    if (paymentMethod === 'cash_on_delivery') {
+    const normalizedPaymentMethod = paymentMethod === 'cod' ? 'cash_on_delivery' : paymentMethod
+    if (normalizedPaymentMethod === 'cash_on_delivery') {
       // PaymentSettingsから代引き手数料を取得
       const paymentSettings = await prisma.paymentSettings.findFirst({
         select: { cashOnDeliveryFee: true }
@@ -285,7 +286,7 @@ export async function POST(request: NextRequest) {
         recipientName,
         contactPhone, // Prismaスキーマに合わせてcontactPhoneのみ使用
         notes,
-        paymentMethod: paymentMethod || 'bank_transfer', // デフォルトは銀行振込
+        paymentMethod: normalizedPaymentMethod || 'bank_transfer', // デフォルトは銀行振込
         status: initialStatus
       }
       console.log('📝 Order data:', JSON.stringify(orderData, null, 2))

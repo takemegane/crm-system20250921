@@ -52,7 +52,8 @@ const ORDER_STATUS = {
 const PAYMENT_METHOD_LABELS = {
   'stripe': 'クレジットカード',
   'bank_transfer': '銀行振込',
-  'cash_on_delivery': '代引き'
+  'cash_on_delivery': '代引き',
+  'cod': '代引き'  // 互換性のため
 } as const
 
 const ORDER_STATUS_COLORS = {
