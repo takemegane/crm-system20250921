@@ -51,3 +51,6 @@ server.log
 # backups
 /backups/*
 !/backups/.gitkeep
+
+# Claude Code settings
+.claude/settings.local.json
