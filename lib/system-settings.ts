@@ -42,7 +42,13 @@ export async function getSystemSettings(): Promise<SystemSettings> {
 
     return settings
   } catch (error) {
-    console.error('Error fetching system settings:', error)
+    // Prisma のテーブル不存在(P2021)などはビルド時に頻発するため静かにフォールバック
+    const code = (error as any)?.code
+    const isTableMissing = code === 'P2021'
+    if (!isTableMissing) {
+      const shouldLog = process.env.NODE_ENV !== 'production'
+      if (shouldLog) console.warn('Error fetching system settings:', error)
+    }
     // エラーの場合はデフォルト値を返す
     return {
       id: 'default',
