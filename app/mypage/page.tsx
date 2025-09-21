@@ -93,6 +93,13 @@ export default function MyPage() {
               <p className="text-sm text-gray-600">商品の閲覧・購入</p>
             </div>
           </Link>
+          <Link href="/mypage/challenge">
+            <div className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 hover:border-blue-300 transition-all cursor-pointer text-center">
+              <div className="text-4xl mb-3">✅</div>
+              <h3 className="font-semibold text-gray-900 mb-2">Month Challenge</h3>
+              <p className="text-sm text-gray-600">毎日の記録（1日1回）</p>
+            </div>
+          </Link>
           {hasEnrollments && (
             <Link href="/mypage/community">
               <div className="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 hover:border-blue-300 transition-all cursor-pointer text-center">
