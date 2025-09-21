@@ -43,6 +43,7 @@ model Customer {
   emailLogs    EmailLog[]
   enrollments  Enrollment[]
   orders       Order[]
+  entries      Entry[]
 }
 
 model Course {
