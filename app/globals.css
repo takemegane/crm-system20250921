@@ -41,8 +41,7 @@
   
   /* モダンな入力フィールド */
   .input-modern {
-    @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-3 focus:border-transparent transition-all duration-200;
-    focus-ring-color: var(--primary-50);
+    @apply w-full px-4 py-3 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition-all duration-200;
   }
   
   /* グラデーション背景 */

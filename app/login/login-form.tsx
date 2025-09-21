@@ -116,7 +116,7 @@ export default function LoginForm({ settings }: LoginFormProps) {
                 name="email"
                 type="email"
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:border-transparent transition duration-200 text-sm"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition duration-200 text-sm"
                 style={{
                   focusRingColor: `${settings.primaryColor}40`,
                   '--tw-ring-color': `${settings.primaryColor}40`,
@@ -136,7 +136,7 @@ export default function LoginForm({ settings }: LoginFormProps) {
                 name="password"
                 type="password"
                 required
-                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-3 focus:border-transparent transition duration-200 text-sm"
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-300 focus:border-transparent transition duration-200 text-sm"
                 style={{
                   focusRingColor: `${settings.primaryColor}40`,
                   '--tw-ring-color': `${settings.primaryColor}40`,
